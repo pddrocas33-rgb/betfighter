@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beetfighter - Histórico de Odds</title>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeSB_CWfsuo2QcJR2OM7piQwo8HhZ4fRQ",
+            authDomain: "taskmeapp-c4951.firebaseapp.com",
+            databaseURL: "https://taskmeapp-c4951-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "taskmeapp-c4951",
+            storageBucket: "taskmeapp-c4951.firebasestorage.app",
+            messagingSenderId: "965251565988",
+            appId: "1:965251565988:web:0de5b7daa0f0566ebc5931",
+            measurementId: "G-HTY2BGM9Y8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ===== Estado global para filtro por data =====
+        let dadosJogosCache = {};
+        let dataSelecionada = hojeISO();
+
+        function hojeISO() {
+            const d = new Date();
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${dd}`;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const inp = document.getElementById('datePicker');
+            if (inp) {
+                inp.value = dataSelecionada;
+                // CORREÇÃO: Removido o inp.max = hojeISO() para permitir datas futuras
+                inp.addEventListener('change', (e) => {
+                    dataSelecionada = e.target.value || hojeISO();
+                    renderizarListaArquivadosPublica(dadosJogosCache);
+                });
+            }
+            const btnHoje = document.getElementById('btnHoje');
+            if (btnHoje) {
+                btnHoje.addEventListener('click', () => {
+                    dataSelecionada = hojeISO();
+                    if (inp) inp.value = dataSelecionada;
+                    renderizarListaArquivadosPublica(dadosJogosCache);
+                });
+            }
+            configurarProximoBanner();
+        });
+
+        let tempoEsperaAtual = 60000; 
+
+        function configurarProximoBanner() {
+            setTimeout(() => {
+                mostrarBannerAnimado();
+                tempoEsperaAtual = tempoEsperaAtual * 2;
+            }, tempoEsperaAtual);
+        }
+
+        function mostrarBannerAnimado() {
+            const popup = document.getElementById('animatedPopupBanner');
+            if(popup) {
+                popup.classList.add('active');
+            }
+        }
+
+        window.fecharBannerAnimado = function() {
+            const popup = document.getElementById('animatedPopupBanner');
+            if(popup) {
+                popup.classList.remove('active');
+                configurarProximoBanner();
+            }
+        }
+
+        onValue(ref(db, "jogos"), (snapshot) => {
+            const dadosJogos = snapshot.val() || {};
+            dadosJogosCache = dadosJogos;
+            renderizarListaArquivadosPublica(dadosJogos);
+        });
+
+        function formatarDataEvento(strData) {
+            if(!strData) return "Data N/D";
+            const partes = strData.split('-');
+            if(partes.length !== 3) return strData;
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+
+        function formatarDataInsercao(timestamp) {
+            if (!timestamp) return "";
+            const data = new Date(timestamp);
+            const dia = String(data.getDate()).padStart(2, '0');
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const ano = data.getFullYear();
+            const hora = String(data.getHours()).padStart(2, '0');
+            const min = String(data.getMinutes()).padStart(2, '0');
+            return `${dia}/${mes}/${ano} às ${hora}:${min}`;
+        }
+
+        function renderizarListaArquivadosPublica(dadosJogos) {
+            const containerPublico = document.getElementById('publicGameViewer');
+            
+            const jogosArquivados = Object.keys(dadosJogos)
+                .map(key => ({ key, ...dadosJogos[key] }))
+                .filter(j => j.arquivado && j.dataEvento === dataSelecionada)
+                .sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+
+            // ===== Calcular ROI, odd média e ganho do dia =====
+            let ganhas = 0, perdidas = 0, pendentes = 0;
+            let somaOddsGanhas = 0;
+            let lucro = 0, stakeTotal = 0;
+            jogosArquivados.forEach(j => {
+                const odd = parseFloat(j.odd);
+                if (j.estadoAposta === 'ganha') {
+                    ganhas++;
+                    stakeTotal += 1;
+                    if (!isNaN(odd) && odd > 0) {
+                        lucro += (odd - 1);
+                        somaOddsGanhas += odd;
+                    }
+                } else if (j.estadoAposta === 'perdida') {
+                    perdidas++;
+                    stakeTotal += 1;
+                    lucro -= 1;
+                } else {
+                    pendentes++;
+                }
+            });
+            const totalEventos = jogosArquivados.length;
+            const oddMedia = totalEventos > 0 ? (somaOddsGanhas / totalEventos) : 0;
+            const roi = stakeTotal > 0 ? (lucro / stakeTotal) * 100 : 0;
+            const positivo = lucro >= 0;
+            const corGanho = positivo ? '#10b981' : '#ef4444';
+            const setaGanho = positivo ? '▲' : '▼';
+
+            const statsBar = `
+                <div class="stats-bar">
+                    <div class="stat-card">
+                        <div class="stat-label">ROI</div>
+                        <div class="stat-value" style="color:${corGanho}">${setaGanho} ${roi.toFixed(1)}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Odd média</div>
+                        <div class="stat-value">@${oddMedia.toFixed(2)}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Lucro (u)</div>
+                        <div class="stat-value" style="color:${corGanho}">${positivo ? '+' : ''}${lucro.toFixed(2)}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Resultados</div>
+                        <div class="stat-value" style="font-size:0.85rem;">
+                            <span style="color:#10b981">${ganhas}G</span> ·
+                            <span style="color:#ef4444">${perdidas}P</span> ·
+                            <span style="color:#94a3b8">${pendentes}Pend</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 2. Agrupar os jogos por Liga
+            const gruposPorLiga = {};
+            jogosArquivados.forEach(j => {
+                const nomeLiga = (j.liga || 'OUTRAS LIGAS').toUpperCase().trim();
+                if (!gruposPorLiga[nomeLiga]) {
+                    gruposPorLiga[nomeLiga] = [];
+                }
+                gruposPorLiga[nomeLiga].push(j);
+            });
+
+            // 3. Montar o HTML inicial
+            let htmlLista = `
+                <div class="brand-title-container">
+                    <h1 class="brand-title"><span class="brand-green">Beet</span><span class="brand-black">fighter</span></h1>
+                    <div class="brand-subtitle">A luta contra as odds</div>
+                </div>
+
+                <div class="date-controls-bar">
+                    <div class="date-controls-left">
+                        <span class="date-controls-title">📊 Dia selecionado: <strong>${formatarDataEvento(dataSelecionada)}</strong></span>
+                    </div>
+                    <div class="date-controls-right">
+                        <button id="btnHoje" class="btn-hoje" type="button">Hoje</button>
+                        <input id="datePicker" type="date" class="date-input" />
+                    </div>
+                </div>
+
+                ${statsBar}
+
+                <div class="main-layout-wrapper">
+                    <a href="https://22bet4me.com?bf=9c0edc58d75d4_464354407" target="_blank" class="sidebar-banner banner-pos-1">
+                        <img src="imagens/banner_esquerdo.png" alt="22Bet" class="img-desktop">
+                        <img src="imagens/banner_esquerdo_mobile.png" alt="22Bet" class="img-mobile">
+                    </a>
+
+                    <div class="games-center-column">
+            `;
+
+            const ligasDisponiveis = Object.keys(gruposPorLiga);
+
+            if (ligasDisponiveis.length === 0) {
+                htmlLista += `
+                    <div class="no-games-fallback">
+                        Nenhum prognóstico arquivado para ${formatarDataEvento(dataSelecionada)}.
+                    </div>
+                `;
+            } else {
+                ligasDisponiveis.forEach(nomeLiga => {
+                    htmlLista += `
+                        <div class="liga-section-container">
+                            <div class="liga-header-title">🏆 ${nomeLiga}</div>
+                            <div class="liga-games-wrapper">
+                    `;
+
+                    gruposPorLiga[nomeLiga].forEach(j => {
+                        const valGolasA = j.resGolosA !== undefined ? j.resGolosA : '';
+                        const valGolasB = j.resGolosB !== undefined ? j.resGolosB : '';
+                        const valOdd = j.odd !== undefined ? j.odd : '';
+                        
+                        const dataJogoFormatada = formatarDataEvento(j.dataEvento);
+                        const dataInsercaoFormatada = formatarDataInsercao(j.criadoEm);
+
+                        const resultadoFinalStr = (valGolasA !== '' && valGolasB !== '') ? `${valGolasA} - ${valGolasB}` : 'vs';
+                        const previsaoStr = j.previsao ? j.previsao : 'N/A';
+                        
+                        let corPrevisaoClass = 'pendente';
+                        if(j.estadoAposta === 'ganha') corPrevisaoClass = 'ganha';
+                        if(j.estadoAposta === 'perdida') corPrevisaoClass = 'perdida';
+
+                        let oddElement = '';
+                        if (valOdd === '' || parseFloat(valOdd) === 0) {
+                            oddElement = `
+                                <a href="https://22bet4me.com?bf=9c0edc58d75d4_464354407" target="_blank" class="affiliate-odd-row">
+                                    Bónus 22BET ⚡
+                                </a>
+                            `;
+                        } else {
+                            oddElement = `<span class="pure-text-badge">@${Number(valOdd).toFixed(2)}</span>`;
+                        }
+
+                        htmlLista += `
+                            <div class="public-archive-row ${j.estadoAposta || 'pendente'}">
+                                
+                                <div class="row-main-info">
+                                    <div class="row-top-metadata">
+                                        <span class="date-badge-top">📅 ${dataJogoFormatada}</span>
+                                    </div>
+                                    
+                                    <div class="row-teams-line">
+                                        <span class="team-name">${j.equipaA}</span>
+                                        <span class="score-badge">${resultadoFinalStr}</span>
+                                        <span class="team-name">${j.equipaB}</span>
+                                    </div>
+
+                                    <div class="row-footer-metadata">
+                                        Inserido: ${dataInsercaoFormatada}
+                                    </div>
+                                </div>
+
+                                <div class="row-actions-zone">
+                                    <div class="prediction-pill-wrapper">
+                                        <span class="row-label">Palpite</span>
+                                        <span class="quadrado-previsao ${corPrevisaoClass}">${previsaoStr}</span>
+                                    </div>
+                                    <div class="odd-pill-wrapper">
+                                        <span class="row-label">Cotação</span>
+                                        ${oddElement}
+                                    </div>
+                                </div>
+
+                            </div>
+                        `;
+                    });
+
+                    htmlLista += `
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            htmlLista += `
+                    </div>
+                </div>
+            `;
+
+            containerPublico.innerHTML = htmlLista;
+
+            // Re-ligar handlers
+            const inp = document.getElementById('datePicker');
+            if (inp) {
+                inp.value = dataSelecionada;
+                // CORREÇÃO: Mantido sem inp.max para permitir futuro
+                inp.addEventListener('change', (e) => {
+                    dataSelecionada = e.target.value || hojeISO();
+                    renderizarListaArquivadosPublica(dadosJogosCache);
+                });
+            }
+            const btnHoje = document.getElementById('btnHoje');
+            if (btnHoje) {
+                btnHoje.addEventListener('click', () => {
+                    dataSelecionada = hojeISO();
+                    renderizarListaArquivadosPublica(dadosJogosCache);
+                });
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+            color: #0f172a;
+        }
+        .visitor-counter-wrapper {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10000;
+            background: #ffffff;
+            padding: 5px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .view-mode-container {
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        .brand-title-container {
+            text-align: center;
+            margin-top: 15px;
+            margin-bottom: 30px;
+        }
+        .brand-title {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+            margin: 0 0 5px 0;
+        }
+        .brand-green { color: #22c55e; }
+        .brand-black { color: #0f172a; }
+        .brand-subtitle {
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .main-layout-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .games-center-column {
+            flex: 1;
+            max-width: 660px;
+            width: 100%;
+        }
+
+        .liga-section-container {
+            margin-bottom: 25px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        .liga-header-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #334155;
+            padding: 8px 12px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .liga-games-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sidebar-banner {
+            display: block;
+            width: 120px !important;
+            height: 400px !important;
+            position: sticky;
+            top: 20px;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s ease;
+        }
+        .sidebar-banner:hover { transform: scale(1.02); }
+        .sidebar-banner img { width: 100%; height: 100%; object-fit: fill; }
+
+        .img-desktop { display: block; }
+        .img-mobile { display: none; }
+
+        .public-archive-row {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .public-archive-row.ganha { border-left: 4px solid #10b981; }
+        .public-archive-row.perdida { border-left: 4px solid #ef4444; }
+        .public-archive-row.pendente { border-left: 4px solid #94a3b8; }
+
+        .row-main-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .row-top-metadata { display: flex; align-items: center; font-size: 0.78rem; font-weight: 600; color: #0f172a; }
+        
+        .row-teams-line { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
+        .team-name { font-size: 0.95rem; font-weight: 700; color: #1e293b; }
+        .score-badge {
+            font-family: monospace; font-weight: 700; background: #f1f5f9; color: #0284c7;
+            padding: 1px 6px; border-radius: 4px; font-size: 0.85rem;
+        }
+
+        .row-footer-metadata { font-size: 0.72rem; color: #94a3b8; font-weight: 500; }
+
+        .row-actions-zone { display: flex; align-items: center; gap: 16px; }
+        .prediction-pill-wrapper, .odd-pill-wrapper { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+        .row-label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; }
+
+        .quadrado-previsao {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 55px; height: 24px; padding: 0 6px; border-radius: 4px;
+            font-weight: 700; color: #ffffff; font-size: 0.78rem; text-transform: uppercase;
+        }
+        .quadrado-previsao.ganha { background: #10b981; }
+        .quadrado-previsao.perdida { background: #ef4444; }
+        .quadrado-previsao.pendente { background: #64748b; }
+
+        .pure-text-badge {
+            background: #f1f5f9; color: #0f172a; padding: 3px 8px; border-radius: 4px;
+            font-weight: 700; font-family: monospace; font-size: 0.85rem; border: 1px solid #e2e8f0;
+        }
+        .affiliate-odd-row {
+            background: #22c55e; color: white !important; font-weight: 700; text-decoration: none;
+            padding: 4px 10px; border-radius: 4px; font-size: 0.78rem;
+        }
+
+        .no-games-fallback {
+            background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 8px;
+            padding: 30px; text-align: center; color: #64748b; font-size: 0.9rem;
+        }
+
+        .date-controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .date-controls-title { font-size: 0.9rem; color: #334155; }
+        .date-controls-right { display: flex; gap: 8px; align-items: center; }
+        .date-input {
+            border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 8px;
+            font-size: 0.85rem; color: #0f172a; background: #f8fafc;
+            font-family: inherit;
+        }
+        .date-input:focus { outline: 2px solid #22c55e; border-color: #22c55e; }
+        .btn-hoje {
+            background: #0f172a; color: #ffffff; border: none; border-radius: 6px;
+            padding: 6px 12px; font-weight: 700; font-size: 0.8rem; cursor: pointer;
+        }
+        .btn-hoje:hover { background: #22c55e; }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .stat-card {
+            background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px;
+            padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;
+        }
+        .stat-label {
+            font-size: 0.65rem; color: #94a3b8; text-transform: uppercase;
+            font-weight: 700; letter-spacing: 0.5px;
+        }
+        .stat-value { font-size: 1.05rem; font-weight: 800; color: #0f172a; }
+
+        @media (max-width: 640px) {
+            .stats-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        .animated-popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.4); z-index: 99999;
+            display: flex; justify-content: center; align-items: center;
+            pointer-events: none; opacity: 0; transition: opacity 0.5s ease;
+        }
+        .animated-popup-content {
+            background: #ffffff; padding: 24px 15px 15px 15px; border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+            position: relative; max-width: 350px; width: 90%;
+            transform: translateX(120vw); transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .animated-popup-overlay.active { pointer-events: auto; opacity: 1; }
+        .animated-popup-overlay.active .animated-popup-content { transform: translateX(0); }
+
+        .popup-close-btn {
+            position: absolute; top: 4px; right: 8px; background: none; border: none;
+            font-size: 24px; font-weight: bold; color: #94a3b8; cursor: pointer;
+        }
+        .popup-close-btn:hover { color: #ef4444; }
+        .popup-banner-anchor { display: block; width: 100%; border-radius: 6px; overflow: hidden; }
+        .popup-banner-anchor img { width: 100%; height: auto; display: block; }
+
+        @media (max-width: 860px) {
+            .main-layout-wrapper { display: grid !important; grid-template-columns: 1fr !important; gap: 15px !important; justify-items: center !important; }
+            .sidebar-banner { display: block !important; position: relative !important; top: 0 !important; width: 340px !important; height: 90px !important; }
+            .img-desktop { display: none !important; }
+            .img-mobile { display: block !important; width: 100% !important; height: 100% !important; }
+            .games-center-column { grid-row: 2 !important; width: 100% !important; }
+            .public-archive-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .row-actions-zone { width: 100%; justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 8px; }
+        }
+    </style>
+</head>
+<body>
+<div class="visitor-counter-wrapper">
+    <a href="https://www.hitwebcounter.com" target="_blank">
+        <img src="https://hitwebcounter.com/counter/counter.php?page=17482939&style=0006&nbdigits=5&type=ip&initCount=0" title="Contador de Visitas" Alt="Web Analytics" border="0">
+    </a>
+</div>
+<div id="publicGameViewer" class="view-mode-container">
+    <p style="text-align: center; color: #64748b; font-size: 0.9rem;">A carregar linhas do Beetfighter...</p>
+</div>
+
+<div id="animatedPopupBanner" class="animated-popup-overlay">
+    <div class="animated-popup-content">
+        <button class="popup-close-btn" onclick="fecharBannerAnimado()">&times;</button>
+        <a href="https://22bet4me.com?bf=9c0edc58d75d4_464354407" target="_blank" class="popup-banner-anchor">
+            <img src="imagens/banner_esquerdo_mobile.png" alt="Promoção Especial">
+        </a>
+    </div>
+</div>
+
+</body>
+</html>
