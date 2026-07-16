@@ -581,19 +581,26 @@
             margin-bottom: 40px;
         }
 
-        @media (max-width: 900px) {
-            .layout-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* ===== Tabelas Profissionais ===== */
+        /* ===== Tabelas Profissionais e Responsivas ===== */
         .table-responsive-wrapper {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 16px;
-            overflow: hidden;
+            overflow-x: auto; /* Rolagem horizontal se a tabela passar do limite móvel */
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Customização elegante da barra de rolagem da tabela no celular */
+        .table-responsive-wrapper::-webkit-scrollbar {
+            height: 6px;
+        }
+        .table-responsive-wrapper::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .table-responsive-wrapper::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
         }
 
         .custom-table {
@@ -601,6 +608,7 @@
             border-collapse: collapse;
             text-align: left;
             font-size: 0.9rem;
+            white-space: nowrap; /* Evita quebra de conteúdo da tabela em colunas apertadas */
         }
 
         .custom-table th {
@@ -697,6 +705,7 @@
             color: var(--brand-dark);
             outline: none;
             transition: border 0.2s;
+            width: 100%; /* Garante estabilidade de largura */
         }
 
         .sim-input-field:focus {
@@ -713,6 +722,7 @@
             font-weight: 700;
             cursor: pointer;
             transition: background 0.2s;
+            white-space: nowrap;
         }
 
         .btn-calc:hover {
@@ -788,30 +798,104 @@
             font-weight: 500;
         }
 
-        /* Animações e Adaptabilidade Mobile */
+        /* Animações */
         @keyframes pulse-animation {
             0% { transform: scale(1); }
             50% { transform: scale(1.02); }
             100% { transform: scale(1); }
         }
 
+        /* ===== REGRAS DE ADAPTABILIDADE MEDIA QUERIES (RESPONSIVO) ===== */
+        
+        /* Tablets e Desktops Pequenos */
+        @media (max-width: 992px) {
+            .layout-grid {
+                grid-template-columns: 1fr; /* Força colunas empilhadas */
+                gap: 40px;
+            }
+            .page-container {
+                margin: 20px auto;
+            }
+        }
+
+        /* Celulares Gerais */
         @media (max-width: 600px) {
             .navbar {
-                padding: 15px;
+                padding: 12px 15px;
+            }
+            .navbar-brand {
+                font-size: 1.5rem;
+            }
+            .page-container {
+                padding: 0 15px;
             }
             .section-header-flex {
                 flex-direction: column;
                 align-items: flex-start;
-            }
-            .select-periodo {
-                width: 100%;
-            }
-            .custom-table th, .custom-table td {
-                padding: 10px 8px;
-                font-size: 0.8rem;
+                gap: 10px;
             }
             .section-title {
-                font-size: 1.5rem;
+                font-size: 1.4rem;
+                border-left-width: 4px;
+                padding-left: 10px;
+            }
+            .select-periodo {
+                width: 100%; /* Filtro ocupa toda a largura no celular */
+                box-sizing: border-box;
+                text-align: center;
+            }
+            /* Grelha de cartões em mobile: 2 colunas para poupar espaço vertical */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+                margin-bottom: 30px;
+            }
+            /* Forçar o cartão da última atualização a ocupar as duas colunas inferiores */
+            .stats-grid .stat-card-premium:last-child {
+                grid-column: span 2;
+            }
+            .stat-card-premium {
+                padding: 16px;
+                border-radius: 12px;
+            }
+            .card-label {
+                font-size: 0.65rem;
+            }
+            .stat-value {
+                font-size: 1.4rem; /* Reduz ligeiramente para não estourar em ecrãs pequenos */
+            }
+            .custom-table th, .custom-table td {
+                padding: 12px 10px;
+                font-size: 0.8rem;
+            }
+            .quick-presets {
+                justify-content: space-between;
+            }
+            .preset-btn {
+                flex: 1 1 calc(33.33% - 8px); /* Botões de preset divididos uniformemente */
+                text-align: center;
+                padding: 8px 4px;
+            }
+            .input-group {
+                flex-direction: column; /* Input e Botão empilhados no celular */
+            }
+            .btn-calc {
+                width: 100%;
+                padding: 12px;
+            }
+            .legal-notice-box {
+                padding: 16px;
+                margin-top: 30px;
+            }
+        }
+
+        /* Celulares Extremamente Pequenos */
+        @media (max-width: 380px) {
+            .stats-grid {
+                grid-template-columns: 1fr; /* Volta para 1 coluna se for muito estreito */
+            }
+            .stats-grid .stat-card-premium:last-child {
+                grid-column: span 1;
             }
         }
     </style>
@@ -887,7 +971,7 @@
                     <span class="card-label" id="lblUltimaAtualizacao">Última Atualização</span>
                     <i class="fa-solid fa-clock card-icon"></i>
                 </div>
-                <div id="stat-update" class="stat-value" style="font-size: 1.3rem; line-height: 1.4;">...</div>
+                <div id="stat-update" class="stat-value" style="font-size: 1.15rem; line-height: 1.4;">...</div>
             </div>
 
         </div>

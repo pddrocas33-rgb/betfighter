@@ -109,7 +109,7 @@
                 infoTitle: "Betfighter को बारेमा",
                 infoWelcome: "<strong>Betfighter</strong> मा तपाईंलाई स्वागत छ!",
                 infoPhase: "हामी जानकारी गराउँदछौं कि यो परियोजना हाल <strong>परीक्षण र विकासको प्रारम्भिक चरणमा</strong> छ। यस कारणले गर्दा, यस चरणमा सबै प्रयोगकर्ताहरूका लागि सबै पहुँच र हाम्रा संग्रहित पूर्वानुमानहरू <strong>१००% नि:शुल्क</strong> हुनेछन्।",
-                infoPartners: "हामी रणनीतिक साझेदारीको लागि खुल्ला छौं! यदि तपाईं आफ्नो ब्रान्ड प्रवर्द्धन गर्न र हाम्रो वेबसाइटमा <strong>विज्ञापन ठाउँहरू भाडामा</strong> लิน चाहनुहुन्छ भने (माथिल्लो, साइड वा मोबाइल ब्यानरहरू), कृपया हामीलाई सम्पर्क गर्नुहोस्:",
+                infoPartners: "हामी रणनीतिक साझेदारीको लागि खुल्ला छौं! यदि तपाईं आफ्नो ब्रान्ड प्रवर्द्धन गर्न र हाम्रो वेबसाइटमा <strong>विज्ञापन ठाउँहरू भाडामा</strong> लिन चाहनुहुन्छ भने (माथिल्लो, साइड वा मोबाइल ब्यानरहरू), कृपया हामीलाई सम्पर्क गर्नुहोस्:",
                 infoContact: "📧 सम्पर्क: "
             }
         };
@@ -201,9 +201,9 @@
             let imagemLateralMobile = b.esquerdoMobImg || "imagens/banner_esquerdo_mobile.png";
             let linkLateral = b.esquerdoLink || "https://22bet4me.com?bf=9c0edc58d75d4_464354407";
 
-            // 4. SIDEBAR LATERAL DIREITA
+            // 4. SIDEBAR LATERAL DIREITA (CORRIGIDO)
             let imagemDireitaDesktop = b.direitoImg || "imagens/banner_esquerdo.png"; 
-            let imagemDireitaMobile = b.esquerdoMobImg || "imagens/banner_esquerdo_mobile.png";
+            let imagemDireitaMobile = b.direitoMobImg || b.esquerdoMobImg || "imagens/banner_esquerdo_mobile.png";
             let linkDireito = b.direitoLink || "https://22bet4me.com?bf=9c0edc58d75d4_464354407";
 
             // Sobreposições idiomáticas do Firebase
@@ -215,7 +215,10 @@
                 if (b.esquerdoImgEn) imagemLateralDesktop = b.esquerdoImgEn;
                 if (b.esquerdoMobImgEn) imagemLateralMobile = b.esquerdoMobImgEn;
                 if (b.esquerdoLinkEn) linkLateral = b.esquerdoLinkEn;
+                
+                // Correções do banner direito em Inglês
                 if (b.direitoImgEn) imagemDireitaDesktop = b.direitoImgEn;
+                if (b.direitoMobImgEn) imagemDireitaMobile = b.direitoMobImgEn;
                 if (b.direitoLinkEn) linkDireito = b.direitoLinkEn;
             } else if (idiomaAtual === 'nep') {
                 if (b.topoImgNep) imagemTopo = b.topoImgNep;
@@ -225,7 +228,10 @@
                 if (b.esquerdoImgNep) imagemLateralDesktop = b.esquerdoImgNep;
                 if (b.esquerdoMobImgNep) imagemLateralMobile = b.esquerdoMobImgNep;
                 if (b.esquerdoLinkNep) linkLateral = b.esquerdoLinkNep;
+                
+                // Correções do banner direito em Nepali
                 if (b.direitoImgNep) imagemDireitaDesktop = b.direitoImgNep;
+                if (b.direitoMobImgNep) imagemDireitaMobile = b.direitoMobImgNep;
                 if (b.direitoLinkNep) linkDireito = b.direitoLinkNep;
             }
 
@@ -251,7 +257,7 @@
                 if (imgMob) imgMob.src = imagemLateralMobile;
             }
 
-            // Aplicar à Sidebar Lateral Direita
+            // Aplicar à Sidebar Lateral Direita (CORRIGIDO)
             const sidebarDireitaAnchor = document.querySelector('.sidebar-banner.banner-pos-right');
             if (sidebarDireitaAnchor) {
                 sidebarDireitaAnchor.href = linkDireito;
@@ -456,22 +462,28 @@
             let imagemLateralMobile = b.esquerdoMobImg || "imagens/banner_esquerdo_mobile.png";
             let linkLateral = b.esquerdoLink || "https://22bet4me.com?bf=9c0edc58d75d4_464354407";
 
-            // Direito
+            // Direito (CORRIGIDO)
             let imagemDireitaDesktop = b.direitoImg || "imagens/banner_esquerdo.png"; 
-            let imagemDireitaMobile = b.esquerdoMobImg || "imagens/banner_esquerdo_mobile.png";
+            let imagemDireitaMobile = b.direitoMobImg || b.esquerdoMobImg || "imagens/banner_esquerdo_mobile.png";
             let linkDireito = b.direitoLink || "https://22bet4me.com?bf=9c0edc58d75d4_464354407";
 
             if (idiomaAtual === 'en') {
                 if (b.esquerdoImgEn) imagemLateralDesktop = b.esquerdoImgEn;
                 if (b.esquerdoMobImgEn) imagemLateralMobile = b.esquerdoMobImgEn;
                 if (b.esquerdoLinkEn) linkLateral = b.esquerdoLinkEn;
+                
+                // Correções do banner direito em Inglês
                 if (b.direitoImgEn) imagemDireitaDesktop = b.direitoImgEn;
+                if (b.direitoMobImgEn) imagemDireitaMobile = b.direitoMobImgEn;
                 if (b.direitoLinkEn) linkDireito = b.direitoLinkEn;
             } else if (idiomaAtual === 'nep') {
                 if (b.esquerdoImgNep) imagemLateralDesktop = b.esquerdoImgNep;
                 if (b.esquerdoMobImgNep) imagemLateralMobile = b.esquerdoMobImgNep;
                 if (b.esquerdoLinkNep) linkLateral = b.esquerdoLinkNep;
+                
+                // Correções do banner direito em Nepali
                 if (b.direitoImgNep) imagemDireitaDesktop = b.direitoImgNep;
+                if (b.direitoMobImgNep) imagemDireitaMobile = b.direitoMobImgNep;
                 if (b.direitoLinkNep) linkDireito = b.direitoLinkNep;
             }
 
@@ -603,7 +615,7 @@
             htmlLista += `
                     </div>
 
-                    <!-- BANNER DIREITO SINCRONIZADO COM A GESTÃO -->
+                    <!-- BANNER DIREITO SINCRONIZADO COM A GESTÃO (CORRIGIDO) -->
                     <a href="${linkDireito}" target="_blank" class="sidebar-banner banner-pos-right">
                         <img src="${imagemDireitaDesktop}" alt="" class="img-desktop">
                         <img src="${imagemDireitaMobile}" alt="" class="img-mobile">
