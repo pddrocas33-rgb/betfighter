@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BETFIGHTER - Histórico de Odds & Estatísticas</title>
+    <title>BETFIGHTER - Histórico de Odds</title>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
@@ -26,7 +26,7 @@
         // ===== DICIONÁRIO DE TRADUÇÃO =====
         const traducoes = {
             pt: {
-                subtitle: "A luta contra as odds - Estatísticas Completas",
+                subtitle: "A luta contra as odds",
                 diaSelecionado: "📊 Dia selecionado:",
                 hoje: "Hoje",
                 roiDia: "ROI Dia",
@@ -36,8 +36,7 @@
                 resultados: "Resultados",
                 nenhumJogo: "Nenhum prognóstico arquivado para",
                 outrasLigas: "OUTRAS LIGAS",
-                palpiteSimples: "Simples",
-                palpiteSugestao: "Sugestão",
+                palpite: "Palpite",
                 cotacao: "Cotação",
                 bonus: "Bónus 22BET ⚡",
                 inserido: "Inserido",
@@ -48,6 +47,7 @@
                 pendente: "pendente",
                 desempenho: "Desempenho",
                 info: "Info",
+                // Traduções do Modal Info
                 infoTitle: "Sobre o Betfighter",
                 infoWelcome: "Seja bem-vindo ao <strong>Betfighter</strong>!",
                 infoPhase: "Informamos que este projeto encontra-se atualmente em <strong>fase inicial de testes e desenvolvimento</strong>. Por este motivo, todo o acesso e os nossos prognósticos arquivados serão <strong>100% livres e gratuitos</strong> para todos os utilizadores nesta etapa.",
@@ -55,7 +55,7 @@
                 infoContact: "📧 Contacto: "
             },
             en: {
-                subtitle: "The fight against the odds - Full Analytics",
+                subtitle: "The fight against the odds",
                 diaSelecionado: "📊 Selected Day:",
                 hoje: "Today",
                 roiDia: "Daily ROI",
@@ -65,8 +65,7 @@
                 resultados: "Results",
                 nenhumJogo: "No predictions archived for",
                 outrasLigas: "OTHER LEAGUES",
-                palpiteSimples: "Simple",
-                palpiteSugestao: "Suggestion",
+                palpite: "Prediction",
                 cotacao: "Odds",
                 bonus: "22BET Bonus ⚡",
                 inserido: "Added",
@@ -77,6 +76,7 @@
                 pendente: "pending",
                 desempenho: "Performance",
                 info: "Info",
+                // Traduções do Modal Info
                 infoTitle: "About Betfighter",
                 infoWelcome: "Welcome to <strong>Betfighter</strong>!",
                 infoPhase: "We inform you that this project is currently in an <strong>initial phase of testing and development</strong>. For this reason, all access and our archived predictions will be <strong>100% free</strong> for all users at this stage.",
@@ -84,7 +84,7 @@
                 infoContact: "📧 Contact: "
             },
             nep: {
-                subtitle: "अड्स विरुद्धको लडाई - पूर्ण तथ्याङ्क",
+                subtitle: "अड्स विरुद्धको लडाई",
                 diaSelecionado: "📊 चयन गरिएको दिन:",
                 hoje: "आज",
                 roiDia: "दैनिक ROI",
@@ -94,8 +94,7 @@
                 resultados: "नतिजाहरू",
                 nenhumJogo: "को लागि कुनै पूर्वानुमान संग्रहित छैन",
                 outrasLigas: "अन्य लिगहरू",
-                palpiteSimples: "साधारण",
-                palpiteSugestao: "सुझाव",
+                palpite: "भविष्यवाणी",
                 cotacao: "अड्स",
                 bonus: "22BET बोनस ⚡",
                 inserido: "थपिएको",
@@ -106,8 +105,9 @@
                 pendente: "बाँकी",
                 desempenho: "प्रदर्शन",
                 info: "जानकारी",
+                // Traduções do Modal Info
                 infoTitle: "Betfighter को बारेमा",
-                infoWelcome: "<strong>Betfighter</strong> मा तपाईंलाई स्वागत unc!",
+                infoWelcome: "<strong>Betfighter</strong> मा तपाईंलाई स्वागत छ!",
                 infoPhase: "हामी जानकारी गराउँदछौं कि यो परियोजना हाल <strong>परीक्षण र विकासको प्रारम्भिक चरणमा</strong> छ। यस कारणले गर्दा, यस चरणमा सबै प्रयोगकर्ताहरूका लागि सबै पहुँच र हाम्रा संग्रहित पूर्वानुमानहरू <strong>१००% नि:शुल्क</strong> हुनेछन्।",
                 infoPartners: "हामी रणनीतिक साझेदारीको लागि खुल्ला छौं! यदि तपाईं आफ्नो ब्रान्ड प्रवर्द्धन गर्न र हाम्रो वेबसाइटमा <strong>विज्ञापन ठाउँहरू भाडामा</strong> लिन चाहनुहुन्छ भने (माथिल्लो, साइड वा मोबाइल ब्यानरहरू), कृपया हामीलाई सम्पर्क गर्नुहोस्:",
                 infoContact: "📧 सम्पर्क: "
@@ -329,34 +329,28 @@
                 .sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
 
             let ganhas = 0, perdidas = 0, pendentes = 0;
-            let somaOdds = 0;
+            let somaOddsGanhas = 0;
             let lucro = 0, stakeTotal = 0;
             
             jogosArquivados.forEach(j => {
-                const odd = parseFloat(j.oddSimples || j.odd || 0);
+                const odd = parseFloat(j.odd);
                 if (j.estadoAposta === 'ganha') {
                     ganhas++;
                     stakeTotal += 1;
                     if (!isNaN(odd) && odd > 0) {
                         lucro += (odd - 1);
-                        somaOdds += odd;
+                        somaOddsGanhas += odd;
                     }
                 } else if (j.estadoAposta === 'perdida') {
                     perdidas++;
                     stakeTotal += 1;
                     lucro -= 1;
-                    if (!isNaN(odd) && odd > 0) {
-                        somaOdds += odd;
-                    }
                 } else {
                     pendentes++;
-                    if (!isNaN(odd) && odd > 0) {
-                        somaOdds += odd;
-                    }
                 }
             });
             const totalEventos = jogosArquivados.length;
-            const oddMedia = totalEventos > 0 ? (somaOdds / totalEventos) : 0;
+            const oddMedia = totalEventos > 0 ? (somaOddsGanhas / totalEventos) : 0;
             const roi = stakeTotal > 0 ? (lucro / stakeTotal) * 100 : 0;
             const positivo = lucro >= 0;
             const corGanho = positivo ? '#10b981' : '#ef4444';
@@ -368,7 +362,7 @@
 
             todosJogosArr.forEach(j => {
                 if (j.arquivado && j.dataEvento && j.dataEvento.startsWith(anoMesSelecionado)) {
-                    const odd = parseFloat(j.oddSimples || j.odd || 0);
+                    const odd = parseFloat(j.odd);
                     if (j.estadoAposta === 'ganha') {
                         stakeMensal += 1;
                         if (!isNaN(odd) && odd > 0) {
@@ -493,58 +487,49 @@
                     gruposPorLiga[nomeLiga].forEach(j => {
                         const valGolasA = j.resGolosA !== undefined ? j.resGolosA : '';
                         const valGolasB = j.resGolosB !== undefined ? j.resGolosB : '';
+                        const valOdd = j.odd !== undefined ? j.odd : '';
                         const dataJogoFormatada = formatarDataEvento(j.dataEvento);
                         const dataInsercaoFormatada = formatarDataInsercao(j.criadoEm);
                         const resultadoFinalStr = (valGolasA !== '' && valGolasB !== '') ? `${valGolasA} - ${valGolasB}` : 'vs';
                         
-                        let corPrevisaoClass = j.estadoAposta || 'pendente';
-
-                        // Dados de Probabilidades & Estatísticas enviadas do painel Betanalytics
-                        const pV1 = j.pctV1 !== undefined && j.pctV1 !== '' ? `${j.pctV1}%` : '-';
-                        const pX = j.pctX !== undefined && j.pctX !== '' ? `${j.pctX}%` : '-';
-                        const pV2 = j.pctV2 !== undefined && j.pctV2 !== '' ? `${j.pctV2}%` : '-';
-                        const xgVal = j.xg !== undefined && j.xg !== '' ? `${Number(j.xg).toFixed(2)}` : '-';
-                        const ouVal = j.overUnder || '-';
-
-                        // Previsão Simples
-                        let badgeSimples = '';
-                        if (j.previsaoSimples) {
-                            badgeSimples = `<div class="pred-item"><span class="pred-lbl">${lang.palpiteSimples}:</span> <span class="badge-blue">${j.previsaoSimples.toUpperCase()}</span> <span class="odd-lbl">@${Number(j.oddSimples || 1).toFixed(2)}</span></div>`;
+                        let previsaoStr = 'N/A';
+                        if (j.previsao) {
+                            if (j.previsao.toLowerCase() === 'ganha') previsaoStr = lang.ganha;
+                            else if (j.previsao.toLowerCase() === 'perdida') previsaoStr = lang.perdida;
+                            else if (j.previsao.toLowerCase() === 'pendente') previsaoStr = lang.pendente;
+                            else previsaoStr = j.previsao; 
                         }
+                        
+                        let corPrevisaoClass = 'pendente';
+                        if(j.estadoAposta === 'ganha') corPrevisaoClass = 'ganha';
+                        if(j.estadoAposta === 'perdida') corPrevisaoClass = 'perdida';
 
-                        // Previsão Sugestão / Combinada
-                        let badgeSugestao = '';
-                        if (j.previsaoSugestao) {
-                            badgeSugestao = `<div class="pred-item"><span class="pred-lbl">${lang.palpiteSugestao}:</span> <span class="badge-purple">${j.previsaoSugestao.toUpperCase()}</span> <span class="odd-lbl">@${Number(j.oddSugestao || 1).toFixed(2)}</span></div>`;
+                        let oddElement = '';
+                        if (valOdd === '' || parseFloat(valOdd) === 0) {
+                            oddElement = `<a href="https://22bet4me.com?bf=9c0edc58d75d4_464354407" target="_blank" class="affiliate-odd-row">${lang.bonus}</a>`;
+                        } else {
+                            oddElement = `<span class="pure-text-badge">@${Number(valOdd).toFixed(2)}</span>`;
                         }
 
                         htmlLista += `
-                            <div class="public-archive-row ${corPrevisaoClass}">
+                            <div class="public-archive-row ${j.estadoAposta || 'pendente'}">
                                 <div class="row-main-info">
-                                    <div class="row-top-metadata">
-                                        <span class="date-badge-top">📅 ${dataJogoFormatada}</span>
-                                        <span class="status-badge-state ${corPrevisaoClass}">${corPrevisaoClass.toUpperCase()}</span>
-                                    </div>
+                                    <div class="row-top-metadata"><span class="date-badge-top">📅 ${dataJogoFormatada}</span></div>
                                     <div class="row-teams-line">
                                         <span class="team-name">${j.equipaA}</span>
                                         <span class="score-badge">${resultadoFinalStr}</span>
                                         <span class="team-name">${j.equipaB}</span>
                                     </div>
-                                    
-                                    <!-- Bloco de Estatísticas Avançadas Betanalytics -->
-                                    <div class="row-analytics-stats">
-                                        <div class="stat-mini-pill">📊 1: <strong>${pV1}</strong> | X: <strong>${pX}</strong> | 2: <strong>${pV2}</strong></div>
-                                        <div class="stat-mini-pill">⚽ xG: <strong>${xgVal}</strong></div>
-                                        <div class="stat-mini-pill">📈 O/U: <strong>${ouVal}</strong></div>
-                                    </div>
-
                                     <div class="row-footer-metadata">${lang.inserido}: ${dataInsercaoFormatada}</div>
                                 </div>
-                                <div class="row-actions-zone-extended">
-                                    ${badgeSimples}
-                                    ${badgeSugestao}
-                                    <div class="bonus-wrapper-link">
-                                        <a href="https://22bet4me.com?bf=9c0edc58d75d4_464354407" target="_blank" class="affiliate-odd-row">${lang.bonus}</a>
+                                <div class="row-actions-zone">
+                                    <div class="prediction-pill-wrapper">
+                                        <span class="row-label">${lang.palpite}</span>
+                                        <span class="quadrado-previsao ${corPrevisaoClass}">${previsaoStr}</span>
+                                    </div>
+                                    <div class="odd-pill-wrapper">
+                                        <span class="row-label">${lang.cotacao}</span>
+                                        ${oddElement}
                                     </div>
                                 </div>
                             </div>
@@ -610,42 +595,25 @@
         .liga-header-title { font-size: 0.95rem; font-weight: 800; color: #334155; padding: 8px 12px; letter-spacing: 0.5px; text-transform: uppercase; }
         .liga-games-wrapper { display: flex; flex-direction: column; gap: 8px; }
         .img-desktop { display: block; } .img-mobile { display: none; }
-        
-        .public-archive-row { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02); gap: 15px; }
-        .public-archive-row.ganha { border-left: 5px solid #10b981; }
-        .public-archive-row.perdida { border-left: 5px solid #ef4444; }
-        .public-archive-row.pendente { border-left: 5px solid #94a3b8; }
-        
-        .row-main-info { display: flex; flex-direction: column; gap: 4px; flex: 1.3; }
-        .row-top-metadata { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; font-weight: 600; color: #0f172a; margin-bottom: 2px; }
-        .status-badge-state { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #fff; text-transform: uppercase; }
-        .status-badge-state.ganha { background: #10b981; }
-        .status-badge-state.perdida { background: #ef4444; }
-        .status-badge-state.pendente { background: #64748b; }
-
+        .public-archive-row { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+        .public-archive-row.ganha { border-left: 4px solid #10b981; }
+        .public-archive-row.perdida { border-left: 4px solid #ef4444; }
+        .public-archive-row.pendente { border-left: 4px solid #94a3b8; }
+        .row-main-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .row-top-metadata { display: flex; align-items: center; font-size: 0.78rem; font-weight: 600; color: #0f172a; }
         .row-teams-line { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
         .team-name { font-size: 0.95rem; font-weight: 700; color: #1e293b; }
-        .score-badge { font-family: monospace; font-weight: 700; background: #f1f5f9; color: #0284c7; padding: 2px 8px; border-radius: 4px; font-size: 0.9rem; border: 1px solid #cbd5e1; }
-        
-        /* Estilos de Estatísticas Betanalytics */
-        .row-analytics-stats { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
-        .stat-mini-pill { background: #f1f5f9; color: #475569; font-size: 0.78rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0; font-family: system-ui, -apple-system, sans-serif; }
-        .stat-mini-pill strong { color: #0f172a; }
-
+        .score-badge { font-family: monospace; font-weight: 700; background: #f1f5f9; color: #0284c7; padding: 1px 6px; border-radius: 4px; font-size: 0.85rem; }
         .row-footer-metadata { font-size: 0.72rem; color: #94a3b8; font-weight: 500; }
-        
-        /* Zona de Ações Estendida */
-        .row-actions-zone-extended { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: 0.9; min-width: 170px; border-left: 1px dashed #e2e8f0; padding-left: 12px; }
-        .pred-item { font-size: 0.8rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 4px; width: 100%; justify-content: flex-end; }
-        .pred-lbl { color: #64748b; font-size: 0.75rem; text-transform: uppercase; }
-        .badge-blue { background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-        .badge-purple { background: #faf5ff; color: #6b21a8; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-        .odd-lbl { font-family: monospace; font-weight: bold; color: #0f172a; background: #f8fafc; padding: 2px 4px; border-radius: 4px; border: 1px solid #cbd5e1; }
-
-        .bonus-wrapper-link { margin-top: 4px; }
-        .affiliate-odd-row { background: #22c55e; color: white !important; font-weight: 700; text-decoration: none; padding: 5px 12px; border-radius: 4px; font-size: 0.78rem; display: inline-block; transition: 0.2s; }
-        .affiliate-odd-row:hover { background: #16a34a; }
-
+        .row-actions-zone { display: flex; align-items: center; gap: 16px; }
+        .prediction-pill-wrapper, .odd-pill-wrapper { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+        .row-label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; }
+        .quadrado-previsao { display: inline-flex; align-items: center; justify-content: center; min-width: 55px; height: 24px; padding: 0 6px; border-radius: 4px; font-weight: 700; color: #ffffff; font-size: 0.78rem; text-transform: uppercase; }
+        .quadrado-previsao.ganha { background: #10b981; }
+        .quadrado-previsao.perdida { background: #ef4444; }
+        .quadrado-previsao.pendente { background: #64748b; }
+        .pure-text-badge { background: #f1f5f9; color: #0f172a; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-family: monospace; font-size: 0.85rem; border: 1px solid #e2e8f0; }
+        .affiliate-odd-row { background: #22c55e; color: white !important; font-weight: 700; text-decoration: none; padding: 4px 10px; border-radius: 4px; font-size: 0.78rem; }
         .no-games-fallback { background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 30px; text-align: center; color: #64748b; font-size: 0.9rem; }
         .date-controls-bar { display: flex; justify-content: space-between; align-items: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; gap: 10px; flex-wrap: wrap; }
         .date-controls-title { font-size: 0.9rem; color: #334155; }
@@ -658,12 +626,7 @@
         .stat-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
         .stat-label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .stat-value { font-size: 1.05rem; font-weight: 800; color: #0f172a; }
-        
-        @media (max-width: 768px) { 
-            .stats-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); } 
-            .stats-bar .stat-card:last-child { grid-column: span 2; } 
-        }
-        
+        @media (max-width: 768px) { .stats-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stats-bar .stat-card:last-child { grid-column: span 2; } }
         .animated-popup-overlay, .modal-overlay-custom { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); z-index: 99999; display: flex; justify-content: center; align-items: center; pointer-events: none; opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(4px); }
         .animated-popup-content { background: #ffffff; padding: 24px 15px 15px 15px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); position: relative; max-width: 350px; width: 90%; transform: translateX(120vw); transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
         .animated-popup-overlay.active, .modal-overlay-custom.active { pointer-events: auto; opacity: 1; }
@@ -672,7 +635,6 @@
         .popup-close-btn:hover { color: #ef4444; }
         .popup-banner-anchor { display: block; width: 100%; border-radius: 6px; overflow: hidden; }
         .popup-banner-anchor img { width: 100%; height: auto; display: block; }
-        
         .disclaimer-modal-content { background: #ffffff; padding: 30px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-width: 480px; width: 90%; position: relative; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); border: 1px solid #e2e8f0; }
         .modal-overlay-custom.active .disclaimer-modal-content { transform: scale(1); }
         .disclaimer-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px; }
@@ -682,22 +644,10 @@
         .disclaimer-body strong { color: #0f172a; }
         .disclaimer-email-box { background: #f0fdf4; border: 1px dashed #22c55e; padding: 12px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 0.95rem; margin-top: 15px; }
         .disclaimer-email-box a { color: #15803d; text-decoration: none; transition: color 0.2s; }
-        .disclaimer-email-box a:hover { color: #166534; text-underline-offset: 3px; text-decoration: underline; }
-        
+        .disclaimer-email-box a:hover { color: #166534; text-decoration: underline; }
         @media (max-width: 1150px) { .sidebar-banner { flex: 0 0 180px; max-width: 180px; } }
         @media (max-width: 992px) { .sidebar-banner { flex: 0 0 150px; max-width: 150px; } }
-        @media (max-width: 860px) { 
-            .main-layout-wrapper { display: grid !important; grid-template-columns: 1fr !important; gap: 15px !important; justify-items: center !important; } 
-            .sidebar-banner { display: block !important; position: relative !important; top: 0 !important; width: 100% !important; max-width: 340px !important; height: 90px !important; flex: none !important; } 
-            .img-desktop { display: none !important; } 
-            .img-mobile { display: block !important; width: 100% !important; height: 100% !important; } 
-            .games-center-column { grid-row: 1 !important; width: 100% !important; } 
-            .banner-pos-left { grid-row: 2 !important; } 
-            .banner-pos-right { grid-row: 3 !important; } 
-            .public-archive-row { flex-direction: column; align-items: flex-start; gap: 12px; } 
-            .row-actions-zone-extended { width: 100%; justify-content: flex-start; align-items: flex-start; border-left: none; border-top: 1px solid #f1f5f9; padding-left: 0; padding-top: 8px; } 
-            .pred-item { justify-content: flex-start; }
-        }
+        @media (max-width: 860px) { .main-layout-wrapper { display: grid !important; grid-template-columns: 1fr !important; gap: 15px !important; justify-items: center !important; } .sidebar-banner { display: block !important; position: relative !important; top: 0 !important; width: 100% !important; max-width: 340px !important; height: 90px !important; flex: none !important; } .img-desktop { display: none !important; } .img-mobile { display: block !important; width: 100% !important; height: 100% !important; } .games-center-column { grid-row: 1 !important; width: 100% !important; } .banner-pos-left { grid-row: 2 !important; } .banner-pos-right { grid-row: 3 !important; } .public-archive-row { flex-direction: column; align-items: flex-start; gap: 12px; } .row-actions-zone { width: 100%; justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 8px; } }
     </style>
 </head>
 <body>
