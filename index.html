@@ -315,6 +315,46 @@
             return `${dia}/${mes}/${ano} ${lang.as} ${hora}:${min}`;
         }
 
+        // ===== CORRIGIDA: NOVA FUNÇÃO DE VALIDAÇÃO INDIVIDUAL COM SUPORTE A OVER/UNDER =====
+        function avaliarPrevisaoIndividualmente(previsao, golosA, golosB, estadoGeral) {
+            if (golosA === undefined || golosB === undefined || golosA === '' || golosB === '') {
+                return estadoGeral || 'pendente';
+            }
+            const gA = parseInt(golosA, 10);
+            const gB = parseInt(golosB, 10);
+            if (isNaN(gA) || isNaN(gB)) return estadoGeral || 'pendente';
+
+            const p = previsao.toLowerCase().trim();
+            const totalGolos = gA + gB;
+
+            // 1. Validação de Mercados Tradicionais 1X2 e Dupla Possibilidade
+            if (p === 'v1' || p === '1') return gA > gB ? 'ganha' : 'perdida';
+            if (p === 'vx' || p === 'x') return gA === gB ? 'ganha' : 'perdida';
+            if (p === 'v2' || p === '2') return gA < gB ? 'ganha' : 'perdida';
+            if (p === '1x' || p === 'v1x' || p === '12') {
+                if (p === '12') return gA !== gB ? 'ganha' : 'perdida';
+                return gA >= gB ? 'ganha' : 'perdida';
+            }
+            if (p === '2x' || p === 'v2x') return gA <= gB ? 'ganha' : 'perdida';
+
+            // 2. Validação de Mercados de Golos (Over / Under)
+            // Deteta termos como: "over 2.5", "under 1.5", "o2.5", "u3.5", "acima de 2.5", "abaixo 0.5"
+            const numMatch = p.match(/[\d.]+/);
+            if (numMatch) {
+                const linhaGolos = parseFloat(numMatch[0]);
+                if (!isNaN(linhaGolos)) {
+                    if (p.includes('over') || p.includes('o') || p.includes('acima') || p.includes('+')) {
+                        return totalGolos > linhaGolos ? 'ganha' : 'perdida';
+                    }
+                    if (p.includes('under') || p.includes('u') || p.includes('abaixo') || p.includes('-')) {
+                        return totalGolos < linhaGolos ? 'ganha' : 'perdida';
+                    }
+                }
+            }
+
+            return estadoGeral || 'pendente';
+        }
+
         function renderizarListaArquivadosPublica(dadosJogos) {
             const containerPublico = document.getElementById('publicGameViewer');
             const lang = traducoes[idiomaAtual];
@@ -517,6 +557,13 @@
                         
                         let corPrevisaoClass = j.estadoAposta || 'pendente';
 
+                        // Cálculo individualizado para cada badge
+                        let corSimplesClass = j.previsaoSimples ? avaliarPrevisaoIndividualmente(j.previsaoSimples, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
+                        let corSugestaoClass = j.previsaoSugestao ? avaliarPrevisaoIndividualmente(j.previsaoSugestao, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
+                        
+                        // CORRIGIDO: Validação dinâmica específica para a caixa de Tendência Over/Under
+                        let corOUClass = j.overUnder ? avaliarPrevisaoIndividualmente(j.overUnder, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
+
                         const pV1 = j.pctV1 !== undefined && j.pctV1 !== '' ? `${j.pctV1}%` : '0%';
                         const pX = j.pctX !== undefined && j.pctX !== '' ? `${j.pctX}%` : '0%';
                         const pV2 = j.pctV2 !== undefined && j.pctV2 !== '' ? `${j.pctV2}%` : '0%';
@@ -527,7 +574,7 @@
                         let badgeSimples = '';
                         if (j.previsaoSimples) {
                             badgeSimples = `
-                                <div class="pred-item status-${corPrevisaoClass}">
+                                <div class="pred-item status-${corSimplesClass}">
                                     <span class="pred-lbl">${lang.palpiteSimples}:</span> 
                                     <span class="badge-type">${j.previsaoSimples.toUpperCase()}</span> 
                                     <span class="odd-lbl">@${Number(j.oddSimples || 1).toFixed(2)}</span>
@@ -538,7 +585,7 @@
                         let badgeSugestao = '';
                         if (j.previsaoSugestao) {
                             badgeSugestao = `
-                                <div class="pred-item status-${corPrevisaoClass}">
+                                <div class="pred-item status-${corSugestaoClass}">
                                     <span class="pred-lbl">${lang.palpiteSugestao}:</span> 
                                     <span class="badge-type">${j.previsaoSugestao.toUpperCase()}</span> 
                                     <span class="odd-lbl">@${Number(j.oddSugestao || 1).toFixed(2)}</span>
@@ -579,7 +626,8 @@
                                                 <span class="m-lbl">⚽ Expectativa Gols (xG)</span>
                                                 <span class="m-val">${xgVal}</span>
                                             </div>
-                                            <div class="metric-pill-clean status-${corPrevisaoClass}">
+                                            <!-- CORRIGIDO: Agora usa a classe de status individual corOUClass -->
+                                            <div class="metric-pill-clean status-${corOUClass}">
                                                 <span class="m-lbl">📈 Tendência Over/Under</span>
                                                 <span class="m-val highlight">${ouVal}</span>
                                             </div>
@@ -704,6 +752,7 @@
         .metric-pill-clean.status-ganha .m-val { color: #047857; }
         .metric-pill-clean.status-perdida { background: #fef2f2; border-color: #fca5a5; }
         .metric-pill-clean.status-perdida .m-val { color: #b91c1c; }
+        .metric-pill-clean.status-pendente { background: #f8fafc; border-color: #e2e8f0; }
 
         .row-footer-metadata { font-size: 0.68rem; color: #94a3b8; font-weight: 600; display: flex; align-items: center; gap: 4px; }
         
@@ -715,10 +764,11 @@
         .pred-item .odd-lbl { font-family: 'Courier New', monospace; font-size: 0.85rem; font-weight: 800; color: #0f172a; align-self: flex-start; }
         
         /* Estados Dinâmicos de Cores para as Caixas de Aposta */
-        .pred-item.status-ganha { background: #ecfdf5; border-color: #10b981; }
+        .pred-item.status-ganha { background: #ecfdf5; border-color: #10b981 !important; }
         .pred-item.status-ganha .badge-type, .pred-item.status-ganha .odd-lbl { color: #047857; }
-        .pred-item.status-perdida { background: #fef2f2; border-color: #ef4444; }
+        .pred-item.status-perdida { background: #fef2f2; border-color: #ef4444 !important; }
         .pred-item.status-perdida .badge-type, .pred-item.status-perdida .odd-lbl { color: #b91c1c; }
+        .pred-item.status-pendente { background: #ffffff; border-color: #64748b; }
 
         /* PAINEL DE CONTROLO DE DATAS */
         .date-controls-bar { display: flex; justify-content: space-between; align-items: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }

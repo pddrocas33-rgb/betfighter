@@ -132,7 +132,7 @@
                 simResultadoTexto: "<strong>{investimento}€</strong> को प्रारम्भिक लगानीको साथ, तपाईंको हाल हुने थियो:",
                 simResultadoLucro: "खुद संचित नाफा {sinal}{lucro}€ ({roi}% ROI)",
                 infoImportante: "महत्त्वपूर्ण जानकारी",
-                avisoLegal1: "BetFighter मा प्रस्तुत पूर्वानुमान, तथ्याङ्क, ROI, नाफा, र सिमुलेशनहरू केवल जानकारीमूलक उद्देश्यका लागि हुन् र प्लेटफर्ममा रेकर्ड गरिएका ऐतिहासिक नतिजाहरूमा आधारित छन्। विगतको प्रदर्शनले भविष्यको नतिजाको ग्यारेन्टी गर्दैन।",
+                avisoLegal1: "BetFighter मा प्रस्तुत पूर्वानुमान, तथ्याङ्क, ROI, नाफा, र सिमुलेशनहरू केवल जानकारीमूलक उद्देश्यका लागि हुन् र प्लेटफर्ममा रेकرد गरिएका ऐतिहासिक नतिजाहरूमा आधारित छन्। विगतको प्रदर्शनले भविष्यको नতিजाको ग्यारेन्टी गर्दैन।",
                 avisoLegal2: "खेलकुद सट्टेबाजीमा वित्तीय जोखिम समावेश हुन्छ। प्रत्येक प्रयोगकर्ता आफ्नो सट्टेबाजी निर्णयहरूको लागि पूर्ण रूपमा जिम्मेवार हुन्छन्। BetFighter ले सट्टेबाजीमा नाफा, आम्दानी, वा सफलताको ग्यारेन्टी गर्दैन, र प्रदान गरिएको पूर्वानुमान वा जानकारीको प्रयोगबाट हुने वित्तीय नोक्सानीको लागि कुनै जिम्मेवारी लिदैन।",
                 avisoLegal3: "प्रस्तुत गरिएका लगानी सिमुलेशनहरू केवल चित्रण उद्देश्यका लागि हुन् र नतिजाहरूको ऐतिहासिक व्यवहार प्रदर्शन गर्न मात्र सेवा गर्दछन्। यसले वित्तीय सल्लाह गठन गर्दैन र भविष्यको प्रतिफलको कुनै प्रतिज्ञा वा ग्यारेन्टी प्रतिनिधित्व गर्दैन।",
                 avisoLegal4: "जिम्मेवारीपूर्वक सट्टेबाजी गर्नुहोस्। कहिल्यै पनि आफूले गुमाउन नसक्ने रकम प्रयोग नगर्नुहोस्।"
@@ -147,13 +147,12 @@
 
         // Carrega idioma preferido do localStorage
         function carregarIdioma() {
-            const idiomaSalvo = localStorage.getItem('idiomaSelecionado');
+            const idiomaSalvo = localStorage.getItem('idiomaPreferido'); // Alinhado com o index.html
             if (idiomaSalvo && traducoes[idiomaSalvo]) {
                 idiomaAtual = idiomaSalvo;
             } else {
                 idiomaAtual = 'pt';
             }
-            // Atualiza a tag HTML lang para acessibilidade
             document.documentElement.lang = idiomaAtual;
         }
 
@@ -172,7 +171,6 @@
         function aplicarTraducoesEstáticas() {
             const t = traducoes[idiomaAtual];
             
-            // Textos da secção de desempenho geral
             document.getElementById('txtDesempenhoGeral').innerText = t.txtDesempenhoGeral;
             document.getElementById('lblTotalApostas').innerText = t.totalApostas;
             document.getElementById('lblGanhas').innerText = t.ganhas;
@@ -182,7 +180,6 @@
             document.getElementById('lblLucroLiquido').innerText = t.lucroLiquido;
             document.getElementById('lblUltimaAtualizacao').innerText = t.ultimaAtualizacao;
 
-            // Histórico & Select
             document.getElementById('txtHistorico').innerText = t.historico;
             const optDiaria = document.getElementById('optDiaria');
             const optMensal = document.getElementById('optMensal');
@@ -191,108 +188,175 @@
             if (optMensal) optMensal.innerText = t.tabelaMensal;
             if (optAnual) optAnual.innerText = t.tabelaAnual;
 
-            // Simulador
             document.getElementById('txtSimulador').innerText = t.simulador;
             document.getElementById('txtQuantoTeriaGanho').innerText = t.quantoTeriaGanho;
             document.getElementById('txtSimuladorDesc').innerText = t.simuladorDesc;
             document.getElementById('btnCalcular').innerText = t.simuladorBtn;
             document.getElementById('sim-input').placeholder = t.placeholderSim;
 
-            // Aviso Legal
             document.getElementById('txtInfoImportante').innerText = t.infoImportante;
             document.getElementById('aviso1').innerText = t.avisoLegal1;
             document.getElementById('aviso2').innerText = t.avisoLegal2;
             document.getElementById('aviso3').innerText = t.avisoLegal3;
             document.getElementById('aviso4').innerText = t.avisoLegal4;
 
-            // Footer
             document.getElementById('footerYear').innerHTML = `&copy; 2026 BETFIGHTER. ${idiomaAtual === 'pt' ? 'Todos os direitos reservados.' : (idiomaAtual === 'en' ? 'All rights reserved.' : 'सबै अधिकार सुरक्षित।')}`;
+        }
+
+        // Funçāo de Avaliação Individual de Mercados (Idêntica à do index.html)
+        function avaliarPrevisaoIndividualmente(previsao, golosA, golosB, estadoGeral) {
+            if (golosA === undefined || golosB === undefined || golosA === '' || golosB === '') {
+                return estadoGeral || 'pendente';
+            }
+            const gA = parseInt(golosA, 10);
+            const gB = parseInt(golosB, 10);
+            if (isNaN(gA) || isNaN(gB)) return estadoGeral || 'pendente';
+
+            const p = previsao.toLowerCase().trim();
+            const totalGolos = gA + gB;
+
+            if (p === 'v1' || p === '1') return gA > gB ? 'ganha' : 'perdida';
+            if (p === 'vx' || p === 'x') return gA === gB ? 'ganha' : 'perdida';
+            if (p === 'v2' || p === '2') return gA < gB ? 'ganha' : 'perdida';
+            if (p === '1x' || p === 'v1x' || p === '12') {
+                if (p === '12') return gA !== gB ? 'ganha' : 'perdida';
+                return gA >= gB ? 'ganha' : 'perdida';
+            }
+            if (p === '2x' || p === 'v2x') return gA <= gB ? 'ganha' : 'perdida';
+
+            const numMatch = p.match(/[\d.]+/);
+            if (numMatch) {
+                const linhaGolos = parseFloat(numMatch[0]);
+                if (!isNaN(linhaGolos)) {
+                    if (p.includes('over') || p.includes('o') || p.includes('acima') || p.includes('+')) {
+                        return totalGolos > linhaGolos ? 'ganha' : 'perdida';
+                    }
+                    if (p.includes('under') || p.includes('u') || p.includes('abaixo') || p.includes('-')) {
+                        return totalGolos < linhaGolos ? 'ganha' : 'perdida';
+                    }
+                }
+            }
+            return estadoGeral || 'pendente';
         }
 
         function processarEstatísticasEFiltrar() {
             const t = traducoes[idiomaAtual];
-            // Filtrar apenas jogos arquivados e decididos (ganha ou perdida)
-            const jogosValidos = todosJogosGlobais.filter(j => j.arquivado && (j.estadoAposta === 'ganha' || j.estadoAposta === 'perdida'));
+            // Filtrar apenas jogos arquivados
+            const jogosValidos = todosJogosGlobais.filter(j => j.arquivado);
 
-            // 1. Variáveis para Resumo Geral
-            let totalApostas = jogosValidos.length;
-            let ganhas = 0;
-            let perdidas = 0;
+            // Variáveis para Resumo Geral (Contagem baseada em investimentos individuais: Simples e Sugestão)
+            let totalApostasContadas = 0;
+            let ganhasContadas = 0;
+            let perdidasContadas = 0;
             let lucroTotalUnidades = 0;
             let stakeTotal = 0;
             let datasValidas = [];
 
-            // Objeto para agrupar dinamicamente (Diário, Mensal ou Anual)
             const agrupamentoPeriodo = {};
 
             jogosValidos.forEach(j => {
-                const odd = parseFloat(j.odd);
                 const dataEvento = j.dataEvento; // Formato esperado: YYYY-MM-DD
-                
                 if (dataEvento) {
                     datasValidas.push(new Date(dataEvento));
                 }
 
-                let ganhoNoJogo = 0;
-                let stakeNoJogo = 1; // Unidade base = 1u
+                const valGolasA = j.resGolosA !== undefined ? j.resGolosA : '';
+                const valGolasB = j.resGolosB !== undefined ? j.resGolosB : '';
 
-                if (j.estadoAposta === 'ganha') {
-                    ganhas++;
-                    if (!isNaN(odd) && odd > 0) {
-                        ganhoNoJogo = odd - 1;
-                    }
-                } else if (j.estadoAposta === 'perdida') {
-                    perdidas++;
-                    ganhoNoJogo = -1;
+                // Lista de sub-apostas possíveis dentro do mesmo registo
+                const subApostas = [];
+
+                if (j.previsaoSimples) {
+                    subApostas.push({
+                        tipo: 'simples',
+                        previsao: j.previsaoSimples,
+                        odd: parseFloat(j.oddSimples || j.odd || 0)
+                    });
+                }
+                if (j.previsaoSugestao) {
+                    subApostas.push({
+                        tipo: 'sugestao',
+                        previsao: j.previsaoSugestao,
+                        odd: parseFloat(j.oddSugestao || 0)
+                    });
                 }
 
-                lucroTotalUnidades += ganhoNoJogo;
-                stakeTotal += stakeNoJogo;
-
-                // Definir chave de agrupamento dependendo do filtro selecionado
-                if (dataEvento && dataEvento.length >= 10) {
-                    let chavePeriodo = "";
-                    if (filtroPeriodo === 'diaria') {
-                        chavePeriodo = dataEvento; // "YYYY-MM-DD"
-                    } else if (filtroPeriodo === 'mensal') {
-                        chavePeriodo = dataEvento.substring(0, 7); // "YYYY-MM"
-                    } else if (filtroPeriodo === 'anual') {
-                        chavePeriodo = dataEvento.substring(0, 4); // "YYYY"
-                    }
-
-                    if (!agrupamentoPeriodo[chavePeriodo]) {
-                        agrupamentoPeriodo[chavePeriodo] = {
-                            total: 0,
-                            ganhas: 0,
-                            perdidas: 0,
-                            lucro: 0,
-                            stake: 0
-                        };
-                    }
-                    agrupamentoPeriodo[chavePeriodo].total++;
-                    if (j.estadoAposta === 'ganha') agrupamentoPeriodo[chavePeriodo].ganhas++;
-                    if (j.estadoAposta === 'perdida') agrupamentoPeriodo[chavePeriodo].perdidas++;
-                    agrupamentoPeriodo[chavePeriodo].lucro += ganhoNoJogo;
-                    agrupamentoPeriodo[chavePeriodo].stake += stakeNoJogo;
+                // Fallback caso seja um registo antigo sem os novos campos estruturados
+                if (subApostas.length === 0 && (j.estadoAposta === 'ganha' || j.estadoAposta === 'perdida')) {
+                    subApostas.push({
+                        tipo: 'fallback',
+                        previsao: '',
+                        odd: parseFloat(j.odd || 0),
+                        estadoForçado: j.estadoAposta
+                    });
                 }
+
+                subApostas.forEach(sa => {
+                    let estadoFinal = sa.estadoForçado || avaliarPrevisaoIndividualmente(sa.previsao, valGolasA, valGolasB, j.estadoAposta);
+                    
+                    if (estadoFinal !== 'ganha' && estadoFinal !== 'perdida') return;
+
+                    let ganhoNoJogo = 0;
+                    let stakeNoJogo = 1; // 1 Unidade base por aposta
+
+                    if (estadoFinal === 'ganha') {
+                        ganhasContadas++;
+                        if (!isNaN(sa.odd) && sa.odd > 0) {
+                            ganhoNoJogo = sa.odd - 1;
+                        }
+                    } else if (estadoFinal === 'perdida') {
+                        perdidasContadas++;
+                        ganhoNoJogo = -1;
+                    }
+
+                    totalApostasContadas++;
+                    lucroTotalUnidades += ganhoNoJogo;
+                    stakeTotal += stakeNoJogo;
+
+                    // Agrupamento por Períodos Temporais para as tabelas
+                    if (dataEvento && dataEvento.length >= 10) {
+                        let chavePeriodo = "";
+                        if (filtroPeriodo === 'diaria') {
+                            chavePeriodo = dataEvento;
+                        } else if (filtroPeriodo === 'mensal') {
+                            chavePeriodo = dataEvento.substring(0, 7);
+                        } else if (filtroPeriodo === 'anual') {
+                            chavePeriodo = dataEvento.substring(0, 4);
+                        }
+
+                        if (!agrupamentoPeriodo[chavePeriodo]) {
+                            agrupamentoPeriodo[chavePeriodo] = {
+                                total: 0,
+                                ganhas: 0,
+                                perdidas: 0,
+                                lucro: 0,
+                                stake: 0
+                            };
+                        }
+                        agrupamentoPeriodo[chavePeriodo].total++;
+                        if (estadoFinal === 'ganha') agrupamentoPeriodo[chavePeriodo].ganhas++;
+                        if (estadoFinal === 'perdida') agrupamentoPeriodo[chavePeriodo].perdidas++;
+                        agrupamentoPeriodo[chavePeriodo].lucro += ganhoNoJogo;
+                        agrupamentoPeriodo[chavePeriodo].stake += stakeNoJogo;
+                    }
+                });
             });
 
-            // Cálculos Finais
-            const winRate = totalApostas > 0 ? (ganhas / totalApostas) * 100 : 0;
+            // Cálculos Finais Globais
+            const winRate = totalApostasContadas > 0 ? (ganhasContadas / totalApostasContadas) * 100 : 0;
             const roiTotal = stakeTotal > 0 ? (lucroTotalUnidades / stakeTotal) * 100 : 0;
-            totalRoiGlobal = roiTotal; // Passa para o simulador
+            totalRoiGlobal = roiTotal; 
 
-            // Data da última atualização
             let ultimaAtualizacaoStr = "N/D";
             if (datasValidas.length > 0) {
                 const ultimaData = new Date(Math.max(...datasValidas));
                 ultimaAtualizacaoStr = ultimaData.toLocaleDateString(idiomaAtual === 'pt' ? 'pt-PT' : (idiomaAtual === 'en' ? 'en-US' : 'ne-NP'));
             }
 
-            // Atualizar UI do Resumo Geral
-            document.getElementById('stat-total').innerText = totalApostas;
-            document.getElementById('stat-ganhas').innerText = ganhas;
-            document.getElementById('stat-perdidas').innerText = perdidas;
+            // Atualizar os Cartões na Interface Gráfica
+            document.getElementById('stat-total').innerText = totalApostasContadas;
+            document.getElementById('stat-ganhas').innerText = ganhasContadas;
+            document.getElementById('stat-perdidas').innerText = perdidasContadas;
             document.getElementById('stat-winrate').innerText = winRate.toFixed(1) + "%";
             
             const roiElement = document.getElementById('stat-roi');
@@ -305,12 +369,11 @@
 
             document.getElementById('stat-update').innerText = ultimaAtualizacaoStr;
 
-            // Renderizar Tabela de Performance
+            // Renderizar Tabela de Performance Dinâmica
             const thPeriodo = document.getElementById('th-periodo');
             const tbody = document.getElementById('performance-tbody');
             tbody.innerHTML = '';
 
-            // Mudar cabeçalho da tabela dinamicamente e títulos das colunas
             if (filtroPeriodo === 'diaria') thPeriodo.innerText = t.dia;
             else if (filtroPeriodo === 'mensal') thPeriodo.innerText = t.mes;
             else if (filtroPeriodo === 'anual') thPeriodo.innerText = t.ano;
@@ -332,7 +395,6 @@
                     const winRatePeriodo = dadosPeriodo.total > 0 ? (dadosPeriodo.ganhas / dadosPeriodo.total) * 100 : 0;
                     const roiPeriodo = dadosPeriodo.stake > 0 ? (dadosPeriodo.lucro / dadosPeriodo.stake) * 100 : 0;
                     
-                    // Formatar o nome do período a exibir de forma amigável
                     let periodoFormatado = chave;
                     if (filtroPeriodo === 'diaria') {
                         const [ano, mes, dia] = chave.split('-');
@@ -356,11 +418,9 @@
                 });
             }
 
-            // Forçar recálculo automático do simulador
             calcularInvestimento();
         }
 
-        // Função do Simulador de Investimento
         function calcularInvestimento() {
             const t = traducoes[idiomaAtual];
             const inputVal = parseFloat(document.getElementById('sim-input').value);
@@ -388,21 +448,17 @@
             `;
         }
 
-        // Definir valores pré-definidos no input do simulador
         window.setSimValue = function(valor) {
             document.getElementById('sim-input').value = valor;
             calcularInvestimento();
         }
 
-        // Escutar mudança de filtro de tabela
         window.mudarFiltroTabela = function(tipo) {
             filtroPeriodo = tipo;
             processarEstatísticasEFiltrar();
         }
 
-        // Tornar funções acessíveis globalmente
         window.calcularInvestimento = calcularInvestimento;
-
     </script>
 
     <style>
@@ -426,7 +482,6 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* ===== Barra de Navegação Superior ===== */
         .navbar {
             background-color: var(--brand-dark);
             padding: 15px 20px;
@@ -451,14 +506,12 @@
         .navbar-brand .brand-green { color: var(--brand-green); }
         .navbar-brand .brand-white { color: #ffffff; }
 
-        /* ===== Container Central ===== */
         .page-container {
             max-width: 1040px;
             margin: 40px auto;
             padding: 0 20px;
         }
 
-        /* Container do Título com o Seletor Alinhado à Direita */
         .section-header-flex {
             display: flex;
             justify-content: space-between;
@@ -480,7 +533,6 @@
             padding-left: 15px;
         }
 
-        /* Seletor Dropdown Estilizado */
         .select-periodo {
             background-color: var(--card-bg);
             border: 2px solid var(--border-color);
@@ -499,7 +551,6 @@
             border-color: var(--brand-green);
         }
 
-        /* ===== Secção 1: Resumo Geral (Cartões) ===== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -573,7 +624,6 @@
         .stat-value.positive { color: #10b981; }
         .stat-value.negative { color: #ef4444; }
 
-        /* ===== Layout de Duas Colunas ===== */
         .layout-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -581,34 +631,25 @@
             margin-bottom: 40px;
         }
 
-        /* ===== Tabelas Profissionais e Responsivas ===== */
         .table-responsive-wrapper {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 16px;
-            overflow-x: auto; /* Rolagem horizontal se a tabela passar do limite móvel */
+            overflow-x: auto;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
             -webkit-overflow-scrolling: touch;
         }
 
-        /* Customização elegante da barra de rolagem da tabela no celular */
-        .table-responsive-wrapper::-webkit-scrollbar {
-            height: 6px;
-        }
-        .table-responsive-wrapper::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .table-responsive-wrapper::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
+        .table-responsive-wrapper::-webkit-scrollbar { height: 6px; }
+        .table-responsive-wrapper::-webkit-scrollbar-track { background: #f1f5f9; }
+        .table-responsive-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
         .custom-table {
             width: 100%;
             border-collapse: collapse;
             text-align: left;
             font-size: 0.9rem;
-            white-space: nowrap; /* Evita quebra de conteúdo da tabela em colunas apertadas */
+            white-space: nowrap;
         }
 
         .custom-table th {
@@ -627,27 +668,14 @@
             color: var(--brand-dark);
         }
 
-        .custom-table tbody tr:last-child td {
-            border-bottom: none;
-        }
+        .custom-table tbody tr:last-child td { border-bottom: none; }
+        .custom-table tbody tr:hover { background-color: #f8fafc; }
 
-        .custom-table tbody tr:hover {
-            background-color: #f8fafc;
-        }
-
-        .empty-table {
-            text-align: center;
-            padding: 40px !important;
-            color: var(--text-muted);
-            font-style: italic;
-        }
-
-        /* Auxiliares de Cores de Performance */
+        .empty-table { text-align: center; padding: 40px !important; color: var(--text-muted); font-style: italic; }
         .text-green { color: #10b981 !important; }
         .text-red { color: #ef4444 !important; }
         .font-weight-bold { font-weight: 700; }
 
-        /* ===== Simulador de Investimento ===== */
         .simulator-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -689,12 +717,7 @@
             color: white;
         }
 
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
         .sim-input-field {
             flex: 1;
             border: 1px solid var(--border-color);
@@ -705,7 +728,7 @@
             color: var(--brand-dark);
             outline: none;
             transition: border 0.2s;
-            width: 100%; /* Garante estabilidade de largura */
+            width: 100%;
         }
 
         .sim-input-field:focus {
@@ -725,10 +748,7 @@
             white-space: nowrap;
         }
 
-        .btn-calc:hover {
-            background-color: #16a34a;
-        }
-
+        .btn-calc:hover { background-color: #16a34a; }
         .simulation-result-box {
             background-color: #f8fafc;
             border: 1px dashed var(--border-color);
@@ -749,13 +769,8 @@
             animation: pulse-animation 1.5s infinite ease-in-out;
         }
 
-        .result-sub {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
+        .result-sub { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
 
-        /* ===== Caixa de Aviso Legal ===== */
         .legal-notice-box {
             background: #fffbeb;
             border: 1px solid #fef3c7;
@@ -776,127 +791,46 @@
             gap: 8px;
         }
 
-        .legal-text {
-            color: #78350f;
-            font-size: 0.8rem;
-            line-height: 1.6;
-        }
+        .legal-text { color: #78350f; font-size: 0.8rem; line-height: 1.6; }
+        .legal-text p { margin: 0 0 12px 0; }
+        .legal-text p:last-child { margin-bottom: 0; }
 
-        .legal-text p {
-            margin: 0 0 12px 0;
-        }
-        .legal-text p:last-child {
-            margin-bottom: 0;
-        }
+        .simple-footer { text-align: center; padding: 40px 0; color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
 
-        /* Footer simples */
-        .simple-footer {
-            text-align: center;
-            padding: 40px 0;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        /* Animações */
         @keyframes pulse-animation {
             0% { transform: scale(1); }
             50% { transform: scale(1.02); }
             100% { transform: scale(1); }
         }
 
-        /* ===== REGRAS DE ADAPTABILIDADE MEDIA QUERIES (RESPONSIVO) ===== */
-        
-        /* Tablets e Desktops Pequenos */
         @media (max-width: 992px) {
-            .layout-grid {
-                grid-template-columns: 1fr; /* Força colunas empilhadas */
-                gap: 40px;
-            }
-            .page-container {
-                margin: 20px auto;
-            }
+            .layout-grid { grid-template-columns: 1fr; gap: 40px; }
+            .page-container { margin: 20px auto; }
         }
 
-        /* Celulares Gerais */
         @media (max-width: 600px) {
-            .navbar {
-                padding: 12px 15px;
-            }
-            .navbar-brand {
-                font-size: 1.5rem;
-            }
-            .page-container {
-                padding: 0 15px;
-            }
-            .section-header-flex {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            .section-title {
-                font-size: 1.4rem;
-                border-left-width: 4px;
-                padding-left: 10px;
-            }
-            .select-periodo {
-                width: 100%; /* Filtro ocupa toda a largura no celular */
-                box-sizing: border-box;
-                text-align: center;
-            }
-            /* Grelha de cartões em mobile: 2 colunas para poupar espaço vertical */
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-                margin-bottom: 30px;
-            }
-            /* Forçar o cartão da última atualização a ocupar as duas colunas inferiores */
-            .stats-grid .stat-card-premium:last-child {
-                grid-column: span 2;
-            }
-            .stat-card-premium {
-                padding: 16px;
-                border-radius: 12px;
-            }
-            .card-label {
-                font-size: 0.65rem;
-            }
-            .stat-value {
-                font-size: 1.4rem; /* Reduz ligeiramente para não estourar em ecrãs pequenos */
-            }
-            .custom-table th, .custom-table td {
-                padding: 12px 10px;
-                font-size: 0.8rem;
-            }
-            .quick-presets {
-                justify-content: space-between;
-            }
-            .preset-btn {
-                flex: 1 1 calc(33.33% - 8px); /* Botões de preset divididos uniformemente */
-                text-align: center;
-                padding: 8px 4px;
-            }
-            .input-group {
-                flex-direction: column; /* Input e Botão empilhados no celular */
-            }
-            .btn-calc {
-                width: 100%;
-                padding: 12px;
-            }
-            .legal-notice-box {
-                padding: 16px;
-                margin-top: 30px;
-            }
+            .navbar { padding: 12px 15px; }
+            .navbar-brand { font-size: 1.5rem; }
+            .page-container { padding: 0 15px; }
+            .section-header-flex { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .section-title { font-size: 1.4rem; border-left-width: 4px; padding-left: 10px; }
+            .select-periodo { width: 100%; box-sizing: border-box; text-align: center; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 30px; }
+            .stats-grid .stat-card-premium:last-child { grid-column: span 2; }
+            .stat-card-premium { padding: 16px; border-radius: 12px; }
+            .card-label { font-size: 0.65rem; }
+            .stat-value { font-size: 1.4rem; }
+            .custom-table th, .custom-table td { padding: 12px 10px; font-size: 0.8rem; }
+            .quick-presets { justify-content: space-between; }
+            .preset-btn { flex: 1 1 calc(33.33% - 8px); text-align: center; padding: 8px 4px; }
+            .input-group { flex-direction: column; }
+            .btn-calc { width: 100%; padding: 12px; }
+            .legal-notice-box { padding: 16px; margin-top: 30px; }
         }
 
-        /* Celulares Extremamente Pequenos */
         @media (max-width: 380px) {
-            .stats-grid {
-                grid-template-columns: 1fr; /* Volta para 1 coluna se for muito estreito */
-            }
-            .stats-grid .stat-card-premium:last-child {
-                grid-column: span 1;
-            }
+            .stats-grid { grid-template-columns: 1fr; }
+            .stats-grid .stat-card-premium:last-child { grid-column: span 1; }
         }
     </style>
 </head>
@@ -1038,7 +972,6 @@
                     </div>
 
                     <div id="sim-result" class="simulation-result-box">
-                        <!-- Gerado automaticamente -->
                         Insira um valor acima.
                     </div>
                 </div>
