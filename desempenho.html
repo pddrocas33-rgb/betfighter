@@ -7,12 +7,14 @@
     
     <!-- FontAwesome para ícones profissionais -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js para Gráficos de Linha -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
 
-        // Configuração idêntica à do seu index.html
         const firebaseConfig = {
             apiKey: "AIzaSyCeSB_CWfsuo2QcJR2OM7piQwo8HhZ4fRQ",
             authDomain: "taskmeapp-c4951.firebaseapp.com",
@@ -30,7 +32,9 @@
         // ===== DICIONÁRIO DE TRADUÇÃO =====
         const traducoes = {
             pt: {
+                sloganTexto: "PLATAFORMA DE PALPITES",
                 txtDesempenhoGeral: "Desempenho Geral",
+                txtGraficos: "Gráficos de Evolução",
                 totalApostas: "Total Apostas",
                 ganhas: "Ganhas",
                 perdidas: "Perdidas",
@@ -42,6 +46,9 @@
                 tabelaDiaria: "Tabela Diária",
                 tabelaMensal: "Tabela Mensal",
                 tabelaAnual: "Tabela Anual",
+                optGrafSemanal: "Gráfico Semanal",
+                optGrafMensal: "Gráfico Mensal",
+                optGrafAnual: "Gráfico Anual",
                 dia: "Dia",
                 mes: "Mês",
                 ano: "Ano",
@@ -61,12 +68,14 @@
                 simResultadoLucro: "Lucro acumulado líquido de {sinal}{lucro}€ ({roi}% ROI)",
                 infoImportante: "Informação Importante",
                 avisoLegal1: "As previsões, estatísticas, ROI, lucros e simulações apresentados no BetFighter destinam-se exclusivamente a fins informativos e baseiam-se em resultados históricos registados na plataforma. O desempenho passado não garante resultados futuros.",
-                avisoLegal2: "As apostas desportivas envolvem risco financeiro. Cada utilizador é inteiramente responsável pelas suas decisões de aposta. O BetFighter não garante lucros, rendimentos ou sucesso nas apostas e não assume qualquer responsabilidade por perdas financeiras decorrentes da utilização das previsões ou das informações disponibilizadas.",
-                avisoLegal3: "As simulações de investimento apresentadas têm caráter meramente ilustrativo e servem apenas para demonstrar o comportamento histórico dos resultados. Não constituem aconselhamento financeiro nem representam qualquer promessa ou garantia de retorno futuro.",
+                avisoLegal2: "As apostas desportivas envolvem risco financeiro. Cada utilizador é inteiramente responsável pelas suas decisões de aposta. O BetFighter não garante lucros, rendimentos ou sucesso nas apostas.",
+                avisoLegal3: "As simulações de investimento apresentadas têm caráter meramente ilustrativo e servem apenas para demonstrar o comportamento histórico.",
                 avisoLegal4: "Aposte de forma responsável. Nunca utilize dinheiro que não possa perder."
             },
             en: {
+                sloganTexto: "PREDICTION PLATFORM",
                 txtDesempenhoGeral: "General Performance",
+                txtGraficos: "Evolution Charts",
                 totalApostas: "Total Bets",
                 ganhas: "Won",
                 perdidas: "Lost",
@@ -78,6 +87,9 @@
                 tabelaDiaria: "Daily Table",
                 tabelaMensal: "Monthly Table",
                 tabelaAnual: "Yearly Table",
+                optGrafSemanal: "Weekly Chart",
+                optGrafMensal: "Monthly Chart",
+                optGrafAnual: "Yearly Chart",
                 dia: "Day",
                 mes: "Month",
                 ano: "Year",
@@ -96,13 +108,15 @@
                 simResultadoTexto: "With an initial investment of <strong>{investimento}€</strong>, you would currently have:",
                 simResultadoLucro: "Net accumulated profit of {sinal}{lucro}€ ({roi}% ROI)",
                 infoImportante: "Important Information",
-                avisoLegal1: "The predictions, statistics, ROI, profits, and simulations presented on BetFighter are strictly for informational purposes and are based on historical results recorded on the platform. Past performance does not guarantee future results.",
-                avisoLegal2: "Sports betting involves financial risk. Each user is entirely responsible for their betting decisions. BetFighter does not guarantee profits, earnings, or success in betting, and assumes no responsibility for financial losses resulting from the use of predictions or information provided.",
-                avisoLegal3: "The investment simulations presented are for illustrative purposes only and serve solely to demonstrate the historical behavior of results. They do not constitute financial advice nor represent any promise or guarantee of future return.",
+                avisoLegal1: "The predictions, statistics, ROI, profits, and simulations presented on BetFighter are strictly for informational purposes.",
+                avisoLegal2: "Sports betting involves financial risk. Each user is entirely responsible for their betting decisions.",
+                avisoLegal3: "The investment simulations presented are for illustrative purposes only.",
                 avisoLegal4: "Bet responsibly. Never use money you cannot afford to lose."
             },
             nep: {
+                sloganTexto: "भविष्यवाणी प्लेटफर्म",
                 txtDesempenhoGeral: "सामान्य प्रदर्शन",
+                txtGraficos: "प्रगति चार्टहरू",
                 totalApostas: "कुल बेटहरू",
                 ganhas: "जीत",
                 perdidas: "हार",
@@ -114,6 +128,9 @@
                 tabelaDiaria: "दैनिक तालिका",
                 tabelaMensal: "मासिक तालिका",
                 tabelaAnual: "वार्षिक तालिका",
+                optGrafSemanal: "साप्ताहिक चार्ट",
+                optGrafMensal: "मासिक चार्ट",
+                optGrafAnual: "वार्षिक चार्ट",
                 dia: "दिन",
                 mes: "महिना",
                 ano: "वर्ष",
@@ -132,22 +149,24 @@
                 simResultadoTexto: "<strong>{investimento}€</strong> को प्रारम्भिक लगानीको साथ, तपाईंको हाल हुने थियो:",
                 simResultadoLucro: "खुद संचित नाफा {sinal}{lucro}€ ({roi}% ROI)",
                 infoImportante: "महत्त्वपूर्ण जानकारी",
-                avisoLegal1: "BetFighter मा प्रस्तुत पूर्वानुमान, तथ्याङ्क, ROI, नाफा, र सिमुलेशनहरू केवल जानकारीमूलक उद्देश्यका लागि हुन् र प्लेटफर्ममा रेकرد गरिएका ऐतिहासिक नतिजाहरूमा आधारित छन्। विगतको प्रदर्शनले भविष्यको नতিजाको ग्यारेन्टी गर्दैन।",
-                avisoLegal2: "खेलकुद सट्टेबाजीमा वित्तीय जोखिम समावेश हुन्छ। प्रत्येक प्रयोगकर्ता आफ्नो सट्टेबाजी निर्णयहरूको लागि पूर्ण रूपमा जिम्मेवार हुन्छन्। BetFighter ले सट्टेबाजीमा नाफा, आम्दानी, वा सफलताको ग्यारेन्टी गर्दैन, र प्रदान गरिएको पूर्वानुमान वा जानकारीको प्रयोगबाट हुने वित्तीय नोक्सानीको लागि कुनै जिम्मेवारी लिदैन।",
-                avisoLegal3: "प्रस्तुत गरिएका लगानी सिमुलेशनहरू केवल चित्रण उद्देश्यका लागि हुन् र नतिजाहरूको ऐतिहासिक व्यवहार प्रदर्शन गर्न मात्र सेवा गर्दछन्। यसले वित्तीय सल्लाह गठन गर्दैन र भविष्यको प्रतिफलको कुनै प्रतिज्ञा वा ग्यारेन्टी प्रतिनिधित्व गर्दैन।",
+                avisoLegal1: "BetFighter मा प्रस्तुत पूर्वानुमानहरू जानकारीमूलक उद्देश्यका लागि हुन्।",
+                avisoLegal2: "खेलकुद सट्टेबाजीमा वित्तीय जोखिम समावेश हुन्छ।",
+                avisoLegal3: "प्रस्तुत गरिएका लगानी सिमुलेशनहरू केवल चित्रण उद्देश्यका लागि हुन्।",
                 avisoLegal4: "जिम्मेवारीपूर्वक सट्टेबाजी गर्नुहोस्। कहिल्यै पनि आफूले गुमाउन नसक्ने रकम प्रयोग नगर्नुहोस्।"
             }
         };
 
-        // Estado Global de Cálculos e Filtro
+        // Estado Global
         let totalRoiGlobal = 0;
         let todosJogosGlobais = [];
-        let filtroPeriodo = 'mensal'; // Padrão: mensal
-        let idiomaAtual = 'pt'; // Idioma atual
+        let filtroPeriodoTabela = 'mensal';
+        let filtroPeriodoGraficos = 'mensal';
+        let idiomaAtual = 'pt';
+        let agrupamentosGlobais = { diaria: {}, semanal: {}, mensal: {}, anual: {} };
+        let graficosInstancias = {};
 
-        // Carrega idioma preferido do localStorage
         function carregarIdioma() {
-            const idiomaSalvo = localStorage.getItem('idiomaPreferido'); // Alinhado com o index.html
+            const idiomaSalvo = localStorage.getItem('idiomaPreferido');
             if (idiomaSalvo && traducoes[idiomaSalvo]) {
                 idiomaAtual = idiomaSalvo;
             } else {
@@ -158,20 +177,22 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             carregarIdioma();
-            aplicarTraducoesEstáticas();
+            aplicarTraducoesEstaticas();
         });
 
-        // Escuta em tempo real à tabela "jogos"
         onValue(ref(db, "jogos"), (snapshot) => {
             const dadosJogos = snapshot.val() || {};
             todosJogosGlobais = Object.keys(dadosJogos).map(key => ({ key, ...dadosJogos[key] }));
-            processarEstatísticasEFiltrar();
+            processarEstatisticasGlobais();
         });
 
-        function aplicarTraducoesEstáticas() {
+        function aplicarTraducoesEstaticas() {
             const t = traducoes[idiomaAtual];
             
+            document.getElementById('slogan-text').innerText = t.sloganTexto;
             document.getElementById('txtDesempenhoGeral').innerText = t.txtDesempenhoGeral;
+            document.getElementById('txtGraficos').innerText = t.txtGraficos;
+            
             document.getElementById('lblTotalApostas').innerText = t.totalApostas;
             document.getElementById('lblGanhas').innerText = t.ganhas;
             document.getElementById('lblPerdidas').innerText = t.perdidas;
@@ -181,12 +202,13 @@
             document.getElementById('lblUltimaAtualizacao').innerText = t.ultimaAtualizacao;
 
             document.getElementById('txtHistorico').innerText = t.historico;
-            const optDiaria = document.getElementById('optDiaria');
-            const optMensal = document.getElementById('optMensal');
-            const optAnual = document.getElementById('optAnual');
-            if (optDiaria) optDiaria.innerText = t.tabelaDiaria;
-            if (optMensal) optMensal.innerText = t.tabelaMensal;
-            if (optAnual) optAnual.innerText = t.tabelaAnual;
+            document.getElementById('optDiaria').innerText = t.tabelaDiaria;
+            document.getElementById('optMensal').innerText = t.tabelaMensal;
+            document.getElementById('optAnual').innerText = t.tabelaAnual;
+            
+            document.getElementById('optGrafSemanal').innerText = t.optGrafSemanal;
+            document.getElementById('optGrafMensal').innerText = t.optGrafMensal;
+            document.getElementById('optGrafAnual').innerText = t.optGrafAnual;
 
             document.getElementById('txtSimulador').innerText = t.simulador;
             document.getElementById('txtQuantoTeriaGanho').innerText = t.quantoTeriaGanho;
@@ -199,19 +221,23 @@
             document.getElementById('aviso2').innerText = t.avisoLegal2;
             document.getElementById('aviso3').innerText = t.avisoLegal3;
             document.getElementById('aviso4').innerText = t.avisoLegal4;
-
             document.getElementById('footerYear').innerHTML = `&copy; 2026 BETFIGHTER. ${idiomaAtual === 'pt' ? 'Todos os direitos reservados.' : (idiomaAtual === 'en' ? 'All rights reserved.' : 'सबै अधिकार सुरक्षित।')}`;
         }
 
-        // Funçāo de Avaliação Individual de Mercados (Idêntica à do index.html)
-        function avaliarPrevisaoIndividualmente(previsao, golosA, golosB, estadoGeral) {
-            if (golosA === undefined || golosB === undefined || golosA === '' || golosB === '') {
-                return estadoGeral || 'pendente';
-            }
-            const gA = parseInt(golosA, 10);
-            const gB = parseInt(golosB, 10);
-            if (isNaN(gA) || isNaN(gB)) return estadoGeral || 'pendente';
+        // Helper para agrupar por semanas (ISO 8601)
+        function getWeekYear(dateStr) {
+            const d = new Date(dateStr);
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+            const week1 = new Date(d.getFullYear(), 0, 4);
+            const weekNum = 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+            return `${d.getFullYear()}-S${weekNum.toString().padStart(2, '0')}`;
+        }
 
+        function avaliarPrevisaoIndividualmente(previsao, golosA, golosB, estadoGeral) {
+            if (golosA === undefined || golosB === undefined || golosA === '' || golosB === '') return estadoGeral || 'pendente';
+            const gA = parseInt(golosA, 10), gB = parseInt(golosB, 10);
+            if (isNaN(gA) || isNaN(gB)) return estadoGeral || 'pendente';
             const p = previsao.toLowerCase().trim();
             const totalGolos = gA + gB;
 
@@ -228,124 +254,73 @@
             if (numMatch) {
                 const linhaGolos = parseFloat(numMatch[0]);
                 if (!isNaN(linhaGolos)) {
-                    if (p.includes('over') || p.includes('o') || p.includes('acima') || p.includes('+')) {
-                        return totalGolos > linhaGolos ? 'ganha' : 'perdida';
-                    }
-                    if (p.includes('under') || p.includes('u') || p.includes('abaixo') || p.includes('-')) {
-                        return totalGolos < linhaGolos ? 'ganha' : 'perdida';
-                    }
+                    if (p.includes('over') || p.includes('o') || p.includes('acima') || p.includes('+')) return totalGolos > linhaGolos ? 'ganha' : 'perdida';
+                    if (p.includes('under') || p.includes('u') || p.includes('abaixo') || p.includes('-')) return totalGolos < linhaGolos ? 'ganha' : 'perdida';
                 }
             }
             return estadoGeral || 'pendente';
         }
 
-        function processarEstatísticasEFiltrar() {
-            const t = traducoes[idiomaAtual];
-            // Filtrar apenas jogos arquivados
+        function processarEstatisticasGlobais() {
             const jogosValidos = todosJogosGlobais.filter(j => j.arquivado);
 
-            // Variáveis para Resumo Geral (Contagem baseada em investimentos individuais: Simples e Sugestão)
-            let totalApostasContadas = 0;
-            let ganhasContadas = 0;
-            let perdidasContadas = 0;
-            let lucroTotalUnidades = 0;
-            let stakeTotal = 0;
+            let totalApostasContadas = 0, ganhasContadas = 0, perdidasContadas = 0;
+            let lucroTotalUnidades = 0, stakeTotal = 0;
             let datasValidas = [];
 
-            const agrupamentoPeriodo = {};
+            // Reiniciar Agrupamentos
+            agrupamentosGlobais = { diaria: {}, semanal: {}, mensal: {}, anual: {} };
 
             jogosValidos.forEach(j => {
-                const dataEvento = j.dataEvento; // Formato esperado: YYYY-MM-DD
-                if (dataEvento) {
-                    datasValidas.push(new Date(dataEvento));
-                }
+                const dataEvento = j.dataEvento; 
+                if (dataEvento) datasValidas.push(new Date(dataEvento));
 
-                const valGolasA = j.resGolosA !== undefined ? j.resGolosA : '';
-                const valGolasB = j.resGolosB !== undefined ? j.resGolosB : '';
-
-                // Lista de sub-apostas possíveis dentro do mesmo registo
                 const subApostas = [];
-
-                if (j.previsaoSimples) {
-                    subApostas.push({
-                        tipo: 'simples',
-                        previsao: j.previsaoSimples,
-                        odd: parseFloat(j.oddSimples || j.odd || 0)
-                    });
-                }
-                if (j.previsaoSugestao) {
-                    subApostas.push({
-                        tipo: 'sugestao',
-                        previsao: j.previsaoSugestao,
-                        odd: parseFloat(j.oddSugestao || 0)
-                    });
-                }
-
-                // Fallback caso seja um registo antigo sem os novos campos estruturados
+                if (j.previsaoSimples) subApostas.push({ tipo: 'simples', previsao: j.previsaoSimples, odd: parseFloat(j.oddSimples || j.odd || 0) });
+                if (j.previsaoSugestao) subApostas.push({ tipo: 'sugestao', previsao: j.previsaoSugestao, odd: parseFloat(j.oddSugestao || 0) });
                 if (subApostas.length === 0 && (j.estadoAposta === 'ganha' || j.estadoAposta === 'perdida')) {
-                    subApostas.push({
-                        tipo: 'fallback',
-                        previsao: '',
-                        odd: parseFloat(j.odd || 0),
-                        estadoForçado: j.estadoAposta
-                    });
+                    subApostas.push({ tipo: 'fallback', previsao: '', odd: parseFloat(j.odd || 0), estadoForçado: j.estadoAposta });
                 }
 
                 subApostas.forEach(sa => {
-                    let estadoFinal = sa.estadoForçado || avaliarPrevisaoIndividualmente(sa.previsao, valGolasA, valGolasB, j.estadoAposta);
-                    
+                    let estadoFinal = sa.estadoForçado || avaliarPrevisaoIndividualmente(sa.previsao, j.resGolosA, j.resGolosB, j.estadoAposta);
                     if (estadoFinal !== 'ganha' && estadoFinal !== 'perdida') return;
 
-                    let ganhoNoJogo = 0;
-                    let stakeNoJogo = 1; // 1 Unidade base por aposta
+                    let ganhoNoJogo = estadoFinal === 'ganha' ? (sa.odd - 1) : -1;
+                    let stakeNoJogo = 1;
 
-                    if (estadoFinal === 'ganha') {
-                        ganhasContadas++;
-                        if (!isNaN(sa.odd) && sa.odd > 0) {
-                            ganhoNoJogo = sa.odd - 1;
-                        }
-                    } else if (estadoFinal === 'perdida') {
-                        perdidasContadas++;
-                        ganhoNoJogo = -1;
-                    }
+                    if (estadoFinal === 'ganha') ganhasContadas++;
+                    else if (estadoFinal === 'perdida') perdidasContadas++;
 
                     totalApostasContadas++;
                     lucroTotalUnidades += ganhoNoJogo;
                     stakeTotal += stakeNoJogo;
 
-                    // Agrupamento por Períodos Temporais para as tabelas
                     if (dataEvento && dataEvento.length >= 10) {
-                        let chavePeriodo = "";
-                        if (filtroPeriodo === 'diaria') {
-                            chavePeriodo = dataEvento;
-                        } else if (filtroPeriodo === 'mensal') {
-                            chavePeriodo = dataEvento.substring(0, 7);
-                        } else if (filtroPeriodo === 'anual') {
-                            chavePeriodo = dataEvento.substring(0, 4);
-                        }
+                        const chaves = {
+                            diaria: dataEvento,
+                            semanal: getWeekYear(dataEvento),
+                            mensal: dataEvento.substring(0, 7),
+                            anual: dataEvento.substring(0, 4)
+                        };
 
-                        if (!agrupamentoPeriodo[chavePeriodo]) {
-                            agrupamentoPeriodo[chavePeriodo] = {
-                                total: 0,
-                                ganhas: 0,
-                                perdidas: 0,
-                                lucro: 0,
-                                stake: 0
-                            };
-                        }
-                        agrupamentoPeriodo[chavePeriodo].total++;
-                        if (estadoFinal === 'ganha') agrupamentoPeriodo[chavePeriodo].ganhas++;
-                        if (estadoFinal === 'perdida') agrupamentoPeriodo[chavePeriodo].perdidas++;
-                        agrupamentoPeriodo[chavePeriodo].lucro += ganhoNoJogo;
-                        agrupamentoPeriodo[chavePeriodo].stake += stakeNoJogo;
+                        Object.keys(chaves).forEach(periodo => {
+                            const chave = chaves[periodo];
+                            if (!agrupamentosGlobais[periodo][chave]) {
+                                agrupamentosGlobais[periodo][chave] = { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 };
+                            }
+                            agrupamentosGlobais[periodo][chave].total++;
+                            if (estadoFinal === 'ganha') agrupamentosGlobais[periodo][chave].ganhas++;
+                            if (estadoFinal === 'perdida') agrupamentosGlobais[periodo][chave].perdidas++;
+                            agrupamentosGlobais[periodo][chave].lucro += ganhoNoJogo;
+                            agrupamentosGlobais[periodo][chave].stake += stakeNoJogo;
+                        });
                     }
                 });
             });
 
-            // Cálculos Finais Globais
             const winRate = totalApostasContadas > 0 ? (ganhasContadas / totalApostasContadas) * 100 : 0;
-            const roiTotal = stakeTotal > 0 ? (lucroTotalUnidades / stakeTotal) * 100 : 0;
-            totalRoiGlobal = roiTotal; 
+            totalRoiGlobal = stakeTotal > 0 ? (lucroTotalUnidades / stakeTotal) * 100 : 0;
 
             let ultimaAtualizacaoStr = "N/D";
             if (datasValidas.length > 0) {
@@ -353,30 +328,36 @@
                 ultimaAtualizacaoStr = ultimaData.toLocaleDateString(idiomaAtual === 'pt' ? 'pt-PT' : (idiomaAtual === 'en' ? 'en-US' : 'ne-NP'));
             }
 
-            // Atualizar os Cartões na Interface Gráfica
+            // Atualizar UI dos Cartões
             document.getElementById('stat-total').innerText = totalApostasContadas;
             document.getElementById('stat-ganhas').innerText = ganhasContadas;
             document.getElementById('stat-perdidas').innerText = perdidasContadas;
             document.getElementById('stat-winrate').innerText = winRate.toFixed(1) + "%";
             
-            const roiElement = document.getElementById('stat-roi');
-            roiElement.innerText = (roiTotal >= 0 ? '+' : '') + roiTotal.toFixed(2) + "%";
-            roiElement.className = "stat-value " + (roiTotal >= 0 ? "positive" : "negative");
+            const roiEl = document.getElementById('stat-roi');
+            roiEl.innerText = (totalRoiGlobal >= 0 ? '+' : '') + totalRoiGlobal.toFixed(2) + "%";
+            roiEl.className = "stat-value " + (totalRoiGlobal >= 0 ? "positive" : "negative");
 
-            const lucroElement = document.getElementById('stat-lucro');
-            lucroElement.innerText = (lucroTotalUnidades >= 0 ? '+' : '') + lucroTotalUnidades.toFixed(2) + " u";
-            lucroElement.className = "stat-value " + (lucroTotalUnidades >= 0 ? "positive" : "negative");
+            const lucroEl = document.getElementById('stat-lucro');
+            lucroEl.innerText = (lucroTotalUnidades >= 0 ? '+' : '') + lucroTotalUnidades.toFixed(2) + " u";
+            lucroEl.className = "stat-value " + (lucroTotalUnidades >= 0 ? "positive" : "negative");
 
             document.getElementById('stat-update').innerText = ultimaAtualizacaoStr;
 
-            // Renderizar Tabela de Performance Dinâmica
+            renderizarTabela();
+            renderizarGraficos();
+            calcularInvestimento();
+        }
+
+        function renderizarTabela() {
+            const t = traducoes[idiomaAtual];
             const thPeriodo = document.getElementById('th-periodo');
             const tbody = document.getElementById('performance-tbody');
             tbody.innerHTML = '';
 
-            if (filtroPeriodo === 'diaria') thPeriodo.innerText = t.dia;
-            else if (filtroPeriodo === 'mensal') thPeriodo.innerText = t.mes;
-            else if (filtroPeriodo === 'anual') thPeriodo.innerText = t.ano;
+            if (filtroPeriodoTabela === 'diaria') thPeriodo.innerText = t.dia;
+            else if (filtroPeriodoTabela === 'mensal') thPeriodo.innerText = t.mes;
+            else if (filtroPeriodoTabela === 'anual') thPeriodo.innerText = t.ano;
 
             document.getElementById('th-apostas').innerText = t.apostas;
             document.getElementById('th-ganhas').innerText = t.ganhas;
@@ -385,40 +366,109 @@
             document.getElementById('th-roi').innerText = t.roi;
             document.getElementById('th-lucro').innerText = t.lucro;
 
-            const periodosOrdenados = Object.keys(agrupamentoPeriodo).sort().reverse();
+            const dadosTabela = agrupamentosGlobais[filtroPeriodoTabela];
+            const periodosOrdenados = Object.keys(dadosTabela).sort().reverse(); // Do mais recente para o mais antigo (tabela)
 
             if (periodosOrdenados.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="empty-table">${t.semDados}</td></tr>`;
-            } else {
-                periodosOrdenados.forEach(chave => {
-                    const dadosPeriodo = agrupamentoPeriodo[chave];
-                    const winRatePeriodo = dadosPeriodo.total > 0 ? (dadosPeriodo.ganhas / dadosPeriodo.total) * 100 : 0;
-                    const roiPeriodo = dadosPeriodo.stake > 0 ? (dadosPeriodo.lucro / dadosPeriodo.stake) * 100 : 0;
-                    
-                    let periodoFormatado = chave;
-                    if (filtroPeriodo === 'diaria') {
-                        const [ano, mes, dia] = chave.split('-');
-                        periodoFormatado = `${dia}/${mes}/${ano}`;
-                    } else if (filtroPeriodo === 'mensal') {
-                        const [ano, mes] = chave.split('-');
-                        periodoFormatado = `${mes}/${ano}`;
-                    }
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><strong>${periodoFormatado}</strong></td>
-                        <td>${dadosPeriodo.total}</td>
-                        <td class="text-green font-weight-bold">${dadosPeriodo.ganhas}</td>
-                        <td class="text-red font-weight-bold">${dadosPeriodo.perdidas}</td>
-                        <td>${winRatePeriodo.toFixed(1)}%</td>
-                        <td class="${roiPeriodo >= 0 ? 'text-green' : 'text-red'} font-weight-bold">${(roiPeriodo >= 0 ? '+' : '')}${roiPeriodo.toFixed(2)}%</td>
-                        <td class="${dadosPeriodo.lucro >= 0 ? 'text-green' : 'text-red'} font-weight-bold">${(dadosPeriodo.lucro >= 0 ? '+' : '')}${dadosPeriodo.lucro.toFixed(2)} u</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                return;
             }
 
-            calcularInvestimento();
+            periodosOrdenados.forEach(chave => {
+                const dadosPeriodo = dadosTabela[chave];
+                const winRatePeriodo = dadosPeriodo.total > 0 ? (dadosPeriodo.ganhas / dadosPeriodo.total) * 100 : 0;
+                const roiPeriodo = dadosPeriodo.stake > 0 ? (dadosPeriodo.lucro / dadosPeriodo.stake) * 100 : 0;
+                
+                let periodoFormatado = chave;
+                if (filtroPeriodoTabela === 'diaria') {
+                    const [ano, mes, dia] = chave.split('-');
+                    periodoFormatado = `${dia}/${mes}/${ano}`;
+                } else if (filtroPeriodoTabela === 'mensal') {
+                    const [ano, mes] = chave.split('-');
+                    periodoFormatado = `${mes}/${ano}`;
+                }
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${periodoFormatado}</strong></td>
+                    <td>${dadosPeriodo.total}</td>
+                    <td class="text-green font-weight-bold">${dadosPeriodo.ganhas}</td>
+                    <td class="text-red font-weight-bold">${dadosPeriodo.perdidas}</td>
+                    <td>${winRatePeriodo.toFixed(1)}%</td>
+                    <td class="${roiPeriodo >= 0 ? 'text-green' : 'text-red'} font-weight-bold">${(roiPeriodo >= 0 ? '+' : '')}${roiPeriodo.toFixed(2)}%</td>
+                    <td class="${dadosPeriodo.lucro >= 0 ? 'text-green' : 'text-red'} font-weight-bold">${(dadosPeriodo.lucro >= 0 ? '+' : '')}${dadosPeriodo.lucro.toFixed(2)} u</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderizarGraficos() {
+            const dados = agrupamentosGlobais[filtroPeriodoGraficos];
+            // Para gráficos é melhor a ordem cronológica (mais antigo para mais recente)
+            const periodosOrdenados = Object.keys(dados).sort();
+
+            const labels = periodosOrdenados;
+            const dataAcerto = [];
+            const dataRoi = [];
+            const dataLucro = [];
+            const dataVolume = [];
+
+            periodosOrdenados.forEach(chave => {
+                const d = dados[chave];
+                const wr = d.total > 0 ? (d.ganhas / d.total) * 100 : 0;
+                const r = d.stake > 0 ? (d.lucro / d.stake) * 100 : 0;
+                
+                dataAcerto.push(wr.toFixed(1));
+                dataRoi.push(r.toFixed(2));
+                dataLucro.push(d.lucro.toFixed(2));
+                dataVolume.push(d.total);
+            });
+
+            atualizarCriarGrafico('chartAcerto', traducoes[idiomaAtual].acerto, labels, dataAcerto, '#3b82f6');
+            atualizarCriarGrafico('chartRoi', traducoes[idiomaAtual].roi, labels, dataRoi, '#10b981');
+            atualizarCriarGrafico('chartLucro', traducoes[idiomaAtual].lucro, labels, dataLucro, '#f59e0b');
+            atualizarCriarGrafico('chartVolume', traducoes[idiomaAtual].apostas, labels, dataVolume, '#8b5cf6');
+        }
+
+        function atualizarCriarGrafico(idCanvas, labelName, labels, data, color) {
+            const ctx = document.getElementById(idCanvas);
+            if (!ctx) return;
+
+            if (graficosInstancias[idCanvas]) {
+                graficosInstancias[idCanvas].destroy();
+            }
+
+            graficosInstancias[idCanvas] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: labelName,
+                        data: data,
+                        borderColor: color,
+                        backgroundColor: color + '20', // Opacidade
+                        borderWidth: 3,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: color,
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { color: '#e2e8f0' } }
+                    }
+                }
+            });
         }
 
         function calcularInvestimento() {
@@ -454,8 +504,13 @@
         }
 
         window.mudarFiltroTabela = function(tipo) {
-            filtroPeriodo = tipo;
-            processarEstatísticasEFiltrar();
+            filtroPeriodoTabela = tipo;
+            renderizarTabela();
+        }
+
+        window.mudarFiltroGraficos = function(tipo) {
+            filtroPeriodoGraficos = tipo;
+            renderizarGraficos();
         }
 
         window.calcularInvestimento = calcularInvestimento;
@@ -512,6 +567,36 @@
             padding: 0 20px;
         }
 
+        /* FLEX CONTAINER GERAL PARA SLOGAN E TÍTULO */
+        .header-slogan-container {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .slogan-box {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, var(--brand-green), #16a34a);
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: white;
+            font-weight: 900;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .slogan-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(34, 197, 94, 0.4);
+            color: white;
+        }
+
         .section-header-flex {
             display: flex;
             justify-content: space-between;
@@ -547,9 +632,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
 
-        .select-periodo:focus, .select-periodo:hover {
-            border-color: var(--brand-green);
-        }
+        .select-periodo:focus, .select-periodo:hover { border-color: var(--brand-green); }
 
         .stats-grid {
             display: grid;
@@ -589,40 +672,32 @@
             transition: background 0.3s;
         }
 
-        .stat-card-premium:hover::before {
-            background: var(--brand-green);
-        }
+        .stat-card-premium:hover::before { background: var(--brand-green); }
 
-        .card-header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .card-label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 0.8px;
-        }
-
-        .card-icon {
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            opacity: 0.7;
-        }
-
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 900;
-            color: var(--brand-dark);
-            line-height: 1;
-        }
-
+        .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .card-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.8px; }
+        .card-icon { font-size: 1.2rem; color: var(--text-muted); opacity: 0.7; }
+        .stat-value { font-size: 1.8rem; font-weight: 900; color: var(--brand-dark); line-height: 1; }
         .stat-value.positive { color: #10b981; }
         .stat-value.negative { color: #ef4444; }
+
+        /* GRID PARA GRÁFICOS */
+        .charts-grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .chart-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+            height: 300px;
+            position: relative;
+        }
 
         .layout-grid {
             display: grid;
@@ -640,37 +715,11 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        .table-responsive-wrapper::-webkit-scrollbar { height: 6px; }
-        .table-responsive-wrapper::-webkit-scrollbar-track { background: #f1f5f9; }
-        .table-responsive-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-
-        .custom-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.9rem;
-            white-space: nowrap;
-        }
-
-        .custom-table th {
-            background-color: var(--brand-dark);
-            color: #ffffff;
-            padding: 16px;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-        }
-
-        .custom-table td {
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--brand-dark);
-        }
-
+        .custom-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; white-space: nowrap; }
+        .custom-table th { background-color: var(--brand-dark); color: #ffffff; padding: 16px; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; }
+        .custom-table td { padding: 16px; border-bottom: 1px solid var(--border-color); color: var(--brand-dark); }
         .custom-table tbody tr:last-child td { border-bottom: none; }
         .custom-table tbody tr:hover { background-color: #f8fafc; }
-
         .empty-table { text-align: center; padding: 40px !important; color: var(--text-muted); font-style: italic; }
         .text-green { color: #10b981 !important; }
         .text-red { color: #ef4444 !important; }
@@ -685,158 +734,67 @@
             height: fit-content;
         }
 
-        .simulator-description {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-
-        .quick-presets {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
+        .simulator-description { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
+        .quick-presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
         .preset-btn {
-            background-color: #f1f5f9;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            cursor: pointer;
-            color: var(--brand-dark);
-            transition: all 0.15s ease;
+            background-color: #f1f5f9; border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 12px;
+            font-size: 0.8rem; font-weight: 700; cursor: pointer; color: var(--brand-dark); transition: all 0.15s ease;
         }
-
-        .preset-btn:hover {
-            background-color: var(--brand-green);
-            border-color: var(--brand-green);
-            color: white;
-        }
+        .preset-btn:hover { background-color: var(--brand-green); border-color: var(--brand-green); color: white; }
 
         .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
         .sim-input-field {
-            flex: 1;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--brand-dark);
-            outline: none;
-            transition: border 0.2s;
-            width: 100%;
+            flex: 1; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px;
+            font-size: 1rem; font-weight: 700; color: var(--brand-dark); outline: none; transition: border 0.2s; width: 100%;
         }
-
-        .sim-input-field:focus {
-            border-color: var(--brand-green);
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
-        }
+        .sim-input-field:focus { border-color: var(--brand-green); box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15); }
 
         .btn-calc {
-            background-color: var(--brand-green);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.2s;
-            white-space: nowrap;
+            background-color: var(--brand-green); color: white; border: none; border-radius: 8px; padding: 10px 18px;
+            font-weight: 700; cursor: pointer; transition: background 0.2s; white-space: nowrap;
         }
-
         .btn-calc:hover { background-color: #16a34a; }
         .simulation-result-box {
-            background-color: #f8fafc;
-            border: 1px dashed var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            font-size: 0.9rem;
-            min-height: 80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            background-color: #f8fafc; border: 1px dashed var(--border-color); border-radius: 12px; padding: 20px;
+            text-align: center; font-size: 0.9rem; min-height: 80px; display: flex; flex-direction: column; justify-content: center;
         }
 
-        .result-highlight {
-            font-size: 2.2rem;
-            font-weight: 900;
-            margin: 8px 0;
-            animation: pulse-animation 1.5s infinite ease-in-out;
-        }
-
+        .result-highlight { font-size: 2.2rem; font-weight: 900; margin: 8px 0; animation: pulse-animation 1.5s infinite ease-in-out; }
         .result-sub { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
 
         .legal-notice-box {
-            background: #fffbeb;
-            border: 1px solid #fef3c7;
-            border-left: 5px solid #f59e0b;
-            border-radius: 12px;
-            padding: 24px;
-            margin-top: 50px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            background: #fffbeb; border: 1px solid #fef3c7; border-left: 5px solid #f59e0b;
+            border-radius: 12px; padding: 24px; margin-top: 50px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
-
-        .legal-title {
-            color: #b45309;
-            font-size: 0.95rem;
-            font-weight: 800;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
+        .legal-title { color: #b45309; font-size: 0.95rem; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
         .legal-text { color: #78350f; font-size: 0.8rem; line-height: 1.6; }
         .legal-text p { margin: 0 0 12px 0; }
         .legal-text p:last-child { margin-bottom: 0; }
 
         .simple-footer { text-align: center; padding: 40px 0; color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
 
-        @keyframes pulse-animation {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
+        @keyframes pulse-animation { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
 
         @media (max-width: 992px) {
             .layout-grid { grid-template-columns: 1fr; gap: 40px; }
-            .page-container { margin: 20px auto; }
+            .charts-grid-container { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 600px) {
             .navbar { padding: 12px 15px; }
-            .navbar-brand { font-size: 1.5rem; }
-            .page-container { padding: 0 15px; }
-            .section-header-flex { flex-direction: column; align-items: flex-start; gap: 10px; }
-            .section-title { font-size: 1.4rem; border-left-width: 4px; padding-left: 10px; }
-            .select-periodo { width: 100%; box-sizing: border-box; text-align: center; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 30px; }
+            .slogan-box { width: 100%; justify-content: center; font-size: 1.2rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
             .stats-grid .stat-card-premium:last-child { grid-column: span 2; }
-            .stat-card-premium { padding: 16px; border-radius: 12px; }
-            .card-label { font-size: 0.65rem; }
             .stat-value { font-size: 1.4rem; }
-            .custom-table th, .custom-table td { padding: 12px 10px; font-size: 0.8rem; }
             .quick-presets { justify-content: space-between; }
-            .preset-btn { flex: 1 1 calc(33.33% - 8px); text-align: center; padding: 8px 4px; }
+            .preset-btn { flex: 1 1 calc(33.33% - 8px); text-align: center; }
             .input-group { flex-direction: column; }
             .btn-calc { width: 100%; padding: 12px; }
-            .legal-notice-box { padding: 16px; margin-top: 30px; }
-        }
-
-        @media (max-width: 380px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            .stats-grid .stat-card-premium:last-child { grid-column: span 1; }
         }
     </style>
 </head>
 <body>
 
-    <!-- NAVBAR IDENTITÁRIA (Navegação integrada) -->
     <nav class="navbar">
         <a href="index.html" class="navbar-brand">
             <span class="brand-green">BET</span><span class="brand-white">FIGHTER</span>
@@ -845,75 +803,68 @@
 
     <div class="page-container">
 
-        <!-- SECÇÃO 1: Resumo Geral de Métricas -->
-        <div class="section-header-flex">
+        <!-- LINK DA GESTÃO E TÍTULO PRINCIPAL (Ao Lado Esquerdo) -->
+        <div class="header-slogan-container">
+            <!-- Insira aqui o Link da app de gestão no atributo href -->
+            <a href="#" class="slogan-box" id="link-logotipo-gestao">
+                <i class="fa-solid fa-bolt" style="margin-right: 8px;"></i>
+                <span id="slogan-text">PLATAFORMA DE PALPITES</span>
+            </a>
+            
             <h2 class="section-title"><i class="fa-solid fa-chart-simple"></i> <span id="txtDesempenhoGeral">Desempenho Geral</span></h2>
         </div>
         
         <div class="stats-grid">
-            
             <div class="stat-card-premium">
-                <div class="card-header-flex">
-                    <span class="card-label" id="lblTotalApostas">Total Apostas</span>
-                    <i class="fa-solid fa-ticket card-icon"></i>
-                </div>
+                <div class="card-header-flex"><span class="card-label" id="lblTotalApostas">Total Apostas</span><i class="fa-solid fa-ticket card-icon"></i></div>
                 <div id="stat-total" class="stat-value">...</div>
             </div>
-
             <div class="stat-card-premium">
-                <div class="card-header-flex">
-                    <span class="card-label" id="lblGanhas">Ganhas</span>
-                    <i class="fa-solid fa-circle-check card-icon" style="color:#10b981;"></i>
-                </div>
+                <div class="card-header-flex"><span class="card-label" id="lblGanhas">Ganhas</span><i class="fa-solid fa-circle-check card-icon" style="color:#10b981;"></i></div>
                 <div id="stat-ganhas" class="stat-value text-green">...</div>
             </div>
-
             <div class="stat-card-premium">
-                <div class="card-header-flex">
-                    <span class="card-label" id="lblPerdidas">Perdidas</span>
-                    <i class="fa-solid fa-circle-xmark card-icon" style="color:#ef4444;"></i>
-                </div>
+                <div class="card-header-flex"><span class="card-label" id="lblPerdidas">Perdidas</span><i class="fa-solid fa-circle-xmark card-icon" style="color:#ef4444;"></i></div>
                 <div id="stat-perdidas" class="stat-value text-red">...</div>
             </div>
-
             <div class="stat-card-premium">
-                <div class="card-header-flex">
-                    <span class="card-label" id="lblWinrate">% de Acerto</span>
-                    <i class="fa-solid fa-bullseye card-icon"></i>
-                </div>
+                <div class="card-header-flex"><span class="card-label" id="lblWinrate">% de Acerto</span><i class="fa-solid fa-bullseye card-icon"></i></div>
                 <div id="stat-winrate" class="stat-value">...</div>
             </div>
-
             <div class="stat-card-premium">
-                <div class="card-header-flex">
-                    <span class="card-label" id="lblRoiAcumulado">ROI Acumulado</span>
-                    <i class="fa-solid fa-percent card-icon"></i>
-                </div>
+                <div class="card-header-flex"><span class="card-label" id="lblRoiAcumulado">ROI Acumulado</span><i class="fa-solid fa-percent card-icon"></i></div>
                 <div id="stat-roi" class="stat-value">...</div>
             </div>
-
             <div class="stat-card-premium">
-                <div class="card-header-flex">
-                    <span class="card-label" id="lblLucroLiquido">Lucro Líquido</span>
-                    <i class="fa-solid fa-coins card-icon"></i>
-                </div>
+                <div class="card-header-flex"><span class="card-label" id="lblLucroLiquido">Lucro Líquido</span><i class="fa-solid fa-coins card-icon"></i></div>
                 <div id="stat-lucro" class="stat-value">...</div>
             </div>
-
             <div class="stat-card-premium">
-                <div class="card-header-flex">
-                    <span class="card-label" id="lblUltimaAtualizacao">Última Atualização</span>
-                    <i class="fa-solid fa-clock card-icon"></i>
-                </div>
+                <div class="card-header-flex"><span class="card-label" id="lblUltimaAtualizacao">Última Atualização</span><i class="fa-solid fa-clock card-icon"></i></div>
                 <div id="stat-update" class="stat-value" style="font-size: 1.15rem; line-height: 1.4;">...</div>
             </div>
-
         </div>
 
-        <!-- LAYOUT DUPLO: Performance / Histórico Dinâmico + Simulador -->
+        <!-- SECÇÃO: Gráficos Dinâmicos -->
+        <div class="section-header-flex">
+            <h2 class="section-title"><i class="fa-solid fa-chart-line"></i> <span id="txtGraficos">Gráficos de Evolução</span></h2>
+            <select class="select-periodo" onchange="mudarFiltroGraficos(this.value)">
+                <option value="semanal" id="optGrafSemanal">Gráfico Semanal</option>
+                <option value="mensal" id="optGrafMensal" selected>Gráfico Mensal</option>
+                <option value="anual" id="optGrafAnual">Gráfico Anual</option>
+            </select>
+        </div>
+
+        <div class="charts-grid-container">
+            <div class="chart-box"><canvas id="chartAcerto"></canvas></div>
+            <div class="chart-box"><canvas id="chartRoi"></canvas></div>
+            <div class="chart-box"><canvas id="chartLucro"></canvas></div>
+            <div class="chart-box"><canvas id="chartVolume"></canvas></div>
+        </div>
+
         <div class="layout-grid">
             
-            <!-- SECÇÃO 2: Performance com Seletor Dropdown -->
+            <!-- SECÇÃO: Tabela Histórico -->
             <div>
                 <div class="section-header-flex">
                     <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i> <span id="txtHistorico">Histórico</span></h2>
@@ -946,7 +897,7 @@
                 </div>
             </div>
 
-            <!-- SECÇÃO 3: Simulador de Investimento -->
+            <!-- SECÇÃO: Simulador -->
             <div>
                 <div class="section-header-flex">
                     <h2 class="section-title"><i class="fa-solid fa-calculator"></i> <span id="txtSimulador">Simulador</span></h2>
@@ -979,15 +930,14 @@
 
         </div>
 
-        <!-- SECÇÃO 8: Caixa de Aviso Legal -->
         <div class="legal-notice-box">
             <div class="legal-title">
                 <i class="fa-solid fa-triangle-exclamation"></i> <span id="txtInfoImportante">Informação Importante</span>
             </div>
             <div class="legal-text">
                 <p id="aviso1">As previsões, estatísticas, ROI, lucros e simulações apresentados no BetFighter destinam-se exclusivamente a fins informativos e baseiam-se em resultados históricos registados na plataforma. O desempenho passado não garante resultados futuros.</p>
-                <p id="aviso2">As apostas desportivas envolvem risco financeiro. Cada utilizador é inteiramente responsável pelas suas decisões de aposta. O BetFighter não garante lucros, rendimentos ou sucesso nas apostas e não assume qualquer responsabilidade por perdas financeiras decorrentes da utilização das previsões ou das informações disponibilizadas.</p>
-                <p id="aviso3">As simulações de investimento apresentadas têm caráter meramente ilustrativo e servem apenas para demonstrar o comportamento histórico dos resultados. Não constituem aconselhamento financeiro nem representam qualquer promessa ou garantia de retorno futuro.</p>
+                <p id="aviso2">As apostas desportivas envolvem risco financeiro. Cada utilizador é inteiramente responsável pelas suas decisões de aposta. O BetFighter não garante lucros, rendimentos ou sucesso nas apostas.</p>
+                <p id="aviso3">As simulações de investimento apresentadas têm caráter meramente ilustrativo e servem apenas para demonstrar o comportamento histórico.</p>
                 <p id="aviso4">Aposte de forma responsável. Nunca utilize dinheiro que não possa perder.</p>
             </div>
         </div>
