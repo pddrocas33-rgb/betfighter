@@ -106,6 +106,33 @@
             let imagemDireitaMobile = b.direitoMobImg || b.esquerdoMobImg || "imagens/banner_esquerdo_mobile.png";
             let linkDireito = b.direitoLink || "https://22bet4me.com?bf=9c0edc58d75d4_464354407";
 
+            // Sobreposições idiomáticas do Firebase
+            if (idiomaAtual === 'en') {
+                if (b.topoImgEn) imagemTopo = b.topoImgEn;
+                if (b.topoLinkEn) linkTopo = b.topoLinkEn;
+                if (b.animadoImgEn) imagemPopup = b.animadoImgEn;
+                if (b.animadoLinkEn) linkPopup = b.animadoLinkEn;
+                if (b.esquerdoImgEn) imagemLateralDesktop = b.esquerdoImgEn;
+                if (b.esquerdoMobImgEn) imagemLateralMobile = b.esquerdoMobImgEn;
+                if (b.esquerdoLinkEn) linkLateral = b.esquerdoLinkEn;
+                
+                if (b.direitoImgEn) imagemDireitaDesktop = b.direitoImgEn;
+                if (b.direitoMobImgEn) imagemDireitaMobile = b.direitoMobImgEn;
+                if (b.direitoLinkEn) linkDireito = b.direitoLinkEn;
+            } else if (idiomaAtual === 'nep') {
+                if (b.topoImgNep) imagemTopo = b.topoImgNep;
+                if (b.topoLinkNep) linkTopo = b.topoLinkNep;
+                if (b.animadoImgNep) imagemPopup = b.animadoImgNep;
+                if (b.animadoLinkNep) linkPopup = b.animadoLinkNep;
+                if (b.esquerdoImgNep) imagemLateralDesktop = b.esquerdoImgNep;
+                if (b.esquerdoMobImgNep) imagemLateralMobile = b.esquerdoMobImgNep;
+                if (b.esquerdoLinkNep) linkLateral = b.esquerdoLinkNep;
+                
+                if (b.direitoImgNep) imagemDireitaDesktop = b.direitoImgNep;
+                if (b.direitoMobImgNep) imagemDireitaMobile = b.direitoMobImgNep;
+                if (b.direitoLinkNep) linkDireito = b.direitoLinkNep;
+            }
+
             const topoImgEl = document.getElementById('imgBannerTopo');
             const topoAnchorEl = document.getElementById('anchorBannerTopo');
             if (topoImgEl) topoImgEl.src = imagemTopo;
@@ -291,12 +318,34 @@
             });
 
             const b = dadosBannersCache;
+            let imagemTopo = b.topoImg || "imagens/banner_topo_novo.png"; 
+            let linkTopo = b.topoLink || "mailto:suporte@bet-fighter.com";
             let imagemLateralDesktop = b.esquerdoImg || "imagens/banner_esquerdo.png";
             let imagemLateralMobile = b.esquerdoMobImg || "imagens/banner_esquerdo_mobile.png";
             let linkLateral = b.esquerdoLink || "https://22bet4me.com?bf=9c0edc58d75d4_464354407";
             let imagemDireitaDesktop = b.direitoImg || "imagens/banner_esquerdo.png"; 
             let imagemDireitaMobile = b.direitoMobImg || b.esquerdoMobImg || "imagens/banner_esquerdo_mobile.png";
             let linkDireito = b.direitoLink || "https://22bet4me.com?bf=9c0edc58d75d4_464354407";
+
+            if (idiomaAtual === 'en') {
+                if (b.topoImgEn) imagemTopo = b.topoImgEn;
+                if (b.topoLinkEn) linkTopo = b.topoLinkEn;
+                if (b.esquerdoImgEn) imagemLateralDesktop = b.esquerdoImgEn;
+                if (b.esquerdoMobImgEn) imagemLateralMobile = b.esquerdoMobImgEn;
+                if (b.esquerdoLinkEn) linkLateral = b.esquerdoLinkEn;
+                if (b.direitoImgEn) imagemDireitaDesktop = b.direitoImgEn;
+                if (b.direitoMobImgEn) imagemDireitaMobile = b.direitoMobImgEn;
+                if (b.direitoLinkEn) linkDireito = b.direitoLinkEn;
+            } else if (idiomaAtual === 'nep') {
+                if (b.topoImgNep) imagemTopo = b.topoImgNep;
+                if (b.topoLinkNep) linkTopo = b.topoLinkNep;
+                if (b.esquerdoImgNep) imagemLateralDesktop = b.esquerdoImgNep;
+                if (b.esquerdoMobImgNep) imagemLateralMobile = b.esquerdoMobImgNep;
+                if (b.esquerdoLinkNep) linkLateral = b.esquerdoLinkNep;
+                if (b.direitoImgNep) imagemDireitaDesktop = b.direitoImgNep;
+                if (b.direitoMobImgNep) imagemDireitaMobile = b.direitoMobImgNep;
+                if (b.direitoLinkNep) linkDireito = b.direitoLinkNep;
+            }
 
             let htmlLista = `
                 <div class="brand-title-container">
@@ -305,8 +354,8 @@
                 </div>
 
                 <div class="top-hero-banner-container">
-                    <a href="mailto:suporte@bet-fighter.com" id="anchorBannerTopo" target="_blank" class="topo-banner-link">
-                        <img src="imagens/banner_topo_novo.png" id="imgBannerTopo" alt="Betfighter Banner">
+                    <a href="${linkTopo}" id="anchorBannerTopo" target="_blank" class="topo-banner-link">
+                        <img src="${imagemTopo}" id="imgBannerTopo" alt="Betfighter Banner">
                     </a>
                 </div>
 
@@ -492,7 +541,6 @@
         .action-button-wrapper:hover { border-color: #22c55e; background-color: #f0fdf4; transform: translateY(-1px); }
         .lang-select { border: none; background: transparent; font-size: 0.8rem; font-weight: 700; color: #475569; cursor: pointer; outline: none; }
         
-        /* Botão Novo BF Stats */
         .bf-stats-wrapper { border-color: #22c55e; background: #f0fdf4; }
         .bf-stats-wrapper a { color: #15803d; }
         
@@ -616,7 +664,6 @@
         </select>
     </div>
 
-    <!-- NOVO BOTÃO BF STATS -->
     <div class="action-button-wrapper bf-stats-wrapper">
         <a href="bf_stats.html" title="Estatísticas Betfighter">
             <img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="BF" style="width: 16px; height: 16px; object-fit: contain;">
