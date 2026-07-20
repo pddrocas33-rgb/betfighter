@@ -32,6 +32,7 @@
         // ===== DICIONÁRIO DE TRADUÇÃO =====
         const traducoes = {
             pt: {
+                sloganTexto: "PLATAFORMA DE PALPITES",
                 txtDesempenhoGeral: "Desempenho Geral",
                 txtGraficos: "Gráficos de Evolução",
                 totalApostas: "Total Apostas",
@@ -70,6 +71,88 @@
                 avisoLegal2: "As apostas desportivas envolvem risco financeiro. Cada utilizador é inteiramente responsável pelas suas decisões de aposta. O BetFighter não garante lucros, rendimentos ou sucesso nas apostas.",
                 avisoLegal3: "As simulações de investimento apresentadas têm caráter meramente ilustrativo e servem apenas para demonstrar o comportamento histórico.",
                 avisoLegal4: "Aposte de forma responsável. Nunca utilize dinheiro que não possa perder."
+            },
+            en: {
+                sloganTexto: "PREDICTION PLATFORM",
+                txtDesempenhoGeral: "General Performance",
+                txtGraficos: "Evolution Charts",
+                totalApostas: "Total Bets",
+                ganhas: "Won",
+                perdidas: "Lost",
+                winrate: "Win Rate",
+                roiAcumulado: "Accumulated ROI",
+                lucroLiquido: "Net Profit",
+                ultimaAtualizacao: "Last Update",
+                historico: "History",
+                tabelaDiaria: "Daily Table",
+                tabelaMensal: "Monthly Table",
+                tabelaAnual: "Yearly Table",
+                optGrafSemanal: "Weekly Chart",
+                optGrafMensal: "Monthly Chart",
+                optGrafAnual: "Yearly Chart",
+                dia: "Day",
+                mes: "Month",
+                ano: "Year",
+                apostas: "Bets",
+                acerto: "Win Rate (%)",
+                roi: "ROI (%)",
+                lucro: "Profit (u)",
+                semDados: "No performance data archived.",
+                carregandoBd: "Reading database...",
+                simulador: "Simulator",
+                quantoTeriaGanho: "How much would you have won?",
+                simuladorDesc: "Simulate the real result of your investment using our consolidated ROI statistics.",
+                simuladorBtn: "Calculate",
+                placeholderSim: "E.g.: 100",
+                insiraValor: "Enter a value above.",
+                simResultadoTexto: "With an initial investment of <strong>{investimento}€</strong>, you would currently have:",
+                simResultadoLucro: "Net accumulated profit of {sinal}{lucro}€ ({roi}% ROI)",
+                infoImportante: "Important Information",
+                avisoLegal1: "The predictions, statistics, ROI, profits, and simulations presented on BetFighter are strictly for informational purposes.",
+                avisoLegal2: "Sports betting involves financial risk. Each user is entirely responsible for their betting decisions.",
+                avisoLegal3: "The investment simulations presented are for illustrative purposes only.",
+                avisoLegal4: "Bet responsibly. Never use money you cannot afford to lose."
+            },
+            nep: {
+                sloganTexto: "भविष्यवाणी प्लेटफर्म",
+                txtDesempenhoGeral: "सामान्य प्रदर्शन",
+                txtGraficos: "प्रगति चार्टहरू",
+                totalApostas: "कुल बेटहरू",
+                ganhas: "जीत",
+                perdidas: "हार",
+                winrate: "सफलता दर",
+                roiAcumulado: "कुल ROI",
+                lucroLiquido: "खुद नाफा",
+                ultimaAtualizacao: "अन्तिम अपडेट",
+                historico: "इतिहास",
+                tabelaDiaria: "दैनिक तालिका",
+                tabelaMensal: "मासिक तालिका",
+                tabelaAnual: "वार्षिक तालिका",
+                optGrafSemanal: "साप्ताहिक चार्ट",
+                optGrafMensal: "मासिक चार्ट",
+                optGrafAnual: "वार्षिक चार्ट",
+                dia: "दिन",
+                mes: "महिना",
+                ano: "वर्ष",
+                apostas: "बेटहरू",
+                acerto: "सफलता दर (%)",
+                roi: "ROI (%)",
+                lucro: "नाफा (u)",
+                semDados: "कुनै प्रदर्शन डाटा संग्रहित छैन।",
+                carregandoBd: "डाटाबेस पढ्दै...",
+                simulador: "सिमुलेटर",
+                quantoTeriaGanho: "तपाईंले कति जित्नुहुने थियो?",
+                simuladorDesc: "हाम्रो एकीकृत ROI तथ्याङ्कहरू प्रयोग गरेर तपाईंको लगानीको वास्तविक नतिजा सिमुलेट गर्नुहोस्।",
+                simuladorBtn: "हिसाब गर्नुहोस्",
+                placeholderSim: "उदा: १००",
+                insiraValor: "माथि एउटा मान प्रविष्ट गर्नुहोस्।",
+                simResultadoTexto: "<strong>{investimento}€</strong> को प्रारम्भिक लगानीको साथ, तपाईंको हाल हुने थियो:",
+                simResultadoLucro: "खुद संचित नाफा {sinal}{lucro}€ ({roi}% ROI)",
+                infoImportante: "महत्त्वपूर्ण जानकारी",
+                avisoLegal1: "BetFighter मा प्रस्तुत पूर्वानुमानहरू जानकारीमूलक उद्देश्यका लागि हुन्।",
+                avisoLegal2: "खेलकुद सट्टेबाजीमा वित्तीय जोखिम समावेश हुन्छ।",
+                avisoLegal3: "प्रस्तुत गरिएका लगानी सिमुलेशनहरू केवल चित्रण उद्देश्यका लागि हुन्।",
+                avisoLegal4: "जिम्मेवारीपूर्वक सट्टेबाजी गर्नुहोस्। कहिल्यै पनि आफूले गुमाउन नसक्ने रकम प्रयोग नगर्नुहोस्।"
             }
         };
 
@@ -78,13 +161,17 @@
         let todosJogosGlobais = [];
         let filtroPeriodoTabela = 'mensal';
         let filtroPeriodoGraficos = 'mensal';
-        let tipoGraficoAtual = 'geral'; // geral ou fight_selection
         let idiomaAtual = 'pt';
         let agrupamentosGlobais = { diaria: {}, semanal: {}, mensal: {}, anual: {} };
         let graficosInstancias = {};
 
         function carregarIdioma() {
-            idiomaAtual = 'pt';
+            const idiomaSalvo = localStorage.getItem('idiomaPreferido');
+            if (idiomaSalvo && traducoes[idiomaSalvo]) {
+                idiomaAtual = idiomaSalvo;
+            } else {
+                idiomaAtual = 'pt';
+            }
             document.documentElement.lang = idiomaAtual;
         }
 
@@ -102,6 +189,7 @@
         function aplicarTraducoesEstaticas() {
             const t = traducoes[idiomaAtual];
             
+            document.getElementById('slogan-text').innerText = t.sloganTexto;
             document.getElementById('txtDesempenhoGeral').innerText = t.txtDesempenhoGeral;
             document.getElementById('txtGraficos').innerText = t.txtGraficos;
             
@@ -133,9 +221,10 @@
             document.getElementById('aviso2').innerText = t.avisoLegal2;
             document.getElementById('aviso3').innerText = t.avisoLegal3;
             document.getElementById('aviso4').innerText = t.avisoLegal4;
-            document.getElementById('footerYear').innerHTML = `&copy; 2026 BETFIGHTER. Todos os direitos reservados.`;
+            document.getElementById('footerYear').innerHTML = `&copy; 2026 BETFIGHTER. ${idiomaAtual === 'pt' ? 'Todos os direitos reservados.' : (idiomaAtual === 'en' ? 'All rights reserved.' : 'सबै अधिकार सुरक्षित।')}`;
         }
 
+        // Helper para agrupar por semanas (ISO 8601)
         function getWeekYear(dateStr) {
             const d = new Date(dateStr);
             d.setHours(0, 0, 0, 0);
@@ -143,69 +232,6 @@
             const week1 = new Date(d.getFullYear(), 0, 4);
             const weekNum = 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
             return `${d.getFullYear()}-S${weekNum.toString().padStart(2, '0')}`;
-        }
-
-        // LÓGICA FIGHT SELECTION
-        function testarFightSelectionSingular(selecao, percentagem, oddStr) {
-            const o = parseFloat(oddStr);
-            if (isNaN(o) || o < 1.99) return null; // Filtro de odd mínima (Value Odds)
-            const percDec = parseFloat(percentagem) / 100;
-            if (isNaN(percDec) || percDec <= 0) return null;
-            const probImplicita = 1 / o;
-            const edge = percDec - probImplicita;
-            
-            if (edge > 0) {
-                let confianca = Math.min((edge * 2) * 100, 95);
-                let cat = '';
-                if (confianca >= 0.1 && confianca <= 15.99) cat = 'low';
-                else if (confianca >= 16 && confianca <= 26.99) cat = 'medium';
-                else if (confianca >= 27) cat = 'high';
-                else cat = 'none';
-
-                return { selecao: selecao.toUpperCase(), edge: edge, odd: o, cat: cat };
-            }
-            return null;
-        }
-
-        function extrairMelhorFightSelection(r1, r2) {
-            if (r1 && r2) return (r1.edge > r2.edge) ? r1 : r2;
-            return r1 || r2 || null;
-        }
-
-        function calcularFightSelectionOculta(previsao, oddFormulario, pctV1, pctX, pctV2, oddV1, oddX, oddV2) {
-            if (!previsao) return null;
-            let p = previsao.toLowerCase().trim();
-            let r1 = null, r2 = null;
-
-            if (p === '1x' || p === 'v1x' || p === '1x2') {
-                r1 = testarFightSelectionSingular('1', pctV1, oddV1);
-                r2 = testarFightSelectionSingular('X', pctX, oddX);
-                return extrairMelhorFightSelection(r1, r2);
-            } else if (p === '2x' || p === 'v2x' || p === 'x2') {
-                r1 = testarFightSelectionSingular('2', pctV2, oddV2);
-                r2 = testarFightSelectionSingular('X', pctX, oddX);
-                return extrairMelhorFightSelection(r1, r2);
-            } else if (p === '12' || p === 'v12') {
-                r1 = testarFightSelectionSingular('1', pctV1, oddV1);
-                r2 = testarFightSelectionSingular('2', pctV2, oddV2);
-                return extrairMelhorFightSelection(r1, r2);
-            }
-
-            let percSelecionada = 0, selecaoFinal = p;
-            if (p === '1' || p === 'v1') { percSelecionada = pctV1; selecaoFinal = '1'; }
-            else if (p === 'x' || p === 'vx') { percSelecionada = pctX; selecaoFinal = 'X'; }
-            else if (p === '2' || p === 'v2') { percSelecionada = pctV2; selecaoFinal = '2'; }
-
-            if (percSelecionada > 0) return testarFightSelectionSingular(selecaoFinal, percSelecionada, oddFormulario);
-            return null;
-        }
-
-        function avaliarResultadoFinal(selecao, gA, gB) {
-            if (isNaN(gA) || isNaN(gB)) return 'pendente';
-            if (selecao === '1') return gA > gB ? 'ganha' : 'perdida';
-            if (selecao === 'X') return gA === gB ? 'ganha' : 'perdida';
-            if (selecao === '2') return gA < gB ? 'ganha' : 'perdida';
-            return 'pendente';
         }
 
         function avaliarPrevisaoIndividualmente(previsao, golosA, golosB, estadoGeral) {
@@ -242,34 +268,12 @@
             let lucroTotalUnidades = 0, stakeTotal = 0;
             let datasValidas = [];
 
+            // Reiniciar Agrupamentos
             agrupamentosGlobais = { diaria: {}, semanal: {}, mensal: {}, anual: {} };
 
             jogosValidos.forEach(j => {
                 const dataEvento = j.dataEvento; 
                 if (dataEvento) datasValidas.push(new Date(dataEvento));
-
-                let keysForGame = {};
-                if (dataEvento && dataEvento.length >= 10) {
-                    keysForGame = {
-                        diaria: dataEvento,
-                        semanal: getWeekYear(dataEvento),
-                        mensal: dataEvento.substring(0, 7),
-                        anual: dataEvento.substring(0, 4)
-                    };
-                    
-                    // Inicializar objetos p/ garantir que não há erros na hora de mapear nos gráficos
-                    Object.keys(keysForGame).forEach(periodo => {
-                        const chave = keysForGame[periodo];
-                        if (!agrupamentosGlobais[periodo][chave]) {
-                            agrupamentosGlobais[periodo][chave] = { 
-                                total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0,
-                                fs_low: { lucro: 0, volume: 0 },
-                                fs_medium: { lucro: 0, volume: 0 },
-                                fs_high: { lucro: 0, volume: 0 }
-                            };
-                        }
-                    });
-                }
 
                 const subApostas = [];
                 if (j.previsaoSimples) subApostas.push({ tipo: 'simples', previsao: j.previsaoSimples, odd: parseFloat(j.oddSimples || j.odd || 0) });
@@ -278,7 +282,6 @@
                     subApostas.push({ tipo: 'fallback', previsao: '', odd: parseFloat(j.odd || 0), estadoForçado: j.estadoAposta });
                 }
 
-                // 1. Processamento Estatísticas Gerais
                 subApostas.forEach(sa => {
                     let estadoFinal = sa.estadoForçado || avaliarPrevisaoIndividualmente(sa.previsao, j.resGolosA, j.resGolosB, j.estadoAposta);
                     if (estadoFinal !== 'ganha' && estadoFinal !== 'perdida') return;
@@ -293,9 +296,19 @@
                     lucroTotalUnidades += ganhoNoJogo;
                     stakeTotal += stakeNoJogo;
 
-                    if (Object.keys(keysForGame).length > 0) {
-                        Object.keys(keysForGame).forEach(periodo => {
-                            const chave = keysForGame[periodo];
+                    if (dataEvento && dataEvento.length >= 10) {
+                        const chaves = {
+                            diaria: dataEvento,
+                            semanal: getWeekYear(dataEvento),
+                            mensal: dataEvento.substring(0, 7),
+                            anual: dataEvento.substring(0, 4)
+                        };
+
+                        Object.keys(chaves).forEach(periodo => {
+                            const chave = chaves[periodo];
+                            if (!agrupamentosGlobais[periodo][chave]) {
+                                agrupamentosGlobais[periodo][chave] = { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 };
+                            }
                             agrupamentosGlobais[periodo][chave].total++;
                             if (estadoFinal === 'ganha') agrupamentosGlobais[periodo][chave].ganhas++;
                             if (estadoFinal === 'perdida') agrupamentosGlobais[periodo][chave].perdidas++;
@@ -304,35 +317,6 @@
                         });
                     }
                 });
-
-                // 2. Processamento Dinâmico Fight Selection
-                let fsData = calcularFightSelectionOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2) || 
-                             calcularFightSelectionOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
-
-                if (fsData && Object.keys(keysForGame).length > 0) {
-                    let estadoFS = 'pendente';
-                    if (j.estadoAposta === 'ganha' || j.estadoAposta === 'perdida') {
-                        const gA = parseInt(j.resGolosA); 
-                        const gB = parseInt(j.resGolosB);
-                        if (!isNaN(gA) && !isNaN(gB)) {
-                            estadoFS = avaliarResultadoFinal(fsData.selecao, gA, gB);
-                        } else {
-                            estadoFS = j.estadoAposta;
-                        }
-                    }
-
-                    if (estadoFS === 'ganha' || estadoFS === 'perdida') {
-                        let ganhoFS = estadoFS === 'ganha' ? (fsData.odd - 1) : -1;
-                        Object.keys(keysForGame).forEach(periodo => {
-                            const chave = keysForGame[periodo];
-                            const targetFS = agrupamentosGlobais[periodo][chave][`fs_${fsData.cat}`];
-                            if (targetFS) {
-                                targetFS.volume++;
-                                targetFS.lucro += ganhoFS;
-                            }
-                        });
-                    }
-                }
             });
 
             const winRate = totalApostasContadas > 0 ? (ganhasContadas / totalApostasContadas) * 100 : 0;
@@ -341,9 +325,10 @@
             let ultimaAtualizacaoStr = "N/D";
             if (datasValidas.length > 0) {
                 const ultimaData = new Date(Math.max(...datasValidas));
-                ultimaAtualizacaoStr = ultimaData.toLocaleDateString('pt-PT');
+                ultimaAtualizacaoStr = ultimaData.toLocaleDateString(idiomaAtual === 'pt' ? 'pt-PT' : (idiomaAtual === 'en' ? 'en-US' : 'ne-NP'));
             }
 
+            // Atualizar UI dos Cartões
             document.getElementById('stat-total').innerText = totalApostasContadas;
             document.getElementById('stat-ganhas').innerText = ganhasContadas;
             document.getElementById('stat-perdidas').innerText = perdidasContadas;
@@ -382,7 +367,7 @@
             document.getElementById('th-lucro').innerText = t.lucro;
 
             const dadosTabela = agrupamentosGlobais[filtroPeriodoTabela];
-            const periodosOrdenados = Object.keys(dadosTabela).sort().reverse(); 
+            const periodosOrdenados = Object.keys(dadosTabela).sort().reverse(); // Do mais recente para o mais antigo (tabela)
 
             if (periodosOrdenados.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="empty-table">${t.semDados}</td></tr>`;
@@ -419,6 +404,7 @@
 
         function renderizarGraficos() {
             const dados = agrupamentosGlobais[filtroPeriodoGraficos];
+            // Para gráficos é melhor a ordem cronológica (mais antigo para mais recente)
             const periodosOrdenados = Object.keys(dados).sort();
 
             const labels = periodosOrdenados;
@@ -426,10 +412,6 @@
             const dataRoi = [];
             const dataLucro = [];
             const dataVolume = [];
-
-            const dataLowFS = [];
-            const dataMediumFS = [];
-            const dataHighFS = [];
 
             periodosOrdenados.forEach(chave => {
                 const d = dados[chave];
@@ -440,23 +422,12 @@
                 dataRoi.push(r.toFixed(2));
                 dataLucro.push(d.lucro.toFixed(2));
                 dataVolume.push(d.total);
-                
-                // Mapeamento real dos lucros de Fight Selection extraídos dinamicamente da DB
-                dataLowFS.push(d.fs_low ? d.fs_low.lucro.toFixed(2) : 0);
-                dataMediumFS.push(d.fs_medium ? d.fs_medium.lucro.toFixed(2) : 0); 
-                dataHighFS.push(d.fs_high ? d.fs_high.lucro.toFixed(2) : 0); 
             });
 
-            if (tipoGraficoAtual === 'geral') {
-                atualizarCriarGrafico('chartAcerto', traducoes[idiomaAtual].acerto, labels, dataAcerto, '#3b82f6');
-                atualizarCriarGrafico('chartRoi', traducoes[idiomaAtual].roi, labels, dataRoi, '#10b981');
-                atualizarCriarGrafico('chartLucro', traducoes[idiomaAtual].lucro, labels, dataLucro, '#f59e0b');
-                atualizarCriarGrafico('chartVolume', traducoes[idiomaAtual].apostas, labels, dataVolume, '#8b5cf6');
-            } else {
-                atualizarCriarGrafico('chartLowFS', 'Lucro Low FS (Laranja)', labels, dataLowFS, '#f97316');
-                atualizarCriarGrafico('chartMediumFS', 'Lucro Medium FS (Amarelas)', labels, dataMediumFS, '#eab308');
-                atualizarCriarGrafico('chartHighFS', 'Lucro High FS (Verdes)', labels, dataHighFS, '#22c55e');
-            }
+            atualizarCriarGrafico('chartAcerto', traducoes[idiomaAtual].acerto, labels, dataAcerto, '#3b82f6');
+            atualizarCriarGrafico('chartRoi', traducoes[idiomaAtual].roi, labels, dataRoi, '#10b981');
+            atualizarCriarGrafico('chartLucro', traducoes[idiomaAtual].lucro, labels, dataLucro, '#f59e0b');
+            atualizarCriarGrafico('chartVolume', traducoes[idiomaAtual].apostas, labels, dataVolume, '#8b5cf6');
         }
 
         function atualizarCriarGrafico(idCanvas, labelName, labels, data, color) {
@@ -475,7 +446,7 @@
                         label: labelName,
                         data: data,
                         borderColor: color,
-                        backgroundColor: color + '20', 
+                        backgroundColor: color + '20', // Opacidade
                         borderWidth: 3,
                         pointBackgroundColor: '#fff',
                         pointBorderColor: color,
@@ -542,26 +513,11 @@
             renderizarGraficos();
         }
 
-        // Tipo de Visão dos Gráficos (Geral vs Fight Selection)
-        window.mudarTipoGraficosApresentar = function(tipo) {
-            tipoGraficoAtual = tipo;
-            const gridGeral = document.getElementById('grid-graficos-geral');
-            const gridFS = document.getElementById('grid-graficos-fight-selection');
-            
-            if(tipo === 'geral') {
-                gridGeral.style.display = 'grid';
-                gridFS.style.display = 'none';
-            } else {
-                gridGeral.style.display = 'none';
-                gridFS.style.display = 'grid';
-            }
-            renderizarGraficos();
-        }
-
         window.calcularInvestimento = calcularInvestimento;
     </script>
 
     <style>
+        /* ===== Estilo e Identidade Visual BetFighter ===== */
         :root {
             --brand-green: #22c55e;
             --brand-dark: #0f172a;
@@ -611,6 +567,7 @@
             padding: 0 20px;
         }
 
+        /* FLEX CONTAINER GERAL PARA SLOGAN E TÍTULO */
         .header-slogan-container {
             display: flex;
             align-items: center;
@@ -619,16 +576,25 @@
             margin-bottom: 25px;
         }
 
-        .brand-logo-img {
-            height: 90px;
-            max-width: 100%;
-            object-fit: contain;
-            display: block;
-            transition: transform 0.2s ease;
+        .slogan-box {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, var(--brand-green), #16a34a);
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: white;
+            font-weight: 900;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-
-        .brand-logo-img:hover {
-            transform: scale(1.05);
+        
+        .slogan-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(34, 197, 94, 0.4);
+            color: white;
         }
 
         .section-header-flex {
@@ -638,12 +604,6 @@
             margin-bottom: 25px;
             flex-wrap: wrap;
             gap: 15px;
-        }
-        
-        .controls-flex {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
         }
 
         .section-title {
@@ -721,6 +681,7 @@
         .stat-value.positive { color: #10b981; }
         .stat-value.negative { color: #ef4444; }
 
+        /* GRID PARA GRÁFICOS */
         .charts-grid-container {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -821,8 +782,7 @@
 
         @media (max-width: 600px) {
             .navbar { padding: 12px 15px; }
-            .controls-flex { flex-direction: column; width: 100%; gap: 10px; }
-            .select-periodo { width: 100%; }
+            .slogan-box { width: 100%; justify-content: center; font-size: 1.2rem; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
             .stats-grid .stat-card-premium:last-child { grid-column: span 2; }
             .stat-value { font-size: 1.4rem; }
@@ -843,9 +803,12 @@
 
     <div class="page-container">
 
+        <!-- LINK DA GESTÃO E TÍTULO PRINCIPAL (Ao Lado Esquerdo) -->
         <div class="header-slogan-container">
-            <a href="index.html" id="link-logotipo-gestao">
-                <img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="BetFighter Logo" class="brand-logo-img">
+            <!-- Insira aqui o Link da app de gestão no atributo href -->
+            <a href="#" class="slogan-box" id="link-logotipo-gestao">
+                <i class="fa-solid fa-bolt" style="margin-right: 8px;"></i>
+                <span id="slogan-text">PLATAFORMA DE PALPITES</span>
             </a>
             
             <h2 class="section-title"><i class="fa-solid fa-chart-simple"></i> <span id="txtDesempenhoGeral">Desempenho Geral</span></h2>
@@ -882,38 +845,26 @@
             </div>
         </div>
 
+        <!-- SECÇÃO: Gráficos Dinâmicos -->
         <div class="section-header-flex">
             <h2 class="section-title"><i class="fa-solid fa-chart-line"></i> <span id="txtGraficos">Gráficos de Evolução</span></h2>
-            
-            <div class="controls-flex">
-                <select class="select-periodo" onchange="mudarTipoGraficosApresentar(this.value)">
-                    <option value="geral" selected>Geral</option>
-                    <option value="fight_selection">Fight Selection</option>
-                </select>
-                
-                <select class="select-periodo" onchange="mudarFiltroGraficos(this.value)">
-                    <option value="semanal" id="optGrafSemanal">Gráfico Semanal</option>
-                    <option value="mensal" id="optGrafMensal" selected>Gráfico Mensal</option>
-                    <option value="anual" id="optGrafAnual">Gráfico Anual</option>
-                </select>
-            </div>
+            <select class="select-periodo" onchange="mudarFiltroGraficos(this.value)">
+                <option value="semanal" id="optGrafSemanal">Gráfico Semanal</option>
+                <option value="mensal" id="optGrafMensal" selected>Gráfico Mensal</option>
+                <option value="anual" id="optGrafAnual">Gráfico Anual</option>
+            </select>
         </div>
 
-        <div class="charts-grid-container" id="grid-graficos-geral">
+        <div class="charts-grid-container">
             <div class="chart-box"><canvas id="chartAcerto"></canvas></div>
             <div class="chart-box"><canvas id="chartRoi"></canvas></div>
             <div class="chart-box"><canvas id="chartLucro"></canvas></div>
             <div class="chart-box"><canvas id="chartVolume"></canvas></div>
         </div>
 
-        <div class="charts-grid-container" id="grid-graficos-fight-selection" style="display: none;">
-            <div class="chart-box"><canvas id="chartLowFS"></canvas></div>
-            <div class="chart-box"><canvas id="chartMediumFS"></canvas></div>
-            <div class="chart-box"><canvas id="chartHighFS"></canvas></div>
-        </div>
-
         <div class="layout-grid">
             
+            <!-- SECÇÃO: Tabela Histórico -->
             <div>
                 <div class="section-header-flex">
                     <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i> <span id="txtHistorico">Histórico</span></h2>
@@ -946,6 +897,7 @@
                 </div>
             </div>
 
+            <!-- SECÇÃO: Simulador -->
             <div>
                 <div class="section-header-flex">
                     <h2 class="section-title"><i class="fa-solid fa-calculator"></i> <span id="txtSimulador">Simulador</span></h2>
