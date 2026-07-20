@@ -315,104 +315,7 @@
             return `${dia}/${mes}/${ano} ${lang.as} ${hora}:${min}`;
         }
 
-        // ===== CÁLCULO OCULTO DE VALUED BETS =====
-
-        // Função auxiliar para testar e calcular a margem de uma única seleção cruzada com a odd correspondente
-        function testarValueBetSingular(selecao, percentagem, oddStr) {
-            const o = parseFloat(oddStr);
-            // A ODD TEM QUE SER A PARTIR DE 1.99
-            if (isNaN(o) || o < 1.99) return null;
-
-            const percDec = parseFloat(percentagem) / 100;
-            if (isNaN(percDec) || percDec <= 0) return null;
-
-            const probImplicita = 1 / o;
-            const edge = percDec - probImplicita;
-
-            if (edge > 0) {
-                let confianca = Math.min((edge * 2) * 100, 95);
-                let cor = '';
-                
-                if (confianca >= 0.1 && confianca <= 15.99) {
-                    cor = '#f97316'; 
-                } else if (confianca >= 16 && confianca <= 26.99) {
-                    cor = '#eab308'; 
-                } else if (confianca >= 27) {
-                    cor = '#22c55e'; 
-                } else {
-                    cor = '#64748b'; 
-                }
-                
-                return {
-                    margem: (edge * 100).toFixed(2),
-                    confianca: confianca.toFixed(0),
-                    cor: cor,
-                    selecao: selecao.toUpperCase(),
-                    edge: edge // guardamos o edge puro para possíveis desempates
-                };
-            }
-            return null;
-        }
-
-        // Função para comparar e extrair a melhor value bet (caso existam duas)
-        function extrairMelhorValueBet(r1, r2) {
-            if (r1 && r2) {
-                return (r1.edge > r2.edge) ? r1 : r2;
-            }
-            return r1 || r2 || null;
-        }
-
-        function calcularValueBetOculta(previsao, oddFormulario, pctV1, pctX, pctV2, oddV1, oddX, oddV2) {
-            if (!previsao) return null;
-            let p = previsao.toLowerCase().trim();
-            
-            let r1 = null;
-            let r2 = null;
-
-            // ===== TRATAMENTO PARA DUPLA HIPÓTESE =====
-            // Se for dupla hipótese, ignora a 'oddFormulario' submetida e verifica 
-            // exclusivamente qual das correspondentes odds base tem value bet.
-            if (p === '1x' || p === 'v1x' || p === '1x2') {
-                r1 = testarValueBetSingular('1', pctV1, oddV1);
-                r2 = testarValueBetSingular('X', pctX, oddX);
-                return extrairMelhorValueBet(r1, r2);
-            } 
-            else if (p === '2x' || p === 'v2x' || p === 'x2') {
-                r1 = testarValueBetSingular('2', pctV2, oddV2);
-                r2 = testarValueBetSingular('X', pctX, oddX);
-                return extrairMelhorValueBet(r1, r2);
-            } 
-            else if (p === '12' || p === 'v12') {
-                r1 = testarValueBetSingular('1', pctV1, oddV1);
-                r2 = testarValueBetSingular('2', pctV2, oddV2);
-                return extrairMelhorValueBet(r1, r2);
-            }
-
-            // ===== TRATAMENTO PARA PALPITES SIMPLES (1, X, 2) =====
-            let percSelecionada = 0;
-            let selecaoFinal = p;
-
-            if (p === '1' || p === 'v1') { 
-                percSelecionada = pctV1; 
-                selecaoFinal = '1'; 
-            }
-            else if (p === 'x' || p === 'vx') { 
-                percSelecionada = pctX; 
-                selecaoFinal = 'X'; 
-            }
-            else if (p === '2' || p === 'v2') { 
-                percSelecionada = pctV2; 
-                selecaoFinal = '2'; 
-            }
-
-            if (percSelecionada > 0) {
-                // Sendo aposta simples, utiliza a odd submetida no formulário
-                return testarValueBetSingular(selecaoFinal, percSelecionada, oddFormulario);
-            }
-            
-            return null;
-        }
-
+        // ===== CORRIGIDA: NOVA FUNÇÃO DE VALIDAÇÃO INDIVIDUAL COM SUPORTE A OVER/UNDER =====
         function avaliarPrevisaoIndividualmente(previsao, golosA, golosB, estadoGeral) {
             if (golosA === undefined || golosB === undefined || golosA === '' || golosB === '') {
                 return estadoGeral || 'pendente';
@@ -424,6 +327,7 @@
             const p = previsao.toLowerCase().trim();
             const totalGolos = gA + gB;
 
+            // 1. Validação de Mercados Tradicionais 1X2 e Dupla Possibilidade
             if (p === 'v1' || p === '1') return gA > gB ? 'ganha' : 'perdida';
             if (p === 'vx' || p === 'x') return gA === gB ? 'ganha' : 'perdida';
             if (p === 'v2' || p === '2') return gA < gB ? 'ganha' : 'perdida';
@@ -431,8 +335,10 @@
                 if (p === '12') return gA !== gB ? 'ganha' : 'perdida';
                 return gA >= gB ? 'ganha' : 'perdida';
             }
-            if (p === '2x' || p === 'v2x' || p === 'x2') return gA <= gB ? 'ganha' : 'perdida';
+            if (p === '2x' || p === 'v2x') return gA <= gB ? 'ganha' : 'perdida';
 
+            // 2. Validação de Mercados de Golos (Over / Under)
+            // Deteta termos como: "over 2.5", "under 1.5", "o2.5", "u3.5", "acima de 2.5", "abaixo 0.5"
             const numMatch = p.match(/[\d.]+/);
             if (numMatch) {
                 const linhaGolos = parseFloat(numMatch[0]);
@@ -576,6 +482,22 @@
             let imagemDireitaMobile = b.direitoMobImg || b.esquerdoMobImg || "imagens/banner_esquerdo_mobile.png";
             let linkDireito = b.direitoLink || "https://22bet4me.com?bf=9c0edc58d75d4_464354407";
 
+            if (idiomaAtual === 'en') {
+                if (b.esquerdoImgEn) imagemLateralDesktop = b.esquerdoImgEn;
+                if (b.esquerdoMobImgEn) imagemLateralMobile = b.esquerdoMobImgEn;
+                if (b.esquerdoLinkEn) linkLateral = b.esquerdoLinkEn;
+                if (b.direitoImgEn) imagemDireitaDesktop = b.direitoImgEn;
+                if (b.direitoMobImgEn) imagemDireitaMobile = b.direitoMobImgEn;
+                if (b.direitoLinkEn) linkDireito = b.direitoLinkEn;
+            } else if (idiomaAtual === 'nep') {
+                if (b.esquerdoImgNep) imagemLateralDesktop = b.esquerdoImgNep;
+                if (b.esquerdoMobImgNep) imagemLateralMobile = b.esquerdoMobImgNep;
+                if (b.esquerdoLinkNep) linkLateral = b.esquerdoLinkNep;
+                if (b.direitoImgNep) imagemDireitaDesktop = b.direitoImgNep;
+                if (b.direitoMobImgNep) imagemDireitaMobile = b.direitoMobImgNep;
+                if (b.direitoLinkNep) linkDireito = b.direitoLinkNep;
+            }
+
             let htmlLista = `
                 <div class="brand-title-container">
                     <h1 class="brand-title"><span class="brand-green">BET</span><span class="brand-black">FIGHTER</span></h1>
@@ -634,8 +556,12 @@
                         const resultadoFinalStr = (valGolasA !== '' && valGolasB !== '') ? `${valGolasA} - ${valGolasB}` : 'vs';
                         
                         let corPrevisaoClass = j.estadoAposta || 'pendente';
+
+                        // Cálculo individualizado para cada badge
                         let corSimplesClass = j.previsaoSimples ? avaliarPrevisaoIndividualmente(j.previsaoSimples, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
                         let corSugestaoClass = j.previsaoSugestao ? avaliarPrevisaoIndividualmente(j.previsaoSugestao, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
+                        
+                        // CORRIGIDO: Validação dinâmica específica para a caixa de Tendência Over/Under
                         let corOUClass = j.overUnder ? avaliarPrevisaoIndividualmente(j.overUnder, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
 
                         const pV1 = j.pctV1 !== undefined && j.pctV1 !== '' ? `${j.pctV1}%` : '0%';
@@ -643,31 +569,8 @@
                         const pV2 = j.pctV2 !== undefined && j.pctV2 !== '' ? `${j.pctV2}%` : '0%';
                         const xgVal = j.xg !== undefined && j.xg !== '' ? `${Number(j.xg).toFixed(2)}` : '-';
                         const ouVal = j.overUnder || '-';
-                        
-                        const oddV1_disp = j.oddV1 ? j.oddV1 : '-';
-                        const oddX_disp = j.oddX ? j.oddX : '-';
-                        const oddV2_disp = j.oddV2 ? j.oddV2 : '-';
 
-                        // ===== ADICIONADO O ENVIO DAS ODDS BASE =====
-                        let vbSimples = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
-                        let vbSugestao = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
-                        
-                        let valuedBetCalculada = vbSugestao || vbSimples; 
-                        let badgeValuedBet = '';
-
-                        if (valuedBetCalculada) {
-                            badgeValuedBet = `
-                                <div class="pred-item" style="border: 2px solid ${valuedBetCalculada.cor}; background-color: #f8fafc;">
-                                    <span class="pred-lbl" style="color: ${valuedBetCalculada.cor}; display: flex; align-items: center; gap: 6px; font-weight: 900;">
-                                        <img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="BF" style="width: 26px; height: 26px; object-fit: contain;"> 
-                                        FIGHT SELECTED
-                                    </span>
-                                    <span class="badge-type" style="color: ${valuedBetCalculada.cor};">${valuedBetCalculada.selecao}</span>
-                                    <span class="odd-lbl" style="color: ${valuedBetCalculada.cor}; font-size: 0.75rem;">Conf: ${valuedBetCalculada.confianca}%</span>
-                                </div>
-                            `;
-                        }
-
+                        // Previsão Simples
                         let badgeSimples = '';
                         if (j.previsaoSimples) {
                             badgeSimples = `
@@ -678,6 +581,7 @@
                                 </div>`;
                         }
 
+                        // Previsão Sugestão / Combinada
                         let badgeSugestao = '';
                         if (j.previsaoSugestao) {
                             badgeSugestao = `
@@ -704,6 +608,7 @@
                                         <span class="team-name text-left">${j.equipaB}</span>
                                     </div>
                                     
+                                    <!-- Bloco de Estatísticas Avançadas Betanalytics -->
                                     <div class="row-analytics-stats">
                                         <div class="stat-technical-box">
                                             <div class="tech-label">
@@ -721,13 +626,10 @@
                                                 <span class="m-lbl">⚽ Expectativa Gols (xG)</span>
                                                 <span class="m-val">${xgVal}</span>
                                             </div>
+                                            <!-- CORRIGIDO: Agora usa a classe de status individual corOUClass -->
                                             <div class="metric-pill-clean status-${corOUClass}">
                                                 <span class="m-lbl">📈 Tendência Over/Under</span>
                                                 <span class="m-val highlight">${ouVal}</span>
-                                            </div>
-                                            <div class="metric-pill-clean" style="grid-column: span 2; display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
-                                                <span class="m-lbl">📊 Odds Base (1 - X - 2):</span>
-                                                <span class="m-val" style="font-size: 0.8rem;">${oddV1_disp} | ${oddX_disp} | ${oddV2_disp}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -740,7 +642,6 @@
                                 <div class="row-actions-zone-extended">
                                     ${badgeSimples}
                                     ${badgeSugestao}
-                                    ${badgeValuedBet}
                                 </div>
                             </div>
                         `;
@@ -810,6 +711,7 @@
         .liga-header-title { font-size: 0.9rem; font-weight: 800; color: #1e293b; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 2px solid #f1f5f9; letter-spacing: 0.6px; display: flex; align-items: center; }
         .liga-games-wrapper { display: flex; flex-direction: column; gap: 14px; }
         
+        /* NOVO DESIGN DO BOLETIM DE JOGO */
         .public-archive-row { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: stretch; gap: 16px; transition: box-shadow 0.2s ease; }
         .public-archive-row:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04); }
         .public-archive-row.ganha { border-left: 6px solid #10b981; }
@@ -830,6 +732,7 @@
         .team-name.text-left { text-align: left; }
         .score-badge { font-family: 'Courier New', monospace; font-weight: 900; background: #0f172a; color: #22c55e; padding: 4px 12px; border-radius: 8px; font-size: 1.05rem; min-width: 45px; text-align: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         
+        /* DESIGN TÉCNICO DAS ESTATÍSTICAS */
         .row-analytics-stats { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
         .stat-technical-box { display: flex; flex-direction: column; gap: 4px; }
         .tech-label { font-size: 0.68rem; text-transform: uppercase; font-weight: 800; color: #64748b; display: flex; align-items: center; gap: 4px; }
@@ -844,6 +747,7 @@
         .metric-pill-clean .m-lbl { font-size: 0.65rem; color: #64748b; font-weight: 700; }
         .metric-pill-clean .m-val { font-size: 0.85rem; font-weight: 800; color: #0f172a; }
         
+        /* ALTERAÇÃO MUDANÇA DE COR OVER/UNDER DINAMICA */
         .metric-pill-clean.status-ganha { background: #ecfdf5; border-color: #a7f3d0; }
         .metric-pill-clean.status-ganha .m-val { color: #047857; }
         .metric-pill-clean.status-perdida { background: #fef2f2; border-color: #fca5a5; }
@@ -852,18 +756,21 @@
 
         .row-footer-metadata { font-size: 0.68rem; color: #94a3b8; font-weight: 600; display: flex; align-items: center; gap: 4px; }
         
+        /* ALTERAÇÃO DE COR DINAMICA PALPITES SIMPLES/SUGESTAO */
         .row-actions-zone-extended { display: flex; flex-direction: column; gap: 8px; flex: 0.8; justify-content: center; border-left: 1px dashed #cbd5e1; padding-left: 16px; }
         .pred-item { display: flex; flex-direction: column; background: #ffffff; border: 1px solid #cbd5e1; padding: 8px; border-radius: 8px; gap: 4px; }
         .pred-item .pred-lbl { font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; }
         .pred-item .badge-type { font-size: 0.85rem; font-weight: 800; color: #1e293b; }
         .pred-item .odd-lbl { font-family: 'Courier New', monospace; font-size: 0.85rem; font-weight: 800; color: #0f172a; align-self: flex-start; }
         
+        /* Estados Dinâmicos de Cores para as Caixas de Aposta */
         .pred-item.status-ganha { background: #ecfdf5; border-color: #10b981 !important; }
         .pred-item.status-ganha .badge-type, .pred-item.status-ganha .odd-lbl { color: #047857; }
         .pred-item.status-perdida { background: #fef2f2; border-color: #ef4444 !important; }
         .pred-item.status-perdida .badge-type, .pred-item.status-perdida .odd-lbl { color: #b91c1c; }
         .pred-item.status-pendente { background: #ffffff; border-color: #64748b; }
 
+        /* PAINEL DE CONTROLO DE DATAS */
         .date-controls-bar { display: flex; justify-content: space-between; align-items: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
         .date-controls-title { font-size: 0.88rem; color: #334155; font-weight: 600; display: flex; align-items: center; }
         .date-controls-right { display: flex; gap: 8px; align-items: center; }
@@ -872,6 +779,7 @@
         .btn-hoje { background: #0f172a; color: #ffffff; border: none; border-radius: 8px; padding: 7px 14px; font-weight: 800; font-size: 0.8rem; cursor: pointer; transition: background 0.2s; }
         .btn-hoje:hover { background: #22c55e; }
         
+        /* ESTATÍSTICAS DO TOPO */
         .stats-bar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 20px; }
         .stat-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
         .stat-label { font-size: 0.68rem; color: #64748b; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px; }
@@ -883,6 +791,7 @@
         
         .no-games-fallback { background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 40px; text-align: center; color: #64748b; font-size: 0.95rem; font-weight: 600; }
         
+        /* POPUPS & MODAIS */
         .animated-popup-overlay, .modal-overlay-custom { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); z-index: 99999; display: flex; justify-content: center; align-items: center; pointer-events: none; opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(5px); }
         .animated-popup-content { background: #ffffff; padding: 24px 16px 16px 16px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); position: relative; max-width: 360px; width: 90%; transform: translateX(120vw); transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
         .animated-popup-overlay.active, .modal-overlay-custom.active { pointer-events: auto; opacity: 1; }

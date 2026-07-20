@@ -316,19 +316,33 @@
         }
 
         // ===== CÁLCULO OCULTO DE VALUED BETS =====
-
-        // Função auxiliar para testar e calcular a margem de uma única seleção cruzada com a odd correspondente
-        function testarValueBetSingular(selecao, percentagem, oddStr) {
-            const o = parseFloat(oddStr);
-            // A ODD TEM QUE SER A PARTIR DE 1.99
+        function calcularValueBetOculta(previsao, odd, pctV1, pctX, pctV2) {
+            if (!previsao || !odd) return null;
+            const o = parseFloat(odd);
+            
+            // ===== A ODD TEM QUE SER A PARTIR DE 1.99 =====
             if (isNaN(o) || o < 1.99) return null;
 
-            const percDec = parseFloat(percentagem) / 100;
-            if (isNaN(percDec) || percDec <= 0) return null;
-
+            let p1 = parseFloat(pctV1) || 0;
+            let px = parseFloat(pctX) || 0;
+            let p2 = parseFloat(pctV2) || 0;
+            let percSelecionada = 0;
+            
+            let p = previsao.toLowerCase().trim();
+            
+            if (p === '1' || p === 'v1') percSelecionada = p1;
+            else if (p === 'x' || p === 'vx') percSelecionada = px;
+            else if (p === '2' || p === 'v2') percSelecionada = p2;
+            else if (p === '1x' || p === 'v1x' || p === '1x2') percSelecionada = Math.max(p1, px);
+            else if (p === '2x' || p === 'v2x' || p === 'x2') percSelecionada = Math.max(p2, px);
+            else if (p === '12' || p === 'v12') percSelecionada = Math.max(p1, p2);
+            
+            if (percSelecionada <= 0) return null;
+            
+            const percDec = percSelecionada / 100;
             const probImplicita = 1 / o;
             const edge = percDec - probImplicita;
-
+            
             if (edge > 0) {
                 let confianca = Math.min((edge * 2) * 100, 95);
                 let cor = '';
@@ -347,69 +361,9 @@
                     margem: (edge * 100).toFixed(2),
                     confianca: confianca.toFixed(0),
                     cor: cor,
-                    selecao: selecao.toUpperCase(),
-                    edge: edge // guardamos o edge puro para possíveis desempates
+                    selecao: p.toUpperCase()
                 };
             }
-            return null;
-        }
-
-        // Função para comparar e extrair a melhor value bet (caso existam duas)
-        function extrairMelhorValueBet(r1, r2) {
-            if (r1 && r2) {
-                return (r1.edge > r2.edge) ? r1 : r2;
-            }
-            return r1 || r2 || null;
-        }
-
-        function calcularValueBetOculta(previsao, oddFormulario, pctV1, pctX, pctV2, oddV1, oddX, oddV2) {
-            if (!previsao) return null;
-            let p = previsao.toLowerCase().trim();
-            
-            let r1 = null;
-            let r2 = null;
-
-            // ===== TRATAMENTO PARA DUPLA HIPÓTESE =====
-            // Se for dupla hipótese, ignora a 'oddFormulario' submetida e verifica 
-            // exclusivamente qual das correspondentes odds base tem value bet.
-            if (p === '1x' || p === 'v1x' || p === '1x2') {
-                r1 = testarValueBetSingular('1', pctV1, oddV1);
-                r2 = testarValueBetSingular('X', pctX, oddX);
-                return extrairMelhorValueBet(r1, r2);
-            } 
-            else if (p === '2x' || p === 'v2x' || p === 'x2') {
-                r1 = testarValueBetSingular('2', pctV2, oddV2);
-                r2 = testarValueBetSingular('X', pctX, oddX);
-                return extrairMelhorValueBet(r1, r2);
-            } 
-            else if (p === '12' || p === 'v12') {
-                r1 = testarValueBetSingular('1', pctV1, oddV1);
-                r2 = testarValueBetSingular('2', pctV2, oddV2);
-                return extrairMelhorValueBet(r1, r2);
-            }
-
-            // ===== TRATAMENTO PARA PALPITES SIMPLES (1, X, 2) =====
-            let percSelecionada = 0;
-            let selecaoFinal = p;
-
-            if (p === '1' || p === 'v1') { 
-                percSelecionada = pctV1; 
-                selecaoFinal = '1'; 
-            }
-            else if (p === 'x' || p === 'vx') { 
-                percSelecionada = pctX; 
-                selecaoFinal = 'X'; 
-            }
-            else if (p === '2' || p === 'v2') { 
-                percSelecionada = pctV2; 
-                selecaoFinal = '2'; 
-            }
-
-            if (percSelecionada > 0) {
-                // Sendo aposta simples, utiliza a odd submetida no formulário
-                return testarValueBetSingular(selecaoFinal, percSelecionada, oddFormulario);
-            }
-            
             return null;
         }
 
@@ -648,13 +602,13 @@
                         const oddX_disp = j.oddX ? j.oddX : '-';
                         const oddV2_disp = j.oddV2 ? j.oddV2 : '-';
 
-                        // ===== ADICIONADO O ENVIO DAS ODDS BASE =====
-                        let vbSimples = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
-                        let vbSugestao = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
+                        let vbSimples = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2);
+                        let vbSugestao = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2);
                         
                         let valuedBetCalculada = vbSugestao || vbSimples; 
                         let badgeValuedBet = '';
 
+                        // ===== AQUI ESTÁ A ALTERAÇÃO DO ÍCONE CLOUDINARY (TAMANHO E URL) =====
                         if (valuedBetCalculada) {
                             badgeValuedBet = `
                                 <div class="pred-item" style="border: 2px solid ${valuedBetCalculada.cor}; background-color: #f8fafc;">
