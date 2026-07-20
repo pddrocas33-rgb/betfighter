@@ -5,10 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BETFIGHTER - Histórico de Odds</title>
     
-    <!-- Ícone da App (Favicon) para o Navegador e Google -->
-    <link rel="icon" type="image/png" href="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png">
-    <link rel="apple-touch-icon" href="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png">
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
@@ -539,19 +535,7 @@
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f0f4f8; margin: 0; padding: 20px; color: #1e293b; }
         img:not([src]), img[src=""] { opacity: 0 !important; }
         
-        /* === ATUALIZAÇÃO: ABAS SUPERIORES COM LIMITE DE LARGURA === */
-        .top-left-actions-wrapper { 
-            position: fixed; 
-            top: 12px; 
-            left: 12px; 
-            right: 12px; /* Mantém as abas dentro dos limites do ecrã */
-            z-index: 10000; 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            flex-wrap: wrap; 
-        }
-        
+        .top-left-actions-wrapper { position: fixed; top: 12px; left: 12px; z-index: 10000; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .action-button-wrapper { background: #ffffff; padding: 6px 12px; border-radius: 20px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 6px; height: 24px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         .action-button-wrapper a { text-decoration: none; color: #475569; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
         .action-button-wrapper:hover { border-color: #22c55e; background-color: #f0fdf4; transform: translateY(-1px); }
@@ -560,7 +544,7 @@
         .bf-stats-wrapper { border-color: #22c55e; background: #f0fdf4; }
         .bf-stats-wrapper a { color: #15803d; }
         
-        .view-mode-container { max-width: 1280px; margin: 0 auto; padding: 10px; margin-top: 40px; transition: margin-top 0.3s; }
+        .view-mode-container { max-width: 1280px; margin: 0 auto; padding: 10px; margin-top: 40px; }
         .brand-title-container { text-align: center; margin-top: 15px; margin-bottom: 25px; }
         .brand-title { font-size: 3.2rem; font-weight: 950; letter-spacing: -2.5px; margin: 0 0 4px 0; font-style: italic; }
         .brand-green { color: #22c55e; } .brand-black { color: #0f172a; }
@@ -665,23 +649,6 @@
             .games-center-column { grid-row: 1 !important; width: 100% !important; } 
             .public-archive-row { flex-direction: column; align-items: stretch; gap: 14px; } 
             .row-actions-zone-extended { width: 100%; border-left: none; border-top: 1px dashed #cbd5e1; padding-left: 0; padding-top: 12px; flex-direction: row; justify-content: space-between; }
-        }
-
-        /* === ATUALIZAÇÃO: COMPORTAMENTO DAS ABAS NO MOBILE === */
-        @media (max-width: 600px) {
-            .top-left-actions-wrapper {
-                justify-content: center; /* Centraliza no telemóvel */
-                top: 0;
-                left: 0;
-                right: 0;
-                padding: 10px;
-                background-color: rgba(255, 255, 255, 0.95); /* Fundo com leve transparência */
-                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-                backdrop-filter: blur(5px); /* Efeito de desfoque elegante */
-            }
-            .view-mode-container {
-                margin-top: 80px; /* Empurra o conteúdo principal para não ficar escondido pelas abas */
-            }
         }
     </style>
 </head>
