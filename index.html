@@ -2,7 +2,8 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ATUALIZAÇÃO: Bloqueia o zoom automático indesejado nos dispositivos móveis -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BETFIGHTER - Histórico de Odds</title>
     
     <!-- Ícone da App (Favicon) para o Navegador e Google -->
@@ -110,7 +111,6 @@
             let imagemDireitaMobile = b.direitoMobImg || b.esquerdoMobImg || "imagens/banner_esquerdo_mobile.png";
             let linkDireito = b.direitoLink || "https://22bet4me.com?bf=9c0edc58d75d4_464354407";
 
-            // Sobreposições idiomáticas do Firebase
             if (idiomaAtual === 'en') {
                 if (b.topoImgEn) imagemTopo = b.topoImgEn;
                 if (b.topoLinkEn) linkTopo = b.topoLinkEn;
@@ -119,7 +119,6 @@
                 if (b.esquerdoImgEn) imagemLateralDesktop = b.esquerdoImgEn;
                 if (b.esquerdoMobImgEn) imagemLateralMobile = b.esquerdoMobImgEn;
                 if (b.esquerdoLinkEn) linkLateral = b.esquerdoLinkEn;
-                
                 if (b.direitoImgEn) imagemDireitaDesktop = b.direitoImgEn;
                 if (b.direitoMobImgEn) imagemDireitaMobile = b.direitoMobImgEn;
                 if (b.direitoLinkEn) linkDireito = b.direitoLinkEn;
@@ -131,7 +130,6 @@
                 if (b.esquerdoImgNep) imagemLateralDesktop = b.esquerdoImgNep;
                 if (b.esquerdoMobImgNep) imagemLateralMobile = b.esquerdoMobImgNep;
                 if (b.esquerdoLinkNep) linkLateral = b.esquerdoLinkNep;
-                
                 if (b.direitoImgNep) imagemDireitaDesktop = b.direitoImgNep;
                 if (b.direitoMobImgNep) imagemDireitaMobile = b.direitoMobImgNep;
                 if (b.direitoLinkNep) linkDireito = b.direitoLinkNep;
@@ -536,15 +534,21 @@
     </script>
 
     <style>
+        /* ATUALIZAÇÃO GLOBAL: Evita que margens e paddings empurrem o layout para fora do ecrã */
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { 
+            max-width: 100vw; 
+            overflow-x: hidden; /* Corta definitivamente o scroll horizontal indesejado */
+        }
+
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f0f4f8; margin: 0; padding: 20px; color: #1e293b; }
         img:not([src]), img[src=""] { opacity: 0 !important; }
         
-        /* === ATUALIZAÇÃO: ABAS SUPERIORES COM LIMITE DE LARGURA === */
         .top-left-actions-wrapper { 
             position: fixed; 
             top: 12px; 
             left: 12px; 
-            right: 12px; /* Mantém as abas dentro dos limites do ecrã */
+            right: 12px; 
             z-index: 10000; 
             display: flex; 
             align-items: center; 
@@ -667,20 +671,39 @@
             .row-actions-zone-extended { width: 100%; border-left: none; border-top: 1px dashed #cbd5e1; padding-left: 0; padding-top: 12px; flex-direction: row; justify-content: space-between; }
         }
 
-        /* === ATUALIZAÇÃO: COMPORTAMENTO DAS ABAS NO MOBILE === */
+        /* === ATUALIZAÇÃO: Ajustes específicos para telemóveis === */
         @media (max-width: 600px) {
             .top-left-actions-wrapper {
-                justify-content: center; /* Centraliza no telemóvel */
+                justify-content: center;
                 top: 0;
                 left: 0;
                 right: 0;
                 padding: 10px;
-                background-color: rgba(255, 255, 255, 0.95); /* Fundo com leve transparência */
+                background-color: rgba(255, 255, 255, 0.95);
                 box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-                backdrop-filter: blur(5px); /* Efeito de desfoque elegante */
+                backdrop-filter: blur(5px);
             }
             .view-mode-container {
-                margin-top: 80px; /* Empurra o conteúdo principal para não ficar escondido pelas abas */
+                margin-top: 80px; 
+            }
+            
+            /* Correção do problema da secção de Data e botão Hoje */
+            .date-controls-bar {
+                flex-direction: column; /* Empilha os itens verticalmente */
+                align-items: stretch; /* Estica para ocupar a largura toda */
+                gap: 12px;
+            }
+            .date-controls-right {
+                width: 100%;
+                justify-content: space-between; /* Espaça o botão "Hoje" e o input de data */
+            }
+            .date-input, .btn-hoje {
+                flex: 1; /* Faz com que partilhem a largura igualmente */
+                font-size: 16px; /* Tamanho 16px é obrigatório para o iOS não fazer zoom automático! */
+            }
+            
+            .brand-title {
+                font-size: 2.2rem; /* Reduz ligeiramente o título principal para não empurrar a página */
             }
         }
     </style>
