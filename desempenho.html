@@ -41,6 +41,7 @@
                 tabelaDiaria: "Tabela Diária",
                 tabelaMensal: "Tabela Mensal",
                 tabelaAnual: "Tabela Anual",
+                optGrafDiario: "Gráfico Diário",
                 optGrafSemanal: "Gráfico Semanal",
                 optGrafMensal: "Gráfico Mensal",
                 optGrafAnual: "Gráfico Anual",
@@ -81,6 +82,7 @@
                 tabelaDiaria: "Daily Table",
                 tabelaMensal: "Monthly Table",
                 tabelaAnual: "Yearly Table",
+                optGrafDiario: "Daily Chart",
                 optGrafSemanal: "Weekly Chart",
                 optGrafMensal: "Monthly Chart",
                 optGrafAnual: "Yearly Chart",
@@ -121,6 +123,7 @@
                 tabelaDiaria: "दैनिक तालिका",
                 tabelaMensal: "मासिक तालिका",
                 tabelaAnual: "वार्षिक तालिका",
+                optGrafDiario: "दैनिक चार्ट",
                 optGrafSemanal: "साप्ताहिक चार्ट",
                 optGrafMensal: "मासिक चार्ट",
                 optGrafAnual: "वार्षिक चार्ट",
@@ -213,6 +216,7 @@
             document.getElementById('optMensal').innerText = t.tabelaMensal;
             document.getElementById('optAnual').innerText = t.tabelaAnual;
             
+            document.getElementById('optGrafDiario').innerText = t.optGrafDiario;
             document.getElementById('optGrafSemanal').innerText = t.optGrafSemanal;
             document.getElementById('optGrafMensal').innerText = t.optGrafMensal;
             document.getElementById('optGrafAnual').innerText = t.optGrafAnual;
@@ -512,7 +516,14 @@
             const dados = agrupamentosGlobais[filtroPeriodoGraficos];
             const periodosOrdenados = Object.keys(dados).sort();
 
-            const labels = periodosOrdenados;
+            const labels = periodosOrdenados.map(chave => {
+                if (filtroPeriodoGraficos === 'diaria' && chave.length >= 10) {
+                    const [ano, mes, dia] = chave.split('-');
+                    return `${dia}/${mes}/${ano}`;
+                }
+                return chave;
+            });
+
             const dataAcerto = [];
             const dataRoi = [];
             const dataLucro = [];
@@ -998,6 +1009,7 @@
                 </select>
                 
                 <select class="select-periodo" onchange="mudarFiltroGraficos(this.value)">
+                    <option value="diaria" id="optGrafDiario">Gráfico Diário</option>
                     <option value="semanal" id="optGrafSemanal">Gráfico Semanal</option>
                     <option value="mensal" id="optGrafMensal" selected>Gráfico Mensal</option>
                     <option value="anual" id="optGrafAnual">Gráfico Anual</option>
