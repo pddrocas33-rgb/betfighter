@@ -2,17 +2,16 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <!-- ATUALIZAÇÃO: Bloqueia o zoom automático indesejado nos dispositivos móveis -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BETFIGHTER - Histórico de Odds</title>
     
-    <!-- Ícone da App (Favicon) para o Navegador e Google -->
+    <!-- Ícone da App (Favicon) -->
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png">
     <link rel="apple-touch-icon" href="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png">
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, onValue, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCeSB_CWfsuo2QcJR2OM7piQwo8HhZ4fRQ",
@@ -38,15 +37,53 @@
                 palpiteSimples: "Simples",
                 palpiteSugestao: "Sugestão",
                 inserido: "Inserido",
-                as: "às",
-                dataNd: "Data N/D",
-                desempenho: "Desempenho",
-                info: "Info",
+                probabilidades: "Probabilidades (1 X 2)",
+                expGols: "⚽ Exp. Gols",
+                oddsBase: "📊 Odds Base (1 - X - 2):",
                 infoTitle: "Sobre o Betfighter",
                 infoWelcome: "Seja bem-vindo ao <strong>Betfighter</strong>!",
                 infoPhase: "Este projeto encontra-se em <strong>fase inicial de testes e desenvolvimento</strong>. Por este motivo, todo o acesso é <strong>100% livre e gratuito</strong>.",
                 infoPartners: "Estamos abertos a parcerias estratégicas! Se deseja promover a sua marca, entre em contacto connosco:",
-                infoContact: "📧 Contacto: "
+                infoContact: "📧 Contacto: ",
+                carregando: "A carregar linhas do Betfighter..."
+            },
+            en: {
+                subtitle: "The fight against the odds",
+                diaSelecionado: "Selected date:",
+                hoje: "Today",
+                nenhumJogo: "No predictions archived for",
+                outrasLigas: "OTHER LEAGUES",
+                palpiteSimples: "Single",
+                palpiteSugestao: "Suggestion",
+                inserido: "Added",
+                probabilidades: "Probabilities (1 X 2)",
+                expGols: "⚽ Exp. Goals",
+                oddsBase: "📊 Base Odds (1 - X - 2):",
+                infoTitle: "About Betfighter",
+                infoWelcome: "Welcome to <strong>Betfighter</strong>!",
+                infoPhase: "This project is in its <strong>initial testing and development phase</strong>. Access is <strong>100% free</strong>.",
+                infoPartners: "We are open to strategic partnerships! If you want to promote your brand, contact us:",
+                infoContact: "📧 Contact: ",
+                carregando: "Loading Betfighter odds..."
+            },
+            nep: {
+                subtitle: "अड्स विरुद्धको लडाईं",
+                diaSelecionado: "छनोट गरिएको मिति:",
+                hoje: "आज",
+                nenhumJogo: "को लागि कुनै भविष्यवाणीहरू भेटिएन",
+                outrasLigas: "अन्य लिगहरू",
+                palpiteSimples: "सिम्पल",
+                palpiteSugestao: "सुझाव",
+                inserido: "थपिएको",
+                probabilidades: "सम्भावनाहरू (1 X 2)",
+                expGols: "⚽ सम्भावित गोलहरू",
+                oddsBase: "📊 बेस अड्स (1 - X - 2):",
+                infoTitle: "Betfighter को बारेमा",
+                infoWelcome: "<strong>Betfighter</strong> मा स्वागत छ!",
+                infoPhase: "यो परियोजना <strong>प्रारम्भिक परीक्षण र विकास चरणमा</strong> छ। त्यसैले, पहुँच <strong>१००% नि:शुल्क</strong> छ।",
+                infoPartners: "हामी रणनीतिक साझेदारीका लागि खुला छौं! यदि तपाइँ तपाइँको ब्रान्ड प्रवर्द्धन गर्न चाहनुहुन्छ भने, हामीलाई सम्पर्क गर्नुहोस्:",
+                infoContact: "📧 सम्पर्क: ",
+                carregando: "Betfighter अड्स लोड हुँदैछ..."
             }
         };
 
@@ -54,6 +91,7 @@
         let dadosBannersCache = {}; 
         let dataSelecionada = hojeISO();
         let idiomaAtual = 'pt';
+        let unsubscribeJogos = null;
 
         function hojeISO() {
             const d = new Date();
@@ -66,15 +104,36 @@
         window.addEventListener('DOMContentLoaded', () => {
             const langSelect = document.getElementById('langSelect');
             if (langSelect) {
-                const idiomaSalvo = localStorage.getItem('idiomaPreferido') || 'pt';
-                idiomaAtual = idiomaSalvo;
-                langSelect.value = idiomaSalvo;
+                idiomaAtual = localStorage.getItem('idiomaPreferido') || 'pt';
+                langSelect.value = idiomaAtual;
 
                 langSelect.addEventListener('change', (e) => {
                     idiomaAtual = e.target.value;
                     localStorage.setItem('idiomaPreferido', idiomaAtual);
+                    atualizarTextosEstaticos();
                     atualizarBannersDinamicos();
-                    renderizarListaArquivadosPublica(dadosJogosCache);
+                    renderizarJogos();
+                });
+            }
+
+            const datePicker = document.getElementById('datePicker');
+            const btnHoje = document.getElementById('btnHoje');
+            
+            if (datePicker) {
+                datePicker.value = dataSelecionada;
+                datePicker.addEventListener('change', (e) => {
+                    dataSelecionada = e.target.value || hojeISO();
+                    atualizarDataFormatada();
+                    escutarJogosDaData(dataSelecionada);
+                });
+            }
+
+            if (btnHoje) {
+                btnHoje.addEventListener('click', () => {
+                    dataSelecionada = hojeISO();
+                    if (datePicker) datePicker.value = dataSelecionada;
+                    atualizarDataFormatada();
+                    escutarJogosDaData(dataSelecionada);
                 });
             }
             
@@ -96,7 +155,70 @@
                     if (e.target === disclaimerModal) disclaimerModal.classList.remove('active');
                 });
             }
+
+            // Inicialização
+            atualizarTextosEstaticos();
+            atualizarDataFormatada();
+            
+            // Subscrição dos banners
+            onValue(ref(db, "banners"), (snapshot) => {
+                dadosBannersCache = snapshot.val() || {};
+                atualizarBannersDinamicos();
+            });
+
+            // Subscrição dos jogos para a data atual
+            escutarJogosDaData(dataSelecionada);
         });
+
+        function atualizarDataFormatada() {
+            const txtData = document.getElementById('txtDataFormatada');
+            if (txtData) txtData.textContent = formatarDataEvento(dataSelecionada);
+        }
+
+        function atualizarTextosEstaticos() {
+            const lang = traducoes[idiomaAtual] || traducoes['pt'];
+            
+            const elSub = document.getElementById('uiSubtitle');
+            if (elSub) elSub.textContent = lang.subtitle;
+
+            const elDiaLbl = document.getElementById('lblDiaSelecionadoText');
+            if (elDiaLbl) elDiaLbl.textContent = lang.diaSelecionado;
+
+            const elBtnHoje = document.getElementById('btnHoje');
+            if (elBtnHoje) elBtnHoje.textContent = lang.hoje;
+
+            const discHeader = document.querySelector('.disclaimer-title');
+            if (discHeader) discHeader.textContent = lang.infoTitle;
+
+            const discBody = document.querySelector('.disclaimer-body');
+            if (discBody) {
+                discBody.innerHTML = `
+                    <p>${lang.infoWelcome}</p>
+                    <p>${lang.infoPhase}</p>
+                    <p>${lang.infoPartners}</p>
+                    <p>${lang.infoContact} <a href="mailto:suporte@bet-fighter.com">suporte@bet-fighter.com</a></p>
+                `;
+            }
+        }
+
+        function escutarJogosDaData(dataStr) {
+            if (unsubscribeJogos) {
+                unsubscribeJogos();
+                unsubscribeJogos = null;
+            }
+
+            const lang = traducoes[idiomaAtual] || traducoes['pt'];
+            const containerCenter = document.getElementById('gamesCenterColumn');
+            if (containerCenter) {
+                containerCenter.innerHTML = `<p style="text-align: center; color: #64748b; font-size: 0.9rem;">${lang.carregando}</p>`;
+            }
+
+            const q = query(ref(db, "jogos"), orderByChild("dataEvento"), equalTo(dataStr));
+            unsubscribeJogos = onValue(q, (snapshot) => {
+                dadosJogosCache = snapshot.val() || {};
+                renderizarJogos();
+            });
+        }
 
         function atualizarBannersDinamicos() {
             const b = dadosBannersCache;
@@ -185,17 +307,6 @@
                 configurarProximoBanner();
             }
         }
-
-        onValue(ref(db, "jogos"), (snapshot) => {
-            const dadosJogos = snapshot.val() || {};
-            dadosJogosCache = dadosJogos;
-            renderizarListaArquivadosPublica(dadosJogos);
-        });
-
-        onValue(ref(db, "banners"), (snapshot) => {
-            dadosBannersCache = snapshot.val() || {};
-            atualizarBannersDinamicos();
-        });
 
         function formatarDataEvento(strData) {
             if(!strData) return "Data N/D";
@@ -303,14 +414,21 @@
             return estadoGeral || 'pendente';
         }
 
-        function renderizarListaArquivadosPublica(dadosJogos) {
-            const containerPublico = document.getElementById('publicGameViewer');
-            const lang = traducoes['pt'];
+        function renderizarJogos() {
+            const container = document.getElementById('gamesCenterColumn');
+            if (!container) return;
+
+            const lang = traducoes[idiomaAtual] || traducoes['pt'];
+            const todosJogosArr = Object.keys(dadosJogosCache).map(key => ({ key, ...dadosJogosCache[key] }));
             
-            const todosJogosArr = Object.keys(dadosJogos).map(key => ({ key, ...dadosJogos[key] }));
             const jogosArquivados = todosJogosArr
-                .filter(j => j.arquivado && j.dataEvento === dataSelecionada)
+                .filter(j => j.arquivado)
                 .sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+
+            if (jogosArquivados.length === 0) {
+                container.innerHTML = `<div class="no-games-fallback">${lang.nenhumJogo} ${formatarDataEvento(dataSelecionada)}.</div>`;
+                return;
+            }
 
             const gruposPorLiga = {};
             jogosArquivados.forEach(j => {
@@ -319,226 +437,133 @@
                 gruposPorLiga[nomeLiga].push(j);
             });
 
-            const b = dadosBannersCache;
-            let imagemTopo = b.topoImg || "imagens/banner_topo_novo.png"; 
-            let linkTopo = b.topoLink || "mailto:suporte@bet-fighter.com";
-            let imagemLateralDesktop = b.esquerdoImg || "imagens/banner_esquerdo.png";
-            let imagemLateralMobile = b.esquerdoMobImg || "imagens/banner_esquerdo_mobile.png";
-            let linkLateral = b.esquerdoLink || "https://22bet4me.com?bf=9c0edc58d75d4_464354407";
-            let imagemDireitaDesktop = b.direitoImg || "imagens/banner_esquerdo.png"; 
-            let imagemDireitaMobile = b.direitoMobImg || b.esquerdoMobImg || "imagens/banner_esquerdo_mobile.png";
-            let linkDireito = b.direitoLink || "https://22bet4me.com?bf=9c0edc58d75d4_464354407";
+            let htmlLista = '';
+            Object.keys(gruposPorLiga).forEach(nomeLiga => {
+                htmlLista += `
+                    <div class="liga-section-container">
+                        <div class="liga-header-title">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                            ${nomeLiga}
+                        </div>
+                        <div class="liga-games-wrapper">
+                `;
 
-            if (idiomaAtual === 'en') {
-                if (b.topoImgEn) imagemTopo = b.topoImgEn;
-                if (b.topoLinkEn) linkTopo = b.topoLinkEn;
-                if (b.esquerdoImgEn) imagemLateralDesktop = b.esquerdoImgEn;
-                if (b.esquerdoMobImgEn) imagemLateralMobile = b.esquerdoMobImgEn;
-                if (b.esquerdoLinkEn) linkLateral = b.esquerdoLinkEn;
-                if (b.direitoImgEn) imagemDireitaDesktop = b.direitoImgEn;
-                if (b.direitoMobImgEn) imagemDireitaMobile = b.direitoMobImgEn;
-                if (b.direitoLinkEn) linkDireito = b.direitoLinkEn;
-            } else if (idiomaAtual === 'nep') {
-                if (b.topoImgNep) imagemTopo = b.topoImgNep;
-                if (b.topoLinkNep) linkTopo = b.topoLinkNep;
-                if (b.esquerdoImgNep) imagemLateralDesktop = b.esquerdoImgNep;
-                if (b.esquerdoMobImgNep) imagemLateralMobile = b.esquerdoMobImgNep;
-                if (b.esquerdoLinkNep) linkLateral = b.esquerdoLinkNep;
-                if (b.direitoImgNep) imagemDireitaDesktop = b.direitoImgNep;
-                if (b.direitoMobImgNep) imagemDireitaMobile = b.direitoMobImgNep;
-                if (b.direitoLinkNep) linkDireito = b.direitoLinkNep;
-            }
+                gruposPorLiga[nomeLiga].forEach(j => {
+                    const valGolasA = j.resGolosA !== undefined ? j.resGolosA : '';
+                    const valGolasB = j.resGolosB !== undefined ? j.resGolosB : '';
+                    const dataJogoFormatada = formatarDataEvento(j.dataEvento);
+                    const dataInsercaoFormatada = formatarDataInsercao(j.criadoEm);
+                    const resultadoFinalStr = (valGolasA !== '' && valGolasB !== '') ? `${valGolasA} - ${valGolasB}` : 'vs';
+                    
+                    let corPrevisaoClass = j.estadoAposta || 'pendente';
+                    let corSimplesClass = j.previsaoSimples ? avaliarPrevisaoIndividualmente(j.previsaoSimples, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
+                    let corSugestaoClass = j.previsaoSugestao ? avaliarPrevisaoIndividualmente(j.previsaoSugestao, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
+                    let corOUClass = j.overUnder ? avaliarPrevisaoIndividualmente(j.overUnder, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
 
-            let htmlLista = `
-                <div class="brand-title-container">
-                    <h1 class="brand-title"><span class="brand-green">BET</span><span class="brand-black">FIGHTER</span></h1>
-                    <div class="brand-subtitle">${lang.subtitle}</div>
-                </div>
+                    const pV1 = j.pctV1 !== undefined && j.pctV1 !== '' ? `${j.pctV1}%` : '0%';
+                    const pX = j.pctX !== undefined && j.pctX !== '' ? `${j.pctX}%` : '0%';
+                    const pV2 = j.pctV2 !== undefined && j.pctV2 !== '' ? `${j.pctV2}%` : '0%';
+                    const xgVal = j.xg !== undefined && j.xg !== '' ? `${Number(j.xg).toFixed(2)}` : '-';
+                    const ouVal = j.overUnder || '-';
+                    const oddV1_disp = j.oddV1 || '-';
+                    const oddX_disp = j.oddX || '-';
+                    const oddV2_disp = j.oddV2 || '-';
 
-                <div class="top-hero-banner-container">
-                    <a href="${linkTopo}" id="anchorBannerTopo" target="_blank" class="topo-banner-link">
-                        <img src="${imagemTopo}" id="imgBannerTopo" alt="Betfighter Banner">
-                    </a>
-                </div>
+                    let vbSimples = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
+                    let vbSugestao = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
+                    let valuedBetCalculada = vbSugestao || vbSimples; 
+                    let badgeValuedBet = '';
 
-                <div class="date-controls-bar">
-                    <div class="date-controls-left">
-                        <span class="date-controls-title">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                            ${lang.diaSelecionado} <strong>${formatarDataEvento(dataSelecionada)}</strong>
-                        </span>
-                    </div>
-                    <div class="date-controls-right">
-                        <button id="btnHoje" class="btn-hoje" type="button">${lang.hoje}</button>
-                        <input id="datePicker" type="date" class="date-input" />
-                    </div>
-                </div>
-
-                <div class="main-layout-wrapper">
-                    <a href="${linkLateral}" target="_blank" class="sidebar-banner banner-pos-left">
-                        <img src="${imagemLateralDesktop}" alt="" class="img-desktop">
-                        <img src="${imagemLateralMobile}" alt="" class="img-mobile">
-                    </a>
-
-                    <div class="games-center-column">
-            `;
-
-            const ligasDisponiveis = Object.keys(gruposPorLiga);
-
-            if (ligasDisponiveis.length === 0) {
-                htmlLista += `<div class="no-games-fallback">${lang.nenhumJogo} ${formatarDataEvento(dataSelecionada)}.</div>`;
-            } else {
-                ligasDisponiveis.forEach(nomeLiga => {
-                    htmlLista += `
-                        <div class="liga-section-container">
-                            <div class="liga-header-title">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-                                ${nomeLiga}
-                            </div>
-                            <div class="liga-games-wrapper">
-                    `;
-                    gruposPorLiga[nomeLiga].forEach(j => {
-                        const valGolasA = j.resGolosA !== undefined ? j.resGolosA : '';
-                        const valGolasB = j.resGolosB !== undefined ? j.resGolosB : '';
-                        const dataJogoFormatada = formatarDataEvento(j.dataEvento);
-                        const dataInsercaoFormatada = formatarDataInsercao(j.criadoEm);
-                        const resultadoFinalStr = (valGolasA !== '' && valGolasB !== '') ? `${valGolasA} - ${valGolasB}` : 'vs';
-                        
-                        let corPrevisaoClass = j.estadoAposta || 'pendente';
-                        let corSimplesClass = j.previsaoSimples ? avaliarPrevisaoIndividualmente(j.previsaoSimples, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
-                        let corSugestaoClass = j.previsaoSugestao ? avaliarPrevisaoIndividualmente(j.previsaoSugestao, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
-                        let corOUClass = j.overUnder ? avaliarPrevisaoIndividualmente(j.overUnder, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
-
-                        const pV1 = j.pctV1 !== undefined && j.pctV1 !== '' ? `${j.pctV1}%` : '0%';
-                        const pX = j.pctX !== undefined && j.pctX !== '' ? `${j.pctX}%` : '0%';
-                        const pV2 = j.pctV2 !== undefined && j.pctV2 !== '' ? `${j.pctV2}%` : '0%';
-                        const xgVal = j.xg !== undefined && j.xg !== '' ? `${Number(j.xg).toFixed(2)}` : '-';
-                        const ouVal = j.overUnder || '-';
-                        const oddV1_disp = j.oddV1 || '-';
-                        const oddX_disp = j.oddX || '-';
-                        const oddV2_disp = j.oddV2 || '-';
-
-                        let vbSimples = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
-                        let vbSugestao = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
-                        let valuedBetCalculada = vbSugestao || vbSimples; 
-                        let badgeValuedBet = '';
-
-                        if (valuedBetCalculada) {
-                            badgeValuedBet = `
-                                <div class="pred-item" style="border: 2px solid ${valuedBetCalculada.cor}; background-color: #f8fafc;">
-                                    <span class="pred-lbl" style="color: ${valuedBetCalculada.cor}; display: flex; align-items: center; gap: 6px; font-weight: 900;">
-                                        <img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="BF" style="width: 26px; height: 26px; object-fit: contain;"> 
-                                        FIGHT SELECTED
-                                    </span>
-                                    <span class="badge-type" style="color: ${valuedBetCalculada.cor};">${valuedBetCalculada.selecao}</span>
-                                    <span class="odd-lbl" style="color: ${valuedBetCalculada.cor}; font-size: 0.75rem;">Conf: ${valuedBetCalculada.confianca}%</span>
-                                </div>
-                            `;
-                        }
-
-                        let badgeSimples = '';
-                        if (j.previsaoSimples) {
-                            badgeSimples = `
-                                <div class="pred-item status-${corSimplesClass}">
-                                    <span class="pred-lbl">${lang.palpiteSimples}:</span> 
-                                    <span class="badge-type">${j.previsaoSimples.toUpperCase()}</span> 
-                                    <span class="odd-lbl">@${Number(j.oddSimples || 1).toFixed(2)}</span>
-                                </div>`;
-                        }
-                        let badgeSugestao = '';
-                        if (j.previsaoSugestao) {
-                            badgeSugestao = `
-                                <div class="pred-item status-${corSugestaoClass}">
-                                    <span class="pred-lbl">${lang.palpiteSugestao}:</span> 
-                                    <span class="badge-type">${j.previsaoSugestao.toUpperCase()}</span> 
-                                    <span class="odd-lbl">@${Number(j.oddSugestao || 1).toFixed(2)}</span>
-                                </div>`;
-                        }
-
-                        htmlLista += `
-                            <div class="public-archive-row ${corPrevisaoClass}">
-                                <div class="row-main-info">
-                                    <div class="row-top-metadata">
-                                        <span class="date-badge-top">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                                            ${dataJogoFormatada}
-                                        </span>
-                                        <span class="status-badge-state ${corPrevisaoClass}">${corPrevisaoClass.toUpperCase()}</span>
-                                    </div>
-                                    <div class="row-teams-line">
-                                        <span class="team-name text-right">${j.equipaA}</span>
-                                        <span class="score-badge">${resultadoFinalStr}</span>
-                                        <span class="team-name text-left">${j.equipaB}</span>
-                                    </div>
-                                    
-                                    <div class="row-analytics-stats">
-                                        <div class="stat-technical-box">
-                                            <div class="tech-label">Probabilidades (1 X 2)</div>
-                                            <div class="tech-bar-wrapper">
-                                                <div class="tech-bar-fill fill-home" style="width: ${pV1}">${pV1}</div>
-                                                <div class="tech-bar-fill fill-draw" style="width: ${pX}">${pX}</div>
-                                                <div class="tech-bar-fill fill-away" style="width: ${pV2}">${pV2}</div>
-                                            </div>
-                                        </div>
-                                        <div class="tech-metrics-grid">
-                                            <div class="metric-pill-clean"><span class="m-lbl">⚽ Exp. Gols</span><span class="m-val">${xgVal}</span></div>
-                                            <div class="metric-pill-clean status-${corOUClass}"><span class="m-lbl">📈 O/U</span><span class="m-val highlight">${ouVal}</span></div>
-                                            <div class="metric-pill-clean" style="grid-column: span 2; display: flex; justify-content: space-between; align-items: center;">
-                                                <span class="m-lbl">📊 Odds Base (1 - X - 2):</span>
-                                                <span class="m-val" style="font-size: 0.8rem;">${oddV1_disp} | ${oddX_disp} | ${oddV2_disp}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row-footer-metadata">${lang.inserido}: ${dataInsercaoFormatada}</div>
-                                </div>
-                                <div class="row-actions-zone-extended">
-                                    ${badgeSimples}
-                                    ${badgeSugestao}
-                                    ${badgeValuedBet}
-                                </div>
+                    if (valuedBetCalculada) {
+                        badgeValuedBet = `
+                            <div class="pred-item" style="border: 2px solid ${valuedBetCalculada.cor}; background-color: #f8fafc;">
+                                <span class="pred-lbl" style="color: ${valuedBetCalculada.cor}; display: flex; align-items: center; gap: 6px; font-weight: 900;">
+                                    <img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="BF" style="width: 26px; height: 26px; object-fit: contain;"> 
+                                    FIGHT SELECTED
+                                </span>
+                                <span class="badge-type" style="color: ${valuedBetCalculada.cor};">${valuedBetCalculada.selecao}</span>
+                                <span class="odd-lbl" style="color: ${valuedBetCalculada.cor}; font-size: 0.75rem;">Conf: ${valuedBetCalculada.confianca}%</span>
                             </div>
                         `;
-                    });
-                    htmlLista += `</div></div>`;
-                });
-            }
+                    }
 
-            htmlLista += `
-                    </div>
-                    <a href="${linkDireito}" target="_blank" class="sidebar-banner banner-pos-right">
-                        <img src="${imagemDireitaDesktop}" alt="" class="img-desktop">
-                        <img src="${imagemDireitaMobile}" alt="" class="img-mobile">
-                    </a>
-                </div>
-            `;
+                    let badgeSimples = '';
+                    if (j.previsaoSimples) {
+                        badgeSimples = `
+                            <div class="pred-item status-${corSimplesClass}">
+                                <span class="pred-lbl">${lang.palpiteSimples}:</span> 
+                                <span class="badge-type">${j.previsaoSimples.toUpperCase()}</span> 
+                                <span class="odd-lbl">@${Number(j.oddSimples || 1).toFixed(2)}</span>
+                            </div>`;
+                    }
+                    let badgeSugestao = '';
+                    if (j.previsaoSugestao) {
+                        badgeSugestao = `
+                            <div class="pred-item status-${corSugestaoClass}">
+                                <span class="pred-lbl">${lang.palpiteSugestao}:</span> 
+                                <span class="badge-type">${j.previsaoSugestao.toUpperCase()}</span> 
+                                <span class="odd-lbl">@${Number(j.oddSugestao || 1).toFixed(2)}</span>
+                            </div>`;
+                    }
 
-            containerPublico.innerHTML = htmlLista;
+                    htmlLista += `
+                        <div class="public-archive-row ${corPrevisaoClass}">
+                            <div class="row-main-info">
+                                <div class="row-top-metadata">
+                                    <span class="date-badge-top">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                        ${dataJogoFormatada}
+                                    </span>
+                                    <span class="status-badge-state ${corPrevisaoClass}">${corPrevisaoClass.toUpperCase()}</span>
+                                </div>
+                                <div class="row-teams-line">
+                                    <span class="team-name text-right">${j.equipaA}</span>
+                                    <span class="score-badge">${resultadoFinalStr}</span>
+                                    <span class="team-name text-left">${j.equipaB}</span>
+                                </div>
+                                
+                                <div class="row-analytics-stats">
+                                    <div class="stat-technical-box">
+                                        <div class="tech-label">${lang.probabilidades}</div>
+                                        <div class="tech-bar-wrapper">
+                                            <div class="tech-bar-fill fill-home" style="width: ${pV1}">${pV1}</div>
+                                            <div class="tech-bar-fill fill-draw" style="width: ${pX}">${pX}</div>
+                                            <div class="tech-bar-fill fill-away" style="width: ${pV2}">${pV2}</div>
+                                        </div>
+                                    </div>
+                                    <div class="tech-metrics-grid">
+                                        <div class="metric-pill-clean"><span class="m-lbl">${lang.expGols}</span><span class="m-val">${xgVal}</span></div>
+                                        <div class="metric-pill-clean status-${corOUClass}"><span class="m-lbl">📈 O/U</span><span class="m-val highlight">${ouVal}</span></div>
+                                        <div class="metric-pill-clean" style="grid-column: span 2; display: flex; justify-content: space-between; align-items: center;">
+                                            <span class="m-lbl">${lang.oddsBase}</span>
+                                            <span class="m-val" style="font-size: 0.8rem;">${oddV1_disp} | ${oddX_disp} | ${oddV2_disp}</span>
+                                        </div>
+                                    </div>
+                                </div>
 
-            const inp = document.getElementById('datePicker');
-            if (inp) {
-                inp.value = dataSelecionada;
-                inp.addEventListener('change', (e) => {
-                    dataSelecionada = e.target.value || hojeISO();
-                    renderizarListaArquivadosPublica(dadosJogosCache);
+                                <div class="row-footer-metadata">${lang.inserido}: ${dataInsercaoFormatada}</div>
+                            </div>
+                            <div class="row-actions-zone-extended">
+                                ${badgeSimples}
+                                ${badgeSugestao}
+                                ${badgeValuedBet}
+                            </div>
+                        </div>
+                    `;
                 });
-            }
-            const btnHoje = document.getElementById('btnHoje');
-            if (btnHoje) {
-                btnHoje.addEventListener('click', () => {
-                    dataSelecionada = hojeISO();
-                    renderizarListaArquivadosPublica(dadosJogosCache);
-                });
-            }
+
+                htmlLista += `</div></div>`;
+            });
+
+            container.innerHTML = htmlLista;
         }
     </script>
 
     <style>
-        /* ATUALIZAÇÃO GLOBAL: Evita que margens e paddings empurrem o layout para fora do ecrã */
         *, *::before, *::after { box-sizing: border-box; }
         html, body { 
             max-width: 100vw; 
-            overflow-x: hidden; /* Corta definitivamente o scroll horizontal indesejado */
+            overflow-x: hidden; 
         }
 
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f0f4f8; margin: 0; padding: 20px; color: #1e293b; }
@@ -671,7 +696,6 @@
             .row-actions-zone-extended { width: 100%; border-left: none; border-top: 1px dashed #cbd5e1; padding-left: 0; padding-top: 12px; flex-direction: row; justify-content: space-between; }
         }
 
-        /* === ATUALIZAÇÃO: Ajustes específicos para telemóveis === */
         @media (max-width: 600px) {
             .top-left-actions-wrapper {
                 justify-content: center;
@@ -687,23 +711,22 @@
                 margin-top: 80px; 
             }
             
-            /* Correção do problema da secção de Data e botão Hoje */
             .date-controls-bar {
-                flex-direction: column; /* Empilha os itens verticalmente */
-                align-items: stretch; /* Estica para ocupar a largura toda */
+                flex-direction: column;
+                align-items: stretch;
                 gap: 12px;
             }
             .date-controls-right {
                 width: 100%;
-                justify-content: space-between; /* Espaça o botão "Hoje" e o input de data */
+                justify-content: space-between;
             }
             .date-input, .btn-hoje {
-                flex: 1; /* Faz com que partilhem a largura igualmente */
-                font-size: 16px; /* Tamanho 16px é obrigatório para o iOS não fazer zoom automático! */
+                flex: 1;
+                font-size: 16px;
             }
             
             .brand-title {
-                font-size: 2.2rem; /* Reduz ligeiramente o título principal para não empurrar a página */
+                font-size: 2.2rem;
             }
         }
     </style>
@@ -742,8 +765,46 @@
     </div>
 </div>
 
-<div id="publicGameViewer" class="view-mode-container">
-    <p style="text-align: center; color: #64748b; font-size: 0.9rem;">A carregar linhas do Betfighter...</p>
+<div class="view-mode-container">
+    <div class="brand-title-container">
+        <h1 class="brand-title"><span class="brand-green">BET</span><span class="brand-black">FIGHTER</span></h1>
+        <div class="brand-subtitle" id="uiSubtitle">A luta contra as odds</div>
+    </div>
+
+    <div class="top-hero-banner-container">
+        <a href="mailto:suporte@bet-fighter.com" id="anchorBannerTopo" target="_blank" class="topo-banner-link">
+            <img src="imagens/banner_topo_novo.png" id="imgBannerTopo" alt="Betfighter Banner">
+        </a>
+    </div>
+
+    <div class="date-controls-bar">
+        <div class="date-controls-left">
+            <span class="date-controls-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span id="lblDiaSelecionadoText">Dia selecionado:</span> <strong id="txtDataFormatada" style="margin-left: 4px;">--/--/----</strong>
+            </span>
+        </div>
+        <div class="date-controls-right">
+            <button id="btnHoje" class="btn-hoje" type="button">Hoje</button>
+            <input id="datePicker" type="date" class="date-input" />
+        </div>
+    </div>
+
+    <div class="main-layout-wrapper">
+        <a href="https://22bet4me.com?bf=9c0edc58d75d4_464354407" target="_blank" class="sidebar-banner banner-pos-left">
+            <img src="imagens/banner_esquerdo.png" alt="" class="img-desktop">
+            <img src="imagens/banner_esquerdo_mobile.png" alt="" class="img-mobile">
+        </a>
+
+        <div class="games-center-column" id="gamesCenterColumn">
+            <!-- Os jogos da data vão ser injetados exclusivamente aqui -->
+        </div>
+
+        <a href="https://22bet4me.com?bf=9c0edc58d75d4_464354407" target="_blank" class="sidebar-banner banner-pos-right">
+            <img src="imagens/banner_esquerdo.png" alt="" class="img-desktop">
+            <img src="imagens/banner_esquerdo_mobile.png" alt="" class="img-mobile">
+        </a>
+    </div>
 </div>
 
 <div id="animatedPopupBanner" class="animated-popup-overlay">

@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BETFIGHTER - Desempenho & Performance</title>
     
-    <!-- FontAwesome para ícones profissionais -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Chart.js para Gráficos de Linha -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script type="module">
@@ -29,7 +26,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // ===== DICIONÁRIO DE TRADUÇÃO =====
         const traducoes = {
             pt: {
                 txtDesempenhoGeral: "Desempenho Geral",
@@ -70,27 +66,126 @@
                 avisoLegal2: "As apostas desportivas envolvem risco financeiro. Cada utilizador é inteiramente responsável pelas suas decisões de aposta. O BetFighter não garante lucros, rendimentos ou sucesso nas apostas.",
                 avisoLegal3: "As simulações de investimento apresentadas têm caráter meramente ilustrativo e servem apenas para demonstrar o comportamento histórico.",
                 avisoLegal4: "Aposte de forma responsável. Nunca utilize dinheiro que não possa perder."
+            },
+            en: {
+                txtDesempenhoGeral: "Overall Performance",
+                txtGraficos: "Evolution Charts",
+                totalApostas: "Total Bets",
+                ganhas: "Wins",
+                perdidas: "Losses",
+                winrate: "Win Rate",
+                roiAcumulado: "Cumulative ROI",
+                lucroLiquido: "Net Profit",
+                ultimaAtualizacao: "Last Update",
+                historico: "History",
+                tabelaDiaria: "Daily Table",
+                tabelaMensal: "Monthly Table",
+                tabelaAnual: "Yearly Table",
+                optGrafSemanal: "Weekly Chart",
+                optGrafMensal: "Monthly Chart",
+                optGrafAnual: "Yearly Chart",
+                dia: "Day",
+                mes: "Month",
+                ano: "Year",
+                apostas: "Bets",
+                acerto: "Win Rate (%)",
+                roi: "ROI (%)",
+                lucro: "Profit (u)",
+                semDados: "No archived performance data.",
+                carregandoBd: "Loading database...",
+                simulador: "Simulator",
+                quantoTeriaGanho: "How much would you have won?",
+                simuladorDesc: "Simulate the real result of your investment using our consolidated ROI statistics.",
+                simuladorBtn: "Calculate",
+                placeholderSim: "Ex: 100",
+                insiraValor: "Insert a value above.",
+                simResultadoTexto: "With an initial investment of <strong>{investimento}€</strong>, currently you would have:",
+                simResultadoLucro: "Net cumulative profit of {sinal}{lucro}€ ({roi}% ROI)",
+                infoImportante: "Important Information",
+                avisoLegal1: "The predictions, statistics, ROI, profits, and simulations presented on BetFighter are strictly for informational purposes and based on historical results registered on the platform. Past performance does not guarantee future results.",
+                avisoLegal2: "Sports betting involves financial risk. Each user is entirely responsible for their betting decisions. BetFighter does not guarantee profits, income, or betting success.",
+                avisoLegal3: "The investment simulations presented are for illustrative purposes only and serve solely to demonstrate historical behavior.",
+                avisoLegal4: "Bet responsibly. Never use money you cannot afford to lose."
+            },
+            nep: {
+                txtDesempenhoGeral: "समग्र प्रदर्शन",
+                txtGraficos: "प्रगति चार्ट",
+                totalApostas: "कुल बाजी",
+                ganhas: "जित",
+                perdidas: "हार",
+                winrate: "जित्ने दर",
+                roiAcumulado: "कुल ROI",
+                lucroLiquido: "खुद नाफा",
+                ultimaAtualizacao: "पछिल्लो अपडेट",
+                historico: "इतिहास",
+                tabelaDiaria: "दैनिक तालिका",
+                tabelaMensal: "मासिक तालिका",
+                tabelaAnual: "वार्षिक तालिका",
+                optGrafSemanal: "साप्ताहिक चार्ट",
+                optGrafMensal: "मासिक चार्ट",
+                optGrafAnual: "वार्षिक चार्ट",
+                dia: "दिन",
+                mes: "महिना",
+                ano: "वर्ष",
+                apostas: "बाजीहरू",
+                acerto: "जित दर (%)",
+                roi: "ROI (%)",
+                lucro: "नाफा (u)",
+                semDados: "कुनै प्रदर्शन डाटा छैन।",
+                carregandoBd: "डेटाबेस लोड हुँदैछ...",
+                simulador: "सिम्युलेटर",
+                quantoTeriaGanho: "तपाईंले कति जित्नुहुन्थ्यो?",
+                simuladorDesc: "हाम्रो ROI तथ्याङ्कहरू प्रयोग गरेर आफ्नो लगानीको परिणाम सिमुलेट गर्नुहोस्।",
+                simuladorBtn: "हिसाब गर्नुहोस्",
+                placeholderSim: "Ex: 100",
+                insiraValor: "माथि एउटा मान राख्नुहोस्।",
+                simResultadoTexto: "सुरुवाती लगानी <strong>{investimento}€</strong> को साथ, अहिले तपाईंसँग हुनेछ:",
+                simResultadoLucro: "खुद नाफा {sinal}{lucro}€ ({roi}% ROI)",
+                infoImportante: "महत्त्वपूर्ण जानकारी",
+                avisoLegal1: "BetFighter मा प्रस्तुत गरिएका भविष्यवाणीहरू र तथ्याङ्कहरू जानकारीको लागि मात्र हुन्। विगतको प्रदर्शनले भविष्यको परिणामको ग्यारेन्टी गर्दैन।",
+                avisoLegal2: "खेल सट्टेबाजीमा वित्तीय जोखिम समावेश छ। BetFighter ले नाफाको ग्यारेन्टी गर्दैन।",
+                avisoLegal3: "प्रस्तुत गरिएका लगानी सिमुलेशनहरू केवल ऐतिहासिक व्यवहार देखाउनको लागि हुन्।",
+                avisoLegal4: "जिम्मेवारीपूर्वक खेल्नुहोस्। गुमाउन नसक्ने पैसा कहिल्यै प्रयोग नगर्नुहोस्।"
             }
         };
 
-        // Estado Global
+        function detectarIdioma() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let lang = urlParams.get('lang') || 
+                       localStorage.getItem('idiomaPreferido') || 
+                       localStorage.getItem('lang') || 
+                       localStorage.getItem('idioma') || 'pt';
+            return ['pt', 'en', 'nep'].includes(lang) ? lang : 'pt';
+        }
+
         let totalRoiGlobal = 0;
         let todosJogosGlobais = [];
         let filtroPeriodoTabela = 'mensal';
         let filtroPeriodoGraficos = 'mensal';
-        let tipoGraficoAtual = 'geral'; // geral ou fight_selection
-        let idiomaAtual = 'pt';
+        let tipoGraficoAtual = 'geral';
+        let idiomaAtual = detectarIdioma();
         let agrupamentosGlobais = { diaria: {}, semanal: {}, mensal: {}, anual: {} };
         let graficosInstancias = {};
 
-        function carregarIdioma() {
-            idiomaAtual = 'pt';
-            document.documentElement.lang = idiomaAtual;
+        function alternarIdioma(novoIdioma) {
+            idiomaAtual = novoIdioma;
+            localStorage.setItem('idiomaPreferido', novoIdioma);
+            localStorage.setItem('lang', novoIdioma);
+            document.documentElement.lang = novoIdioma;
+
+            aplicarTraducoesEstaticas();
+            renderizarTabela();
+            renderizarGraficos();
+            calcularInvestimento();
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            carregarIdioma();
-            aplicarTraducoesEstaticas();
+            const selectLang = document.getElementById('seletorIdiomaPage');
+            if (selectLang) {
+                selectLang.value = idiomaAtual;
+                selectLang.addEventListener('change', (e) => alternarIdioma(e.target.value));
+            }
+            alternarIdioma(idiomaAtual);
         });
 
         onValue(ref(db, "jogos"), (snapshot) => {
@@ -145,10 +240,9 @@
             return `${d.getFullYear()}-S${weekNum.toString().padStart(2, '0')}`;
         }
 
-        // LÓGICA FIGHT SELECTION
         function testarFightSelectionSingular(selecao, percentagem, oddStr) {
             const o = parseFloat(oddStr);
-            if (isNaN(o) || o < 1.99) return null; // Filtro de odd mínima (Value Odds)
+            if (isNaN(o) || o < 1.99) return null;
             const percDec = parseFloat(percentagem) / 100;
             if (isNaN(percDec) || percDec <= 0) return null;
             const probImplicita = 1 / o;
@@ -257,7 +351,6 @@
                         anual: dataEvento.substring(0, 4)
                     };
                     
-                    // Inicializar objetos p/ garantir que não há erros na hora de mapear nos gráficos
                     Object.keys(keysForGame).forEach(periodo => {
                         const chave = keysForGame[periodo];
                         if (!agrupamentosGlobais[periodo][chave]) {
@@ -278,7 +371,6 @@
                     subApostas.push({ tipo: 'fallback', previsao: '', odd: parseFloat(j.odd || 0), estadoForçado: j.estadoAposta });
                 }
 
-                // 1. Processamento Estatísticas Gerais
                 subApostas.forEach(sa => {
                     let estadoFinal = sa.estadoForçado || avaliarPrevisaoIndividualmente(sa.previsao, j.resGolosA, j.resGolosB, j.estadoAposta);
                     if (estadoFinal !== 'ganha' && estadoFinal !== 'perdida') return;
@@ -305,7 +397,6 @@
                     }
                 });
 
-                // 2. Processamento Dinâmico Fight Selection
                 let fsData = calcularFightSelectionOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2) || 
                              calcularFightSelectionOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
 
@@ -441,7 +532,6 @@
                 dataLucro.push(d.lucro.toFixed(2));
                 dataVolume.push(d.total);
                 
-                // Mapeamento real dos lucros de Fight Selection extraídos dinamicamente da DB
                 dataLowFS.push(d.fs_low ? d.fs_low.lucro.toFixed(2) : 0);
                 dataMediumFS.push(d.fs_medium ? d.fs_medium.lucro.toFixed(2) : 0); 
                 dataHighFS.push(d.fs_high ? d.fs_high.lucro.toFixed(2) : 0); 
@@ -542,7 +632,6 @@
             renderizarGraficos();
         }
 
-        // Tipo de Visão dos Gráficos (Geral vs Fight Selection)
         window.mudarTipoGraficosApresentar = function(tipo) {
             tipoGraficoAtual = tipo;
             const gridGeral = document.getElementById('grid-graficos-geral');
@@ -604,6 +693,18 @@
         }
         .navbar-brand .brand-green { color: var(--brand-green); }
         .navbar-brand .brand-white { color: #ffffff; }
+
+        .select-lang-nav {
+            background-color: #1e293b;
+            color: #ffffff;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-weight: 700;
+            outline: none;
+            cursor: pointer;
+        }
+        .select-lang-nav:focus { border-color: var(--brand-green); }
 
         .page-container {
             max-width: 1040px;
@@ -839,6 +940,11 @@
         <a href="index.html" class="navbar-brand">
             <span class="brand-green">BET</span><span class="brand-white">FIGHTER</span>
         </a>
+        <select id="seletorIdiomaPage" class="select-lang-nav">
+            <option value="pt">🇵🇹 PT</option>
+            <option value="en">🇬🇧 EN</option>
+            <option value="nep">🇳🇵 NEP</option>
+        </select>
     </nav>
 
     <div class="page-container">

@@ -87,13 +87,18 @@
             }
         };
 
-        // Capturar idioma do URL (?lang=en) ou do LocalStorage
-        const urlParams = new URLSearchParams(window.location.search);
-        let currentLang = urlParams.get('lang') || localStorage.getItem('lang') || 'pt';
-        if (!['pt', 'en', 'nep'].includes(currentLang)) currentLang = 'pt';
-        
-        const t = i18n[currentLang]; // Textos a usar na página
+        // Função de Deteção Universal de Idioma
+        function detectarIdioma() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let lang = urlParams.get('lang') || 
+                       localStorage.getItem('idiomaPreferido') || 
+                       localStorage.getItem('lang') || 
+                       localStorage.getItem('idioma') || 'pt';
+            return ['pt', 'en', 'nep'].includes(lang) ? lang : 'pt';
+        }
 
+        let currentLang = detectarIdioma();
+        let t = i18n[currentLang];
         let dataSelecionada = hojeISO();
         let dadosJogosCache = {};
 
@@ -105,14 +110,28 @@
             return `${y}-${m}-${dd}`;
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            // Aplicar traduções à interface base
-            document.documentElement.lang = currentLang;
+        function atualizarIdioma(novoIdioma) {
+            currentLang = novoIdioma;
+            t = i18n[currentLang];
+            localStorage.setItem('idiomaPreferido', novoIdioma);
+            localStorage.setItem('lang', novoIdioma);
+            document.documentElement.lang = novoIdioma;
+
             document.getElementById('txtVoltar').innerText = t.back;
             document.getElementById('txtDiaSel').innerText = t.selDay;
             document.getElementById('btnHoje').innerText = t.today;
-            document.getElementById('btnVoltar').href = `index.html?lang=${currentLang}`;
-            document.getElementById('statsContainer').innerHTML = `<p style="text-align: center; color: #64748b;">${t.loading}</p>`;
+            
+            renderizarEstatisticas(dadosJogosCache);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const selectLang = document.getElementById('seletorIdioma');
+            if (selectLang) {
+                selectLang.value = currentLang;
+                selectLang.addEventListener('change', (e) => atualizarIdioma(e.target.value));
+            }
+
+            atualizarIdioma(currentLang);
 
             const inp = document.getElementById('datePicker');
             const btnHoje = document.getElementById('btnHoje');
@@ -227,7 +246,6 @@
                 const isMonthly = j.dataEvento && j.dataEvento.startsWith(anoMesSelecionado);
                 if (!isDaily && !isMonthly) return;
 
-                // 1. Processar APOSTA SIMPLES
                 const oddSimples = parseFloat(j.oddSimples || j.odd || 0);
                 if (j.estadoAposta === 'ganha') {
                     if (isDaily) { s.simples.ganhas++; s.simples.stake++; if(oddSimples>0) { s.simples.lucro += (oddSimples-1); s.simples.somaOdds += oddSimples; } }
@@ -239,7 +257,6 @@
                     if (isDaily) { s.simples.pendentes++; if(oddSimples>0) s.simples.somaOdds += oddSimples; }
                 }
 
-                // 2. Processar VALUE BETS
                 let vbS = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let vbSug = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let vb = vbSug || vbS;
@@ -337,6 +354,9 @@
         .page-title { display: flex; align-items: center; gap: 10px; font-size: 1.5rem; font-weight: 900; color: #0f172a; margin: 0; }
         .page-title img { width: 24px; height: 24px; object-fit: contain; }
         
+        .select-lang-header { border: 2px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; font-weight: 700; color: #0f172a; background: #fff; cursor: pointer; outline: none; }
+        .select-lang-header:focus { border-color: #22c55e; }
+
         .date-controls-bar { display: flex; justify-content: space-between; align-items: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); max-width: 1000px; margin-left: auto; margin-right: auto; }
         .date-controls-title { font-size: 0.88rem; color: #334155; font-weight: 600; display: flex; align-items: center; gap: 6px; }
         .date-controls-right { display: flex; gap: 8px; align-items: center; }
@@ -381,6 +401,11 @@
             <img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="BF Logo">
             BetFighter Analytics
         </h1>
+        <select id="seletorIdioma" class="select-lang-header">
+            <option value="pt">🇵🇹 PT</option>
+            <option value="en">🇬🇧 EN</option>
+            <option value="nep">🇳🇵 NEP</option>
+        </select>
     </div>
 
     <div class="date-controls-bar">
