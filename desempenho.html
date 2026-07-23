@@ -34,17 +34,18 @@
                 ganhas: "Ganhas",
                 perdidas: "Perdidas",
                 winrate: "% de Acerto",
-                roiAcumulado: "ROI Acumulado",
+                roiAcumulado: "ROI",
                 lucroLiquido: "Lucro Líquido",
                 ultimaAtualizacao: "Última Atualização",
                 historico: "Histórico",
                 tabelaDiaria: "Tabela Diária",
                 tabelaMensal: "Tabela Mensal",
                 tabelaAnual: "Tabela Anual",
-                optGrafDiario: "Gráfico Diário",
-                optGrafSemanal: "Gráfico Semanal",
-                optGrafMensal: "Gráfico Mensal",
-                optGrafAnual: "Gráfico Anual",
+                optGrafGlobal: "Global",
+                optGrafDiario: "Diário",
+                optGrafSemanal: "Semanal",
+                optGrafMensal: "Mensal",
+                optGrafAnual: "Anual",
                 dia: "Dia",
                 mes: "Mês",
                 ano: "Ano",
@@ -75,17 +76,18 @@
                 ganhas: "Wins",
                 perdidas: "Losses",
                 winrate: "Win Rate",
-                roiAcumulado: "Cumulative ROI",
+                roiAcumulado: "ROI",
                 lucroLiquido: "Net Profit",
                 ultimaAtualizacao: "Last Update",
                 historico: "History",
                 tabelaDiaria: "Daily Table",
                 tabelaMensal: "Monthly Table",
                 tabelaAnual: "Yearly Table",
-                optGrafDiario: "Daily Chart",
-                optGrafSemanal: "Weekly Chart",
-                optGrafMensal: "Monthly Chart",
-                optGrafAnual: "Yearly Chart",
+                optGrafGlobal: "Global",
+                optGrafDiario: "Daily",
+                optGrafSemanal: "Weekly",
+                optGrafMensal: "Monthly",
+                optGrafAnual: "Yearly",
                 dia: "Day",
                 mes: "Month",
                 ano: "Year",
@@ -116,17 +118,18 @@
                 ganhas: "जित",
                 perdidas: "हार",
                 winrate: "जित्ने दर",
-                roiAcumulado: "कुल ROI",
+                roiAcumulado: "ROI",
                 lucroLiquido: "खुद नाफा",
                 ultimaAtualizacao: "पछिल्लो अपडेट",
                 historico: "इतिहास",
                 tabelaDiaria: "दैनिक तालिका",
                 tabelaMensal: "मासिक तालिका",
                 tabelaAnual: "वार्षिक तालिका",
-                optGrafDiario: "दैनिक चार्ट",
-                optGrafSemanal: "साप्ताहिक चार्ट",
-                optGrafMensal: "मासिक चार्ट",
-                optGrafAnual: "वार्षिक चार्ट",
+                optGrafGlobal: "विश्वव्यापी",
+                optGrafDiario: "दैनिक",
+                optGrafSemanal: "साप्ताहिक",
+                optGrafMensal: "मासिक",
+                optGrafAnual: "वार्षिक",
                 dia: "दिन",
                 mes: "महिना",
                 ano: "वर्ष",
@@ -163,11 +166,17 @@
 
         let totalRoiGlobal = 0;
         let todosJogosGlobais = [];
+        
         let filtroPeriodoTabela = 'mensal';
-        let filtroPeriodoGraficos = 'mensal';
+        let filtroPeriodoGraficos = 'global';
         let tipoGraficoAtual = 'geral';
+        
         let idiomaAtual = detectarIdioma();
         let agrupamentosGlobais = { diaria: {}, semanal: {}, mensal: {}, anual: {} };
+        let totaisGlobais = {
+            geral: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 },
+            fs: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 }
+        };
         let graficosInstancias = {};
 
         function alternarIdioma(novoIdioma) {
@@ -177,9 +186,9 @@
             document.documentElement.lang = novoIdioma;
 
             aplicarTraducoesEstaticas();
+            atualizarCardsDesempenho();
             renderizarTabela();
             renderizarGraficos();
-            calcularInvestimento();
         }
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -203,7 +212,6 @@
             document.getElementById('txtDesempenhoGeral').innerText = t.txtDesempenhoGeral;
             document.getElementById('txtGraficos').innerText = t.txtGraficos;
             
-            document.getElementById('lblTotalApostas').innerText = t.totalApostas;
             document.getElementById('lblGanhas').innerText = t.ganhas;
             document.getElementById('lblPerdidas').innerText = t.perdidas;
             document.getElementById('lblWinrate').innerText = t.winrate;
@@ -216,6 +224,7 @@
             document.getElementById('optMensal').innerText = t.tabelaMensal;
             document.getElementById('optAnual').innerText = t.tabelaAnual;
             
+            document.getElementById('optGrafGlobal').innerText = t.optGrafGlobal;
             document.getElementById('optGrafDiario').innerText = t.optGrafDiario;
             document.getElementById('optGrafSemanal').innerText = t.optGrafSemanal;
             document.getElementById('optGrafMensal').innerText = t.optGrafMensal;
@@ -336,11 +345,13 @@
         function processarEstatisticasGlobais() {
             const jogosValidos = todosJogosGlobais.filter(j => j.arquivado);
 
-            let totalApostasContadas = 0, ganhasContadas = 0, perdidasContadas = 0;
-            let lucroTotalUnidades = 0, stakeTotal = 0;
-            let datasValidas = [];
-
             agrupamentosGlobais = { diaria: {}, semanal: {}, mensal: {}, anual: {} };
+            totaisGlobais = {
+                geral: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 },
+                fs: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 }
+            };
+            
+            let datasValidas = [];
 
             jogosValidos.forEach(j => {
                 const dataEvento = j.dataEvento; 
@@ -360,9 +371,10 @@
                         if (!agrupamentosGlobais[periodo][chave]) {
                             agrupamentosGlobais[periodo][chave] = { 
                                 total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0,
-                                fs_low: { lucro: 0, volume: 0 },
-                                fs_medium: { lucro: 0, volume: 0 },
-                                fs_high: { lucro: 0, volume: 0 }
+                                fs_low: { lucro: 0, volume: 0, ganhas: 0, perdidas: 0, stake: 0 },
+                                fs_medium: { lucro: 0, volume: 0, ganhas: 0, perdidas: 0, stake: 0 },
+                                fs_high: { lucro: 0, volume: 0, ganhas: 0, perdidas: 0, stake: 0 },
+                                fs_total: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 }
                             };
                         }
                     });
@@ -382,12 +394,11 @@
                     let ganhoNoJogo = estadoFinal === 'ganha' ? (sa.odd - 1) : -1;
                     let stakeNoJogo = 1;
 
-                    if (estadoFinal === 'ganha') ganhasContadas++;
-                    else if (estadoFinal === 'perdida') perdidasContadas++;
-
-                    totalApostasContadas++;
-                    lucroTotalUnidades += ganhoNoJogo;
-                    stakeTotal += stakeNoJogo;
+                    totaisGlobais.geral.total++;
+                    totaisGlobais.geral.lucro += ganhoNoJogo;
+                    totaisGlobais.geral.stake += stakeNoJogo;
+                    if (estadoFinal === 'ganha') totaisGlobais.geral.ganhas++;
+                    if (estadoFinal === 'perdida') totaisGlobais.geral.perdidas++;
 
                     if (Object.keys(keysForGame).length > 0) {
                         Object.keys(keysForGame).forEach(periodo => {
@@ -418,45 +429,125 @@
 
                     if (estadoFS === 'ganha' || estadoFS === 'perdida') {
                         let ganhoFS = estadoFS === 'ganha' ? (fsData.odd - 1) : -1;
+                        
+                        totaisGlobais.fs.total++;
+                        totaisGlobais.fs.lucro += ganhoFS;
+                        totaisGlobais.fs.stake += 1;
+                        if (estadoFS === 'ganha') totaisGlobais.fs.ganhas++;
+                        if (estadoFS === 'perdida') totaisGlobais.fs.perdidas++;
+
                         Object.keys(keysForGame).forEach(periodo => {
                             const chave = keysForGame[periodo];
                             const targetFS = agrupamentosGlobais[periodo][chave][`fs_${fsData.cat}`];
+                            const totalFS = agrupamentosGlobais[periodo][chave].fs_total;
+                            
                             if (targetFS) {
                                 targetFS.volume++;
                                 targetFS.lucro += ganhoFS;
+                                targetFS.stake = (targetFS.stake || 0) + 1;
+                                targetFS.ganhas = (targetFS.ganhas || 0) + (estadoFS === 'ganha' ? 1 : 0);
+                                targetFS.perdidas = (targetFS.perdidas || 0) + (estadoFS === 'perdida' ? 1 : 0);
+                            }
+                            if (totalFS) {
+                                totalFS.total++;
+                                totalFS.lucro += ganhoFS;
+                                totalFS.stake += 1;
+                                if(estadoFS === 'ganha') totalFS.ganhas++;
+                                if(estadoFS === 'perdida') totalFS.perdidas++;
                             }
                         });
                     }
                 }
             });
 
-            const winRate = totalApostasContadas > 0 ? (ganhasContadas / totalApostasContadas) * 100 : 0;
-            totalRoiGlobal = stakeTotal > 0 ? (lucroTotalUnidades / stakeTotal) * 100 : 0;
-
             let ultimaAtualizacaoStr = "N/D";
             if (datasValidas.length > 0) {
                 const ultimaData = new Date(Math.max(...datasValidas));
                 ultimaAtualizacaoStr = ultimaData.toLocaleDateString('pt-PT');
             }
+            document.getElementById('stat-update').innerText = ultimaAtualizacaoStr;
 
-            document.getElementById('stat-total').innerText = totalApostasContadas;
-            document.getElementById('stat-ganhas').innerText = ganhasContadas;
-            document.getElementById('stat-perdidas').innerText = perdidasContadas;
+            atualizarCardsDesempenho();
+            renderizarTabela();
+            renderizarGraficos();
+        }
+
+        function atualizarCardsDesempenho() {
+            let stats;
+            const t = traducoes[idiomaAtual];
+            let tituloLabel = t.totalApostas;
+
+            if (filtroPeriodoGraficos === 'global') {
+                stats = tipoGraficoAtual === 'geral' ? totaisGlobais.geral : totaisGlobais.fs;
+                tituloLabel += " (Global)";
+            } else {
+                const dados = agrupamentosGlobais[filtroPeriodoGraficos];
+                const chaves = Object.keys(dados).sort().reverse();
+                if (chaves.length > 0) {
+                    const chaveMaisRecente = chaves[0];
+                    stats = tipoGraficoAtual === 'geral' ? dados[chaveMaisRecente] : dados[chaveMaisRecente].fs_total;
+                    
+                    let periodoFormatado = chaveMaisRecente;
+                    if (filtroPeriodoGraficos === 'diaria') {
+                        const partes = chaveMaisRecente.split('-');
+                        if(partes.length === 3) periodoFormatado = `${partes[2]}/${partes[1]}`;
+                    } else if (filtroPeriodoGraficos === 'mensal') {
+                        const partes = chaveMaisRecente.split('-');
+                        if(partes.length === 2) periodoFormatado = `${partes[1]}/${partes[0]}`;
+                    }
+                    
+                    tituloLabel += ` (${periodoFormatado})`;
+                } else {
+                    stats = { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 };
+                }
+            }
+            
+            document.getElementById('lblTotalApostas').innerText = tituloLabel;
+            
+            const apostas = stats.total || 0;
+            const ganhas = stats.ganhas || 0;
+            const perdidas = stats.perdidas || 0;
+            const lucro = stats.lucro || 0;
+            const stake = stats.stake || 0;
+            
+            const winRate = apostas > 0 ? (ganhas / apostas) * 100 : 0;
+            const roi = stake > 0 ? (lucro / stake) * 100 : 0;
+            
+            document.getElementById('stat-total').innerText = apostas;
+            document.getElementById('stat-ganhas').innerText = ganhas;
+            document.getElementById('stat-perdidas').innerText = perdidas;
             document.getElementById('stat-winrate').innerText = winRate.toFixed(1) + "%";
             
             const roiEl = document.getElementById('stat-roi');
-            roiEl.innerText = (totalRoiGlobal >= 0 ? '+' : '') + totalRoiGlobal.toFixed(2) + "%";
-            roiEl.className = "stat-value " + (totalRoiGlobal >= 0 ? "positive" : "negative");
+            roiEl.innerText = (roi >= 0 && apostas > 0 ? '+' : '') + roi.toFixed(2) + "%";
+            roiEl.className = "stat-value " + (roi >= 0 ? "positive" : "negative");
 
             const lucroEl = document.getElementById('stat-lucro');
-            lucroEl.innerText = (lucroTotalUnidades >= 0 ? '+' : '') + lucroTotalUnidades.toFixed(2) + " u";
-            lucroEl.className = "stat-value " + (lucroTotalUnidades >= 0 ? "positive" : "negative");
-
-            document.getElementById('stat-update').innerText = ultimaAtualizacaoStr;
-
-            renderizarTabela();
-            renderizarGraficos();
+            lucroEl.innerText = (lucro >= 0 && apostas > 0 ? '+' : '') + lucro.toFixed(2) + " u";
+            lucroEl.className = "stat-value " + (lucro >= 0 ? "positive" : "negative");
+            
+            totalRoiGlobal = roi;
             calcularInvestimento();
+        }
+
+        window.mudarFiltroPrincipal = function(campo, valor) {
+            if (campo === 'tipo') {
+                tipoGraficoAtual = valor;
+                const gridGeral = document.getElementById('grid-graficos-geral');
+                const gridFS = document.getElementById('grid-graficos-fight-selection');
+                if (valor === 'geral') {
+                    gridGeral.style.display = 'grid';
+                    gridFS.style.display = 'none';
+                } else {
+                    gridGeral.style.display = 'none';
+                    gridFS.style.display = 'grid';
+                }
+            } else if (campo === 'tempo') {
+                filtroPeriodoGraficos = valor;
+            }
+            
+            atualizarCardsDesempenho();
+            renderizarGraficos();
         }
 
         function renderizarTabela() {
@@ -513,11 +604,13 @@
         }
 
         function renderizarGraficos() {
-            const dados = agrupamentosGlobais[filtroPeriodoGraficos];
+            // Se o filtro for 'global', agregamos visualmente como 'mensal' por defeito
+            const agrupamentoVisual = filtroPeriodoGraficos === 'global' ? 'mensal' : filtroPeriodoGraficos;
+            const dados = agrupamentosGlobais[agrupamentoVisual];
             const periodosOrdenados = Object.keys(dados).sort();
 
             const labels = periodosOrdenados.map(chave => {
-                if (filtroPeriodoGraficos === 'diaria' && chave.length >= 10) {
+                if (agrupamentoVisual === 'diaria' && chave.length >= 10) {
                     const [ano, mes, dia] = chave.split('-');
                     return `${dia}/${mes}/${ano}`;
                 }
@@ -636,26 +729,6 @@
         window.mudarFiltroTabela = function(tipo) {
             filtroPeriodoTabela = tipo;
             renderizarTabela();
-        }
-
-        window.mudarFiltroGraficos = function(tipo) {
-            filtroPeriodoGraficos = tipo;
-            renderizarGraficos();
-        }
-
-        window.mudarTipoGraficosApresentar = function(tipo) {
-            tipoGraficoAtual = tipo;
-            const gridGeral = document.getElementById('grid-graficos-geral');
-            const gridFS = document.getElementById('grid-graficos-fight-selection');
-            
-            if(tipo === 'geral') {
-                gridGeral.style.display = 'grid';
-                gridFS.style.display = 'none';
-            } else {
-                gridGeral.style.display = 'none';
-                gridFS.style.display = 'grid';
-            }
-            renderizarGraficos();
         }
 
         window.calcularInvestimento = calcularInvestimento;
@@ -964,8 +1037,25 @@
             <a href="index.html" id="link-logotipo-gestao">
                 <img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="BetFighter Logo" class="brand-logo-img">
             </a>
-            
+        </div>
+        
+        <div class="section-header-flex">
             <h2 class="section-title"><i class="fa-solid fa-chart-simple"></i> <span id="txtDesempenhoGeral">Desempenho Geral</span></h2>
+            
+            <div class="controls-flex">
+                <select class="select-periodo" onchange="mudarFiltroPrincipal('tipo', this.value)">
+                    <option value="geral" selected>Geral</option>
+                    <option value="fight_selection">Fight Selection</option>
+                </select>
+                
+                <select class="select-periodo" onchange="mudarFiltroPrincipal('tempo', this.value)">
+                    <option value="global" id="optGrafGlobal" selected>Global</option>
+                    <option value="diaria" id="optGrafDiario">Diário</option>
+                    <option value="semanal" id="optGrafSemanal">Semanal</option>
+                    <option value="mensal" id="optGrafMensal">Mensal</option>
+                    <option value="anual" id="optGrafAnual">Anual</option>
+                </select>
+            </div>
         </div>
         
         <div class="stats-grid">
@@ -999,22 +1089,8 @@
             </div>
         </div>
 
-        <div class="section-header-flex">
+        <div class="section-header-flex" style="margin-bottom: 20px;">
             <h2 class="section-title"><i class="fa-solid fa-chart-line"></i> <span id="txtGraficos">Gráficos de Evolução</span></h2>
-            
-            <div class="controls-flex">
-                <select class="select-periodo" onchange="mudarTipoGraficosApresentar(this.value)">
-                    <option value="geral" selected>Geral</option>
-                    <option value="fight_selection">Fight Selection</option>
-                </select>
-                
-                <select class="select-periodo" onchange="mudarFiltroGraficos(this.value)">
-                    <option value="diaria" id="optGrafDiario">Gráfico Diário</option>
-                    <option value="semanal" id="optGrafSemanal">Gráfico Semanal</option>
-                    <option value="mensal" id="optGrafMensal" selected>Gráfico Mensal</option>
-                    <option value="anual" id="optGrafAnual">Gráfico Anual</option>
-                </select>
-            </div>
         </div>
 
         <div class="charts-grid-container" id="grid-graficos-geral">
