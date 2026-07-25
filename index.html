@@ -49,7 +49,13 @@
                 infoPhase: "Projeto em <strong>fase beta e desenvolvimento</strong>. Acesso <strong>100% livre</strong>.",
                 infoPartners: "Abertos a parcerias estratégicas! Promova a sua marca connosco:",
                 infoContact: "📧 Contacto: ",
-                carregando: "A analisar linhas de dados..."
+                carregando: "A analisar linhas de dados...",
+                filtrosTitle: "Filtros de Jogos",
+                oddMin: "Odd Mínima (Palpite Simples):",
+                oddMax: "Odd Máxima (Palpite Simples):",
+                apenasFightSelected: "Apenas Fight Selected",
+                aplicarFiltros: "Aplicar Filtros",
+                limparFiltros: "Limpar"
             },
             en: {
                 subtitle: "The fight against the odds",
@@ -67,7 +73,13 @@
                 infoPhase: "Project in <strong>beta testing phase</strong>. Access is <strong>100% free</strong>.",
                 infoPartners: "Open to strategic partnerships! Promote your brand with us:",
                 infoContact: "📧 Contact: ",
-                carregando: "Analyzing data lines..."
+                carregando: "Analyzing data lines...",
+                filtrosTitle: "Match Filters",
+                oddMin: "Min Odd (Simple Pick):",
+                oddMax: "Max Odd (Simple Pick):",
+                apenasFightSelected: "Fight Selected Only",
+                aplicarFiltros: "Apply Filters",
+                limparFiltros: "Clear"
             },
             nep: {
                 subtitle: "अड्स विरुद्धको लडाईं",
@@ -85,7 +97,13 @@
                 infoPhase: "यो परियोजना <strong>प्रारम्भिक परीक्षण र विकास चरणमा</strong> छ। पहुँच <strong>१००% नि:शुल्क</strong> छ।",
                 infoPartners: "हामी रणनीतिक साझेदारीका लागि खुला छौं! ब्रान्ड प्रवर्द्धन गर्न सम्पर्क गर्नुहोस्:",
                 infoContact: "📧 सम्पर्क: ",
-                carregando: "डेटा लाइनहरू विश्लेषण गर्दै..."
+                carregando: "डेटा लाइनहरू विश्लेषण गर्दै...",
+                filtrosTitle: "खेल फिल्टरहरू",
+                oddMin: "न्यूनतम अड्र्स (सामान्य सुझाव):",
+                oddMax: "अधिकतम अड्र्स (सामान्य सुझाव):",
+                apenasFightSelected: "Fight Selected मात्र",
+                aplicarFiltros: "फिल्टर लागू गर्नुहोस्",
+                limparFiltros: "हटाउनुहोस्"
             }
         };
 
@@ -94,6 +112,13 @@
         let dataSelecionada = hojeISO();
         let idiomaAtual = 'pt';
         let unsubscribeJogos = null;
+
+        // Estado dos Filtros
+        let filtros = {
+            oddMin: null,
+            oddMax: null,
+            fightSelectedOnly: false
+        };
 
         function hojeISO() {
             const d = new Date();
@@ -158,6 +183,58 @@
                 });
             }
 
+            // Modal de Filtros
+            const btnFilter = document.getElementById('btnFilter');
+            const filterModal = document.getElementById('filterModal');
+            const closeFilter = document.getElementById('closeFilter');
+            const btnApplyFilters = document.getElementById('btnApplyFilters');
+            const btnClearFilters = document.getElementById('btnClearFilters');
+
+            if (btnFilter && filterModal) {
+                btnFilter.addEventListener('click', () => {
+                    filterModal.classList.add('active');
+                });
+            }
+            if (closeFilter && filterModal) {
+                closeFilter.addEventListener('click', () => filterModal.classList.remove('active'));
+                filterModal.addEventListener('click', (e) => {
+                    if (e.target === filterModal) filterModal.classList.remove('active');
+                });
+            }
+
+            if (btnApplyFilters) {
+                btnApplyFilters.addEventListener('click', () => {
+                    const minVal = parseFloat(document.getElementById('inputOddMin').value);
+                    const maxVal = parseFloat(document.getElementById('inputOddMax').value);
+                    const fightOnly = document.getElementById('chkFightSelected').checked;
+
+                    filtros.oddMin = !isNaN(minVal) ? minVal : null;
+                    filtros.oddMax = !isNaN(maxVal) ? maxVal : null;
+                    filtros.fightSelectedOnly = fightOnly;
+
+                    if (filtros.oddMin !== null || filtros.oddMax !== null || filtros.fightSelectedOnly) {
+                        btnFilter.classList.add('active-filter');
+                    } else {
+                        btnFilter.classList.remove('active-filter');
+                    }
+
+                    filterModal.classList.remove('active');
+                    renderizarJogos();
+                });
+            }
+
+            if (btnClearFilters) {
+                btnClearFilters.addEventListener('click', () => {
+                    document.getElementById('inputOddMin').value = '';
+                    document.getElementById('inputOddMax').value = '';
+                    document.getElementById('chkFightSelected').checked = false;
+
+                    filtros = { oddMin: null, oddMax: null, fightSelectedOnly: false };
+                    btnFilter.classList.remove('active-filter');
+                    renderizarJogos();
+                });
+            }
+
             atualizarTextosEstaticos();
             atualizarDataFormatada();
             
@@ -188,6 +265,25 @@
 
             const discHeader = document.querySelector('.disclaimer-title');
             if (discHeader) discHeader.textContent = lang.infoTitle;
+
+            // Filtros - Textos
+            const txtFilterTitle = document.getElementById('txtFilterTitle');
+            if (txtFilterTitle) txtFilterTitle.textContent = lang.filtrosTitle;
+            
+            const lblOddMin = document.getElementById('lblOddMin');
+            if (lblOddMin) lblOddMin.textContent = lang.oddMin;
+
+            const lblOddMax = document.getElementById('lblOddMax');
+            if (lblOddMax) lblOddMax.textContent = lang.oddMax;
+
+            const lblFightSel = document.getElementById('lblFightSel');
+            if (lblFightSel) lblFightSel.textContent = lang.apenasFightSelected;
+
+            const btnApplyFilters = document.getElementById('btnApplyFilters');
+            if (btnApplyFilters) btnApplyFilters.textContent = lang.aplicarFiltros;
+
+            const btnClearFilters = document.getElementById('btnClearFilters');
+            if (btnClearFilters) btnClearFilters.textContent = lang.limparFiltros;
 
             const discBody = document.querySelector('.disclaimer-body');
             if (discBody) {
@@ -334,7 +430,8 @@
                     confianca: confianca.toFixed(0),
                     cor: cor,
                     selecao: selecao.toUpperCase(),
-                    edge: edge 
+                    edge: edge,
+                    odd: o
                 };
             }
             return null;
@@ -409,9 +506,38 @@
             const lang = traducoes[idiomaAtual] || traducoes['pt'];
             const todosJogosArr = Object.keys(dadosJogosCache).map(key => ({ key, ...dadosJogosCache[key] }));
             
-            const jogosArquivados = todosJogosArr
+            let jogosArquivados = todosJogosArr
                 .filter(j => j.arquivado)
                 .sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+
+            // Aplicação dos Filtros
+            jogosArquivados = jogosArquivados.filter(j => {
+                let vbSimples = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
+                let vbSugestao = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
+                let valuedBetCalculada = vbSugestao || vbSimples;
+
+                if (filtros.fightSelectedOnly && !valuedBetCalculada) {
+                    return false;
+                }
+
+                // Validação EXCLUSIVA pela Odd do Palpite Simples
+                const oddSimplesVal = parseFloat(j.oddSimples);
+
+                // Se houver filtro ativado de Odd e o jogo não tiver Palpite Simples com odd válida
+                if ((filtros.oddMin !== null || filtros.oddMax !== null) && (isNaN(oddSimplesVal) || !j.previsaoSimples)) {
+                    return false;
+                }
+
+                if (filtros.oddMin !== null && oddSimplesVal < filtros.oddMin) {
+                    return false;
+                }
+
+                if (filtros.oddMax !== null && oddSimplesVal > filtros.oddMax) {
+                    return false;
+                }
+
+                return true;
+            });
 
             if (jogosArquivados.length === 0) {
                 container.innerHTML = `<div class="no-games-fallback">${lang.nenhumJogo} ${formatarDataEvento(dataSelecionada)}.</div>`;
@@ -618,6 +744,25 @@
         .btn-hoje { background: #0f172a; color: #fff; border: none; border-radius: 4px; padding: 6px 12px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; font-family: 'Montserrat', sans-serif;}
         .btn-hoje:hover { background: #10b981; }
 
+        /* Botão Filtro */
+        .btn-filter-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 6px;
+            cursor: pointer;
+            color: #475569;
+            transition: all 0.2s;
+        }
+        .btn-filter-icon:hover, .btn-filter-icon.active-filter {
+            background: #10b981;
+            color: #ffffff;
+            border-color: #10b981;
+        }
+
         .layout-grid {
             display: grid;
             grid-template-columns: 200px minmax(0, 1fr) 200px;
@@ -692,7 +837,6 @@
         .mini-pred .val { font-weight: 800; color: #1e293b; }
         .mini-pred .odd { font-family: 'Courier New', monospace; font-weight: 700; color: #475569; }
         
-        /* Cores Dinâmicas e Importantes para Sobrescrever CSS Inline */
         .mini-pred.status-ganha { background: #ecfdf5 !important; border-color: #10b981 !important; }
         .mini-pred.status-ganha .val, .mini-pred.status-ganha .odd { color: #047857 !important; }
         .mini-pred.status-perdida { background: #fef2f2 !important; border-color: #ef4444 !important; }
@@ -710,6 +854,16 @@
         
         .disclaimer-header { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px; font-size: 1.1rem; font-weight: 800; color: #0f172a; }
         .disclaimer-body { font-size: 0.85rem; color: #475569; line-height: 1.5; }
+
+        /* Estilos do Modal de Filtros */
+        .filter-modal-body { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .filter-group label { font-size: 0.8rem; font-weight: 600; color: #475569; }
+        .filter-input { border: 1px solid #cbd5e1; border-radius: 4px; padding: 6px 10px; font-size: 0.85rem; outline: none; font-family: 'Montserrat', sans-serif; }
+        .filter-checkbox { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #0f172a; cursor: pointer; margin-top: 4px; }
+        .filter-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+        .btn-apply { background: #10b981; color: #fff; border: none; border-radius: 4px; padding: 8px 14px; font-weight: 700; cursor: pointer; font-family: 'Montserrat', sans-serif; }
+        .btn-clear { background: #e2e8f0; color: #475569; border: none; border-radius: 4px; padding: 8px 14px; font-weight: 600; cursor: pointer; font-family: 'Montserrat', sans-serif; }
 
         .img-desktop { display: block; } .img-mobile { display: none; }
 
@@ -788,6 +942,9 @@
             <span id="lblDiaSelecionadoText">Data Base:</span> <span id="txtDataFormatada" style="color: #0f172a; font-weight: 800;">--/--/--</span>
         </div>
         <div class="controls-right">
+            <button id="btnFilter" class="btn-filter-icon" type="button" title="Filtros">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+            </button>
             <button id="btnHoje" class="btn-hoje" type="button">Hoje</button>
             <input id="datePicker" type="date" class="date-input" />
         </div>
@@ -828,6 +985,35 @@
         </div>
         <div class="disclaimer-body">
             <!-- Conteúdo carregado via JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Filtros -->
+<div id="filterModal" class="modal-overlay-custom">
+    <div class="disclaimer-modal-content">
+        <button class="popup-close-btn" id="closeFilter">&times;</button>
+        <div class="disclaimer-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+            <span id="txtFilterTitle">Filtros de Jogos</span>
+        </div>
+        <div class="filter-modal-body">
+            <div class="filter-group">
+                <label id="lblOddMin" for="inputOddMin">Odd Mínima (Palpite Simples):</label>
+                <input type="number" id="inputOddMin" class="filter-input" placeholder="Ex: 1.50" step="0.01" min="1" />
+            </div>
+            <div class="filter-group">
+                <label id="lblOddMax" for="inputOddMax">Odd Máxima (Palpite Simples):</label>
+                <input type="number" id="inputOddMax" class="filter-input" placeholder="Ex: 3.00" step="0.01" min="1" />
+            </div>
+            <label class="filter-checkbox">
+                <input type="checkbox" id="chkFightSelected" />
+                <span id="lblFightSel">Apenas Fight Selected</span>
+            </label>
+            <div class="filter-actions">
+                <button type="button" id="btnClearFilters" class="btn-clear">Limpar</button>
+                <button type="button" id="btnApplyFilters" class="btn-apply">Aplicar Filtros</button>
+            </div>
         </div>
     </div>
 </div>
