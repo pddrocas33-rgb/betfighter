@@ -465,18 +465,34 @@
                     let vbSugestao = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                     let valuedBetCalculada = vbSugestao || vbSimples; 
 
+                    let logoBFHtml = `<img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="Betfighter" style="width:18px; height:18px; object-fit:contain; vertical-align:middle;">`;
+
                     let badgesHtml = '';
                     if (j.previsaoSimples) {
-                        badgesHtml += `<div class="mini-pred status-${corSimplesClass}"><span class="lbl">S:</span> <span class="val">${j.previsaoSimples.toUpperCase()}</span> <span class="odd">@${Number(j.oddSimples || 1).toFixed(2)}</span></div>`;
+                        badgesHtml += `
+                            <div class="mini-pred status-${corSimplesClass}">
+                                <span class="lbl">S:</span> 
+                                <div style="display:flex; align-items:center; gap:4px; margin-left:auto;">
+                                    <span class="val">${j.previsaoSimples.toUpperCase()}</span>
+                                    <span class="odd">@${Number(j.oddSimples || 1).toFixed(2)}</span>
+                                </div>
+                            </div>`;
                     }
                     if (j.previsaoSugestao) {
-                        badgesHtml += `<div class="mini-pred status-${corSugestaoClass}"><span class="lbl">G:</span> <span class="val">${j.previsaoSugestao.toUpperCase()}</span> <span class="odd">@${Number(j.oddSugestao || 1).toFixed(2)}</span></div>`;
+                        badgesHtml += `
+                            <div class="mini-pred status-${corSugestaoClass}">
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <span class="lbl">G:</span> 
+                                    ${logoBFHtml}
+                                </div>
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <span class="val">${j.previsaoSugestao.toUpperCase()}</span>
+                                    <span class="odd">@${Number(j.oddSugestao || 1).toFixed(2)}</span>
+                                </div>
+                            </div>`;
                     }
                     if (valuedBetCalculada) {
-                        // AGORA AVALIA O RESULTADO DO FIGHT SELECTION TAMBÉM!
                         let corValueClass = avaliarPrevisaoIndividualmente(valuedBetCalculada.selecao, valGolasA, valGolasB, j.estadoAposta);
-                        
-                        // Se estiver pendente, usa a cor de confiança (tracejado). Se resolvido (Ganha/Perdida), o CSS trata da cor automaticamente
                         let inlineStyleBorder = corValueClass === 'pendente' ? `border-color:${valuedBetCalculada.cor};` : '';
                         let inlineStyleColor = corValueClass === 'pendente' ? `color:${valuedBetCalculada.cor};` : '';
 
