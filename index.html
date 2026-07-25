@@ -55,7 +55,8 @@
                 oddMax: "Odd Máxima (Palpite Simples):",
                 apenasFightSelected: "Apenas Fight Selected",
                 aplicarFiltros: "Aplicar Filtros",
-                limparFiltros: "Limpar"
+                limparFiltros: "Limpar",
+                progressoMes: "Progresso do Mês:"
             },
             en: {
                 subtitle: "The fight against the odds",
@@ -79,7 +80,8 @@
                 oddMax: "Max Odd (Simple Pick):",
                 apenasFightSelected: "Fight Selected Only",
                 aplicarFiltros: "Apply Filters",
-                limparFiltros: "Clear"
+                limparFiltros: "Clear",
+                progressoMes: "Monthly Progress:"
             },
             nep: {
                 subtitle: "अड्स विरुद्धको लडाईं",
@@ -103,7 +105,8 @@
                 oddMax: "अधिकतम अड्र्स (सामान्य सुझाव):",
                 apenasFightSelected: "Fight Selected मात्र",
                 aplicarFiltros: "फिल्टर लागू गर्नुहोस्",
-                limparFiltros: "हटाउनुहोस्"
+                limparFiltros: "हटाउनुहोस्",
+                progressoMes: "महिनाको प्रगति:"
             }
         };
 
@@ -128,7 +131,112 @@
             return `${y}-${m}-${dd}`;
         }
 
+        // Função para calcular e atualizar a Barra de Progresso Mensal
+        function atualizarBarraProgressoMensal() {
+            const agora = new Date();
+            const ano = agora.getFullYear();
+            const mes = agora.getMonth();
+
+            const inicioMes = new Date(ano, mes, 1);
+            const fimMes = new Date(ano, mes + 1, 0, 23, 59, 59, 999);
+
+            const tempoTotalMes = fimMes - inicioMes;
+            const tempoDecorrido = agora - inicioMes;
+
+            let percentagem = (tempoDecorrido / tempoTotalMes) * 100;
+            percentagem = Math.min(Math.max(percentagem, 0), 100);
+
+            const fillEl = document.getElementById('monthlyProgressFill');
+            const iconEl = document.getElementById('monthlyProgressIcon');
+            const textEl = document.getElementById('monthlyProgressText');
+
+            if (fillEl) fillEl.style.width = `${percentagem.toFixed(2)}%`;
+            if (iconEl) iconEl.style.left = `${percentagem.toFixed(2)}%`;
+            if (textEl) textEl.textContent = `${percentagem.toFixed(1)}%`;
+        }
+
+        // Função para escutar todos os jogos e calcular ROI do Mês Atual
+        function escutarROIMensal() {
+            const agora = new Date();
+            const ano = agora.getFullYear();
+            const mes = String(agora.getMonth() + 1).padStart(2, '0');
+            const mesAnoPrefix = `${ano}-${mes}`;
+
+            onValue(ref(db, "jogos"), (snapshot) => {
+                const todosJogos = snapshot.val() || {};
+                calcularROIMensal(todosJogos, mesAnoPrefix);
+            });
+        }
+
+        function calcularROIMensal(todosJogosObj, mesAnoStr) {
+            let apostasSimples = 0;
+            let lucroSimples = 0;
+
+            let apostasFS = 0;
+            let lucroFS = 0;
+
+            Object.values(todosJogosObj).forEach(j => {
+                if (!j.arquivado || !j.dataEvento || !j.dataEvento.startsWith(mesAnoStr)) return;
+
+                const valGolasA = j.resGolosA !== undefined ? j.resGolosA : '';
+                const valGolasB = j.resGolosB !== undefined ? j.resGolosB : '';
+
+                // 1. ROI Simples
+                if (j.previsaoSimples && j.previsaoSimples.toString().trim() !== '') {
+                    const oddS = parseFloat(j.oddSimples || j.odd || 0);
+                    const stSimples = avaliarPrevisaoIndividualmente(j.previsaoSimples, valGolasA, valGolasB, j.estadoAposta);
+                    
+                    if (stSimples === 'ganha') {
+                        apostasSimples++;
+                        if (oddS > 0) lucroSimples += (oddS - 1);
+                    } else if (stSimples === 'perdida') {
+                        apostasSimples++;
+                        lucroSimples -= 1;
+                    }
+                }
+
+                // 2. ROI Fight Selected (FS)
+                let vbSimples = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
+                let vbSugestao = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
+                let valuedBetCalculada = vbSugestao || vbSimples;
+
+                if (valuedBetCalculada) {
+                    const stFS = avaliarPrevisaoIndividualmente(valuedBetCalculada.selecao, valGolasA, valGolasB, j.estadoAposta);
+                    const oddFS = parseFloat(valuedBetCalculada.odd);
+
+                    if (stFS === 'ganha') {
+                        apostasFS++;
+                        if (oddFS > 0) lucroFS += (oddFS - 1);
+                    } else if (stFS === 'perdida') {
+                        apostasFS++;
+                        lucroFS -= 1;
+                    }
+                }
+            });
+
+            const roiSimples = apostasSimples > 0 ? (lucroSimples / apostasSimples) * 100 : 0;
+            const roiFS = apostasFS > 0 ? (lucroFS / apostasFS) * 100 : 0;
+
+            const elRoiSimples = document.getElementById('roiSimplesVal');
+            const elRoiFS = document.getElementById('roiFSVal');
+
+            if (elRoiSimples) {
+                const txtSimples = `${roiSimples >= 0 ? '+' : ''}${roiSimples.toFixed(1)}%`;
+                elRoiSimples.textContent = txtSimples;
+                elRoiSimples.className = roiSimples >= 0 ? 'roi-positive' : 'roi-negative';
+            }
+
+            if (elRoiFS) {
+                const txtFS = `${roiFS >= 0 ? '+' : ''}${roiFS.toFixed(1)}%`;
+                elRoiFS.textContent = txtFS;
+                elRoiFS.className = roiFS >= 0 ? 'roi-positive' : 'roi-negative';
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
+            atualizarBarraProgressoMensal();
+            escutarROIMensal();
+
             const langSelect = document.getElementById('langSelect');
             if (langSelect) {
                 idiomaAtual = localStorage.getItem('idiomaPreferido') || 'pt';
@@ -262,6 +370,9 @@
 
             const elBtnHoje = document.getElementById('btnHoje');
             if (elBtnHoje) elBtnHoje.textContent = lang.hoje;
+
+            const elProg = document.getElementById('lblProgressoMes');
+            if (elProg) elProg.textContent = lang.progressoMes;
 
             const discHeader = document.querySelector('.disclaimer-title');
             if (discHeader) discHeader.textContent = lang.infoTitle;
@@ -444,7 +555,7 @@
 
         function calcularValueBetOculta(previsao, oddFormulario, pctV1, pctX, pctV2, oddV1, oddX, oddV2) {
             if (!previsao) return null;
-            let p = previsao.toLowerCase().trim();
+            let p = previsao.toString().toLowerCase().trim();
             let r1 = null; let r2 = null;
 
             if (p === '1x' || p === 'v1x' || p === '1x2') {
@@ -476,7 +587,7 @@
             const gB = parseInt(golosB, 10);
             if (isNaN(gA) || isNaN(gB)) return estadoGeral || 'pendente';
 
-            const p = previsao.toLowerCase().trim();
+            const p = previsao.toString().toLowerCase().trim();
             const totalGolos = gA + gB;
 
             if (p === 'v1' || p === '1') return gA > gB ? 'ganha' : 'perdida';
@@ -728,6 +839,86 @@
         .top-hero-banner-container { width: 100%; border-radius: 8px; overflow: hidden; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .top-hero-banner-container img { width: 100%; display: block; object-fit: cover; }
 
+        /* Estilos do Widget de Progresso Mensal e ROI */
+        .monthly-progress-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .monthly-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #0f172a;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .roi-badge-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .roi-badge-box .roi-item-title { color: #64748b; font-weight: 600; }
+        .roi-badge-box .roi-divider { color: #cbd5e1; }
+        .roi-positive { color: #10b981; font-weight: 800; }
+        .roi-negative { color: #ef4444; font-weight: 800; }
+
+        .monthly-progress-track {
+            position: relative;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: visible;
+        }
+
+        .monthly-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0f172a 0%, #10b981 100%);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .monthly-progress-icon {
+            position: absolute;
+            top: 50%;
+            left: 0%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            background: #ffffff;
+            border: 2px solid #10b981;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: left 0.4s ease;
+        }
+
+        .monthly-progress-icon img {
+            width: 14px;
+            height: 14px;
+            object-fit: contain;
+        }
+
         .tech-controls-bar {
             display: flex;
             justify-content: space-between;
@@ -934,6 +1125,29 @@
         <a href="mailto:suporte@bet-fighter.com" id="anchorBannerTopo" target="_blank">
             <img src="imagens/banner_topo_novo.png" id="imgBannerTopo" alt="Banner Topo">
         </a>
+    </div>
+
+    <!-- Barra de Progresso Mensal com ROI Mensal Integrado -->
+    <div class="monthly-progress-card">
+        <div class="monthly-progress-header">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span id="lblProgressoMes">Progresso do Mês:</span>
+                <div class="roi-badge-box">
+                    <span class="roi-item-title">Simples:</span>
+                    <span id="roiSimplesVal" class="roi-positive">+0.0%</span>
+                    <span class="roi-divider">|</span>
+                    <span class="roi-item-title">FS:</span>
+                    <span id="roiFSVal" class="roi-positive">+0.0%</span>
+                </div>
+            </div>
+            <span id="monthlyProgressText" style="color: #10b981; font-weight: 800;">0%</span>
+        </div>
+        <div class="monthly-progress-track">
+            <div id="monthlyProgressFill" class="monthly-progress-fill"></div>
+            <div id="monthlyProgressIcon" class="monthly-progress-icon">
+                <img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="Betfighter">
+            </div>
+        </div>
     </div>
 
     <div class="tech-controls-bar">
