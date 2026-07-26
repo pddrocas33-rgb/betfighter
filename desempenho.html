@@ -26,6 +26,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // Limite padrão dinâmico de Odd do Fight Selection
+        window.minFsOdd = 1.99;
+
         const traducoes = {
             pt: {
                 txtDesempenhoGeral: "Desempenho Geral",
@@ -200,6 +203,18 @@
             alternarIdioma(idiomaAtual);
         });
 
+        // Escuta a configuração global do Firebase para a Odd Mínima do Fight Selection
+        onValue(ref(db, "config"), (snapshot) => {
+            const config = snapshot.val() || {};
+            if (config.minFsOdd !== undefined) {
+                window.minFsOdd = parseFloat(config.minFsOdd);
+            } else {
+                window.minFsOdd = 1.99;
+            }
+            processarEstatisticasGlobais();
+        });
+
+        // Escuta a tabela de jogos
         onValue(ref(db, "jogos"), (snapshot) => {
             const dadosJogos = snapshot.val() || {};
             todosJogosGlobais = Object.keys(dadosJogos).map(key => ({ key, ...dadosJogos[key] }));
@@ -255,7 +270,9 @@
 
         function testarFightSelectionSingular(selecao, percentagem, oddStr) {
             const o = parseFloat(oddStr);
-            if (isNaN(o) || o < 1.99) return null;
+            const limiteMinimo = window.minFsOdd || 1.99;
+            if (isNaN(o) || o < limiteMinimo) return null;
+            
             const percDec = parseFloat(percentagem) / 100;
             if (isNaN(percDec) || percDec <= 0) return null;
             const probImplicita = 1 / o;
