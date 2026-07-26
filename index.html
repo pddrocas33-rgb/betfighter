@@ -31,6 +31,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // PARÂMETRO DINÂMICO: Sincronizado via Firebase
+        let MIN_FS_ODD = 1.99;
+
         // Traduções
         const traducoes = {
             pt: {
@@ -115,8 +118,9 @@
         let dataSelecionada = hojeISO();
         let idiomaAtual = 'pt';
         let unsubscribeJogos = null;
+        let todosJogosGlobalCache = {};
 
-        // Estado dos Filtros
+        // Estado dos Filtros Locais
         let filtros = {
             oddMin: null,
             oddMax: null,
@@ -131,7 +135,6 @@
             return `${y}-${m}-${dd}`;
         }
 
-        // Função para calcular e atualizar a Barra de Progresso Mensal
         function atualizarBarraProgressoMensal() {
             const agora = new Date();
             const ano = agora.getFullYear();
@@ -155,7 +158,6 @@
             if (textEl) textEl.textContent = `${percentagem.toFixed(1)}%`;
         }
 
-        // Função para escutar todos os jogos e calcular ROI do Mês Atual
         function escutarROIMensal() {
             const agora = new Date();
             const ano = agora.getFullYear();
@@ -163,8 +165,8 @@
             const mesAnoPrefix = `${ano}-${mes}`;
 
             onValue(ref(db, "jogos"), (snapshot) => {
-                const todosJogos = snapshot.val() || {};
-                calcularROIMensal(todosJogos, mesAnoPrefix);
+                todosJogosGlobalCache = snapshot.val() || {};
+                calcularROIMensal(todosJogosGlobalCache, mesAnoPrefix);
             });
         }
 
@@ -236,6 +238,20 @@
         window.addEventListener('DOMContentLoaded', () => {
             atualizarBarraProgressoMensal();
             escutarROIMensal();
+
+            // Escuta a configuração do limite Mínimo de FS Odd enviada pela App de Gestão
+            onValue(ref(db, "config/minFsOdd"), (snapshot) => {
+                const val = snapshot.val();
+                if (val !== null && !isNaN(val)) {
+                    MIN_FS_ODD = parseFloat(val);
+                    // Recalcular em tempo real com a nova odd mínima
+                    const agora = new Date();
+                    const ano = agora.getFullYear();
+                    const mes = String(agora.getMonth() + 1).padStart(2, '0');
+                    calcularROIMensal(todosJogosGlobalCache, `${ano}-${mes}`);
+                    renderizarJogos();
+                }
+            });
 
             const langSelect = document.getElementById('langSelect');
             if (langSelect) {
@@ -521,9 +537,10 @@
             return `${partes[2]}/${partes[1]}/${partes[0].substring(2)}`;
         }
 
+        // Validação dinâmica usando MIN_FS_ODD recebido do Firebase
         function testarValueBetSingular(selecao, percentagem, oddStr) {
             const o = parseFloat(oddStr);
-            if (isNaN(o) || o < 1.99) return null;
+            if (isNaN(o) || o < MIN_FS_ODD) return null;
             const percDec = parseFloat(percentagem) / 100;
             if (isNaN(percDec) || percDec <= 0) return null;
             const probImplicita = 1 / o;
@@ -621,7 +638,7 @@
                 .filter(j => j.arquivado)
                 .sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
 
-            // Aplicação dos Filtros
+            // Aplicação dos Filtros Locais
             jogosArquivados = jogosArquivados.filter(j => {
                 let vbSimples = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let vbSugestao = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
@@ -634,7 +651,6 @@
                 // Validação EXCLUSIVA pela Odd do Palpite Simples
                 const oddSimplesVal = parseFloat(j.oddSimples);
 
-                // Se houver filtro ativado de Odd e o jogo não tiver Palpite Simples com odd válida
                 if ((filtros.oddMin !== null || filtros.oddMax !== null) && (isNaN(oddSimplesVal) || !j.previsaoSimples)) {
                     return false;
                 }
@@ -839,7 +855,6 @@
         .top-hero-banner-container { width: 100%; border-radius: 8px; overflow: hidden; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .top-hero-banner-container img { width: 100%; display: block; object-fit: cover; }
 
-        /* Estilos do Widget de Progresso Mensal e ROI */
         .monthly-progress-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -935,7 +950,6 @@
         .btn-hoje { background: #0f172a; color: #fff; border: none; border-radius: 4px; padding: 6px 12px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; font-family: 'Montserrat', sans-serif;}
         .btn-hoje:hover { background: #10b981; }
 
-        /* Botão Filtro */
         .btn-filter-icon {
             display: flex;
             align-items: center;
@@ -1046,7 +1060,6 @@
         .disclaimer-header { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px; font-size: 1.1rem; font-weight: 800; color: #0f172a; }
         .disclaimer-body { font-size: 0.85rem; color: #475569; line-height: 1.5; }
 
-        /* Estilos do Modal de Filtros */
         .filter-modal-body { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
         .filter-group { display: flex; flex-direction: column; gap: 4px; }
         .filter-group label { font-size: 0.8rem; font-weight: 600; color: #475569; }
