@@ -23,6 +23,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // Limite padrão dinâmico de Odd Fight Selection
+        window.minFsOdd = 1.99;
+
         // Dicionário de Traduções
         const i18n = {
             pt: {
@@ -39,11 +42,14 @@
                 roiMonth: "ROI Mensal",
                 avgOdd: "Odd média",
                 profitDay: "Lucro Dia (u)",
-                results: "Resultados",
+                results: "Resultados Dia",
+                resultsMonth: "Resultados Mês",
                 win: "G",
                 loss: "P",
                 pend: "Pnd",
-                dateND: "Data N/D"
+                dateND: "Data N/D",
+                noGames: "Nenhum jogo nesta categoria para o dia selecionado.",
+                viewGames: "Ver jogos"
             },
             en: {
                 back: "Back to Picks",
@@ -59,11 +65,14 @@
                 roiMonth: "Monthly ROI",
                 avgOdd: "Avg Odd",
                 profitDay: "Daily Profit (u)",
-                results: "Results",
+                results: "Daily Results",
+                resultsMonth: "Monthly Results",
                 win: "W",
                 loss: "L",
                 pend: "Pnd",
-                dateND: "Date N/A"
+                dateND: "Date N/A",
+                noGames: "No games found in this category for the selected date.",
+                viewGames: "View games"
             },
             nep: {
                 back: "पिक्समा फर्कनुहोस्",
@@ -79,11 +88,14 @@
                 roiMonth: "मासिक ROI",
                 avgOdd: "औसत Odd",
                 profitDay: "दैनिक नाफा (u)",
-                results: "नतिजाहरू",
+                results: "दैनिक नतिजा",
+                resultsMonth: "मासिक नतिजा",
                 win: "W",
                 loss: "L",
                 pend: "Pnd",
-                dateND: "मिति N/A"
+                dateND: "मिति N/A",
+                noGames: "छानिएको दिनको लागि यो श्रेणीमा कुनै खेलहरू भेटिएन।",
+                viewGames: "खेलहरू हेर्नुहोस्"
             }
         };
 
@@ -152,6 +164,18 @@
             }
         });
 
+        // Escuta a configuração do limite dinâmico de Odd do Fight Selection
+        onValue(ref(db, "config"), (snapshot) => {
+            const config = snapshot.val() || {};
+            if (config.minFsOdd !== undefined) {
+                window.minFsOdd = parseFloat(config.minFsOdd);
+            } else {
+                window.minFsOdd = 1.99;
+            }
+            renderizarEstatisticas(dadosJogosCache);
+        });
+
+        // Escuta os jogos
         onValue(ref(db, "jogos"), (snapshot) => {
             dadosJogosCache = snapshot.val() || {};
             renderizarEstatisticas(dadosJogosCache);
@@ -166,7 +190,9 @@
 
         function testarValueBetSingular(selecao, percentagem, oddStr) {
             const o = parseFloat(oddStr);
-            if (isNaN(o) || o < 1.99) return null;
+            const limiteMinimo = window.minFsOdd || 1.99;
+            if (isNaN(o) || o < limiteMinimo) return null;
+            
             const percDec = parseFloat(percentagem) / 100;
             if (isNaN(percDec) || percDec <= 0) return null;
             const probImplicita = 1 / o;
@@ -204,7 +230,7 @@
                 r2 = testarValueBetSingular('X', pctX, oddX);
                 return extrairMelhorValueBet(r1, r2);
             } else if (p === '12' || p === 'v12') {
-                r1 = testarValueBetSingular('1', pctV1, oddV1);
+                r1 = testarValueBetSingular('1', pctV1, pctV1, oddV1);
                 r2 = testarValueBetSingular('2', pctV2, oddV2);
                 return extrairMelhorValueBet(r1, r2);
             }
@@ -228,17 +254,18 @@
 
         function renderizarEstatisticas(dadosJogos) {
             const container = document.getElementById('statsContainer');
+            if(!container) return;
             document.getElementById('lblDataEscolhida').innerText = formatarDataDisplay(dataSelecionada);
             
             const anoMesSelecionado = dataSelecionada.substring(0, 7);
             const todosJogos = Object.values(dadosJogos).filter(j => j.arquivado);
 
             const s = {
-                simples: { ganhas: 0, perdidas: 0, pendentes: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0 },
-                fs_all:  { ganhas: 0, perdidas: 0, pendentes: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0 },
-                fs_low:  { ganhas: 0, perdidas: 0, pendentes: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0 },
-                fs_medium:{ ganhas: 0, perdidas: 0, pendentes: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0 },
-                fs_high: { ganhas: 0, perdidas: 0, pendentes: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0 }
+                simples: { ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] },
+                fs_all:  { ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] },
+                fs_low:  { ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] },
+                fs_medium:{ ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] },
+                fs_high: { ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] }
             };
 
             todosJogos.forEach(j => {
@@ -247,16 +274,33 @@
                 if (!isDaily && !isMonthly) return;
 
                 const oddSimples = parseFloat(j.oddSimples || j.odd || 0);
-                if (j.estadoAposta === 'ganha') {
-                    if (isDaily) { s.simples.ganhas++; s.simples.stake++; if(oddSimples>0) { s.simples.lucro += (oddSimples-1); s.simples.somaOdds += oddSimples; } }
-                    if (isMonthly) { s.simples.stakeMensal++; if(oddSimples>0) s.simples.lucroMensal += (oddSimples-1); }
-                } else if (j.estadoAposta === 'perdida') {
-                    if (isDaily) { s.simples.perdidas++; s.simples.stake++; s.simples.lucro -= 1; if(oddSimples>0) s.simples.somaOdds += oddSimples; }
-                    if (isMonthly) { s.simples.stakeMensal++; s.simples.lucroMensal -= 1; }
-                } else {
-                    if (isDaily) { s.simples.pendentes++; if(oddSimples>0) s.simples.somaOdds += oddSimples; }
+                
+                // Simples
+                if (isDaily) {
+                    s.simples.jogosDia.push({
+                        equipaA: j.equipaA,
+                        equipaB: j.equipaB,
+                        liga: j.liga || '',
+                        resA: j.resGolosA,
+                        resB: j.resGolosB,
+                        aposta: j.previsaoSimples || '-',
+                        odd: oddSimples,
+                        estado: j.estadoAposta || 'pendente'
+                    });
                 }
 
+                if (j.estadoAposta === 'ganha') {
+                    if (isDaily) { s.simples.ganhas++; s.simples.stake++; if(oddSimples>0) { s.simples.lucro += (oddSimples-1); s.simples.somaOdds += oddSimples; } }
+                    if (isMonthly) { s.simples.ganhasM++; s.simples.stakeMensal++; if(oddSimples>0) s.simples.lucroMensal += (oddSimples-1); }
+                } else if (j.estadoAposta === 'perdida') {
+                    if (isDaily) { s.simples.perdidas++; s.simples.stake++; s.simples.lucro -= 1; if(oddSimples>0) s.simples.somaOdds += oddSimples; }
+                    if (isMonthly) { s.simples.perdidasM++; s.simples.stakeMensal++; s.simples.lucroMensal -= 1; }
+                } else {
+                    if (isDaily) { s.simples.pendentes++; if(oddSimples>0) s.simples.somaOdds += oddSimples; }
+                    if (isMonthly) { s.simples.pendentesM++; }
+                }
+
+                // Fighter Selection
                 let vbS = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let vbSug = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let vb = vbSug || vbS;
@@ -276,20 +320,35 @@
                     
                     subCats.forEach(c => {
                         if(!s[c]) return;
+
+                        if (isDaily) {
+                            s[c].jogosDia.push({
+                                equipaA: j.equipaA,
+                                equipaB: j.equipaB,
+                                liga: j.liga || '',
+                                resA: j.resGolosA,
+                                resB: j.resGolosB,
+                                aposta: vb.selecao,
+                                odd: vb.odd,
+                                estado: estadoVB
+                            });
+                        }
+
                         if (estadoVB === 'ganha') {
                             if (isDaily) { s[c].ganhas++; s[c].stake++; s[c].lucro += (vb.odd-1); s[c].somaOdds += vb.odd; }
-                            if (isMonthly) { s[c].stakeMensal++; s[c].lucroMensal += (vb.odd-1); }
+                            if (isMonthly) { s[c].ganhasM++; s[c].stakeMensal++; s[c].lucroMensal += (vb.odd-1); }
                         } else if (estadoVB === 'perdida') {
                             if (isDaily) { s[c].perdidas++; s[c].stake++; s[c].lucro -= 1; s[c].somaOdds += vb.odd; }
-                            if (isMonthly) { s[c].stakeMensal++; s[c].lucroMensal -= 1; }
+                            if (isMonthly) { s[c].perdidasM++; s[c].stakeMensal++; s[c].lucroMensal -= 1; }
                         } else {
                             if (isDaily) { s[c].pendentes++; s[c].somaOdds += vb.odd; }
+                            if (isMonthly) { s[c].pendentesM++; }
                         }
                     });
                 }
             });
 
-            function gerarLinhaHTML(title, color, statsObj) {
+            function gerarLinhaHTML(idCategory, title, color, statsObj) {
                 const tot = statsObj.ganhas + statsObj.perdidas + statsObj.pendentes;
                 const oddM = tot > 0 ? (statsObj.somaOdds / tot) : 0;
                 const roi = statsObj.stake > 0 ? (statsObj.lucro / statsObj.stake) * 100 : 0;
@@ -298,12 +357,46 @@
                 const posD = statsObj.lucro >= 0; const posM = statsObj.lucroMensal >= 0;
                 const corD = posD ? '#10b981' : '#ef4444'; const corM = posM ? '#10b981' : '#ef4444';
 
+                let listaJogosHtml = '';
+                if (statsObj.jogosDia.length === 0) {
+                    listaJogosHtml = `<div class="empty-games">${t.noGames}</div>`;
+                } else {
+                    statsObj.jogosDia.forEach(jg => {
+                        const resText = (jg.resA !== undefined && jg.resB !== undefined && jg.resA !== '' && jg.resB !== '') 
+                            ? `${jg.resA} - ${jg.resB}` 
+                            : 'vs';
+
+                        let badgeClass = 'pend';
+                        let statusSymbol = '⌛';
+                        if (jg.estado === 'ganha') { badgeClass = 'win'; statusSymbol = '✓'; }
+                        if (jg.estado === 'perdida') { badgeClass = 'loss'; statusSymbol = '✕'; }
+
+                        listaJogosHtml += `
+                            <div class="game-row-item">
+                                <div class="game-info">
+                                    <span class="game-teams"><b>${jg.equipaA}</b> <span class="score-pill">${resText}</span> <b>${jg.equipaB}</b></span>
+                                    ${jg.liga ? `<span class="game-league">${jg.liga}</span>` : ''}
+                                </div>
+                                <div class="game-pick-details">
+                                    <span class="pick-tag">${jg.aposta}</span>
+                                    <span class="odd-tag">@${jg.odd.toFixed(2)}</span>
+                                    <span class="status-badge ${badgeClass}">${statusSymbol}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
                 return `
                     <div class="stats-category-block" style="border-left: 5px solid ${color};">
-                        <h3 class="cat-title">
-                            <span class="cat-dot" style="background: ${color};"></span>
-                            ${title}
-                        </h3>
+                        <div class="block-header">
+                            <h3 class="cat-title">
+                                <span class="cat-dot" style="background: ${color};"></span>
+                                ${title}
+                                <span class="count-badge">${statsObj.jogosDia.length}</span>
+                            </h3>
+                        </div>
+                        
                         <div class="stats-bar">
                             <div class="stat-card">
                                 <div class="stat-label">${t.roiDay}</div>
@@ -329,17 +422,36 @@
                                     <span class="pill-res pend">${statsObj.pendentes}${t.pend}</span>
                                 </div>
                             </div>
+                            <div class="stat-card">
+                                <div class="stat-label">${t.resultsMonth}</div>
+                                <div class="stat-value pills-wrapper">
+                                    <span class="pill-res win">${statsObj.ganhasM}${t.win}</span>
+                                    <span class="pill-res loss">${statsObj.perdidasM}${t.loss}</span>
+                                    <span class="pill-res pend">${statsObj.pendentesM}${t.pend}</span>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- LISTAGEM DE JOGOS EXPANSÍVEL -->
+                        <details class="games-accordion">
+                            <summary class="games-summary">
+                                <span>${t.viewGames} (${statsObj.jogosDia.length})</span>
+                                <span class="arrow-indicator">▼</span>
+                            </summary>
+                            <div class="games-dropdown-container">
+                                ${listaJogosHtml}
+                            </div>
+                        </details>
                     </div>
                 `;
             }
 
             container.innerHTML = `
-                ${gerarLinhaHTML(t.statsNormais, "#64748b", s.simples)}
-                ${gerarLinhaHTML(t.statsFSAll, "#3b82f6", s.fs_all)}
-                ${gerarLinhaHTML(t.statsFSLow, "#f97316", s.fs_low)}
-                ${gerarLinhaHTML(t.statsFSMed, "#eab308", s.fs_medium)}
-                ${gerarLinhaHTML(t.statsFSHigh, "#22c55e", s.fs_high)}
+                ${gerarLinhaHTML("normais", t.statsNormais, "#64748b", s.simples)}
+                ${gerarLinhaHTML("fs_all", t.statsFSAll, "#3b82f6", s.fs_all)}
+                ${gerarLinhaHTML("fs_low", t.statsFSLow, "#f97316", s.fs_low)}
+                ${gerarLinhaHTML("fs_med", t.statsFSMed, "#eab308", s.fs_medium)}
+                ${gerarLinhaHTML("fs_high", t.statsFSHigh, "#22c55e", s.fs_high)}
             `;
         }
     </script>
@@ -366,27 +478,63 @@
 
         .container-master { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
         
-        .stats-category-block { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px -2px rgba(0,0,0,0.05); }
-        .cat-title { margin: 0 0 16px 0; font-size: 1.15rem; color: #0f172a; display: flex; align-items: center; gap: 10px; font-weight: 800; }
+        /* BLOCOS DE CATEGORIA */
+        .stats-category-block { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px -2px rgba(0,0,0,0.05); overflow: hidden; transition: all 0.2s ease; }
+        
+        .block-header { padding: 20px 20px 15px 20px; }
+        .cat-title { margin: 0; font-size: 1.15rem; color: #0f172a; display: flex; align-items: center; gap: 10px; font-weight: 800; }
         .cat-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+        .count-badge { background: #e2e8f0; color: #475569; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: bold; }
+
+        .stats-bar { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; padding: 0 20px 15px 20px; }
+        .stat-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+        .stat-label { font-size: 0.68rem; color: #64748b; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; white-space: nowrap; }
+        .stat-value { font-size: 1.15rem; font-weight: 900; color: #0f172a; }
         
-        .stats-bar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
-        .stat-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
-        .stat-label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; white-space: nowrap; }
-        .stat-value { font-size: 1.2rem; font-weight: 900; color: #0f172a; }
-        
-        .pills-wrapper { display: flex; gap: 4px; margin-top: 4px; }
-        .pill-res { font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; color: white; }
+        .pills-wrapper { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+        .pill-res { font-size: 0.72rem; font-weight: 800; padding: 2px 6px; border-radius: 6px; color: white; }
         .pill-res.win { background: #10b981; }
         .pill-res.loss { background: #ef4444; }
         .pill-res.pend { background: #64748b; }
 
-        @media (max-width: 768px) {
+        /* PAINEL DE JOGOS EXPANSÍVEL (DENTRO DE CADA CATEGORIA) */
+        .games-accordion { border-top: 1px solid #f1f5f9; }
+        .games-summary { padding: 12px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; list-style: none; background-color: #fafafa; font-weight: 700; font-size: 0.85rem; color: #475569; transition: background-color 0.2s; }
+        .games-summary::-webkit-details-marker { display: none; }
+        .games-summary:hover { background-color: #f1f5f9; color: #0f172a; }
+
+        .arrow-indicator { font-size: 0.75rem; color: #94a3b8; transition: transform 0.2s ease; }
+        .games-accordion[open] .arrow-indicator { transform: rotate(180deg); }
+
+        .games-dropdown-container { padding: 15px 20px; background: #fdfdfd; display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed #e2e8f0; }
+        .empty-games { text-align: center; color: #94a3b8; font-size: 0.88rem; font-style: italic; padding: 10px 0; }
+
+        .game-row-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; flex-wrap: wrap; gap: 10px; }
+        .game-info { display: flex; flex-direction: column; gap: 2px; }
+        .game-teams { color: #0f172a; font-size: 0.92rem; display: flex; align-items: center; gap: 6px; }
+        .score-pill { background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-weight: bold; color: #0284c7; font-size: 0.85rem; border: 1px solid #cbd5e1; }
+        .game-league { font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
+
+        .game-pick-details { display: flex; align-items: center; gap: 8px; }
+        .pick-tag { background: #e0f2fe; color: #0369a1; font-weight: bold; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem; text-transform: uppercase; }
+        .odd-tag { background: #f1f5f9; color: #334155; font-weight: 800; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem; font-family: monospace; border: 1px solid #e2e8f0; }
+        
+        .status-badge { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; color: white; }
+        .status-badge.win { background: #10b981; }
+        .status-badge.loss { background: #ef4444; }
+        .status-badge.pend { background: #94a3b8; }
+
+        @media (max-width: 900px) {
+            .stats-bar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 600px) {
             .stats-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .stats-bar .stat-card:last-child { grid-column: span 2; }
             .header-bar { flex-direction: column; gap: 12px; align-items: flex-start; }
             .date-controls-bar { flex-direction: column; gap: 12px; align-items: stretch; }
             .date-controls-right { justify-content: space-between; }
+            .game-row-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .game-pick-details { width: 100%; justify-content: space-between; }
         }
     </style>
 </head>
