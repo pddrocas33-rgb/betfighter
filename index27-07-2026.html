@@ -15,16 +15,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, onValue, query, orderByChild, equalTo, set, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-        import { 
-            getAuth, 
-            signInWithEmailAndPassword, 
-            createUserWithEmailAndPassword, 
-            signOut, 
-            onAuthStateChanged,
-            GoogleAuthProvider,
-            signInWithPopup
-        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getDatabase, ref, onValue, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCeSB_CWfsuo2QcJR2OM7piQwo8HhZ4fRQ",
@@ -39,15 +30,10 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const auth = getAuth(app);
-        const googleProvider = new GoogleAuthProvider();
-
-        // ESTADO DE AUTENTICAÇÃO
-        let usuarioLogado = null;
 
         // PARÂMETROS DINÂMICOS: Sincronizados via Firebase
         let MIN_FS_ODD = 1.99;
-        let MIN_FS_EDGE = 0.10; 
+        let MIN_FS_EDGE = 0.10; // 10% por defeito (0.01 a 0.50)
 
         // Traduções
         const traducoes = {
@@ -71,13 +57,10 @@
                 filtrosTitle: "Filtros de Jogos",
                 oddMin: "Odd Mínima (Palpite Simples):",
                 oddMax: "Odd Máxima (Palpite Simples):",
-                apenasFightSelected: "Apenas Fight Selected (Membros)",
+                apenasFightSelected: "Apenas Fight Selected",
                 aplicarFiltros: "Aplicar Filtros",
                 limparFiltros: "Limpar",
-                progressoMes: "Progresso do Mês:",
-                btnLogin: "Entrar",
-                logout: "Sair",
-                membrosRestrito: "🔒 Conteúdo Exclusivo (Faça Login para ver Sugestões e Fight Selected)"
+                progressoMes: "Progresso do Mês:"
             },
             en: {
                 subtitle: "The fight against the odds",
@@ -99,13 +82,10 @@
                 filtrosTitle: "Match Filters",
                 oddMin: "Min Odd (Simple Pick):",
                 oddMax: "Max Odd (Simple Pick):",
-                apenasFightSelected: "Fight Selected Only (Members)",
+                apenasFightSelected: "Fight Selected Only",
                 aplicarFiltros: "Apply Filters",
                 limparFiltros: "Clear",
-                progressoMes: "Monthly Progress:",
-                btnLogin: "Login",
-                logout: "Logout",
-                membrosRestrito: "🔒 Exclusive Content (Login to view Suggestions & Fight Selected)"
+                progressoMes: "Monthly Progress:"
             },
             nep: {
                 subtitle: "अड्स विरुद्धको लडाईं",
@@ -127,13 +107,10 @@
                 filtrosTitle: "खेल फिल्टरहरू",
                 oddMin: "न्यूनतम अड्र्स (सामान्य सुझाव):",
                 oddMax: "अधिकतम अड्र्स (सामान्य सुझाव):",
-                apenasFightSelected: "Fight Selected मात्र (सदस्य)",
+                apenasFightSelected: "Fight Selected मात्र",
                 aplicarFiltros: "फिल्टर लागू गर्नुहोस्",
                 limparFiltros: "हटाउनुहोस्",
-                progressoMes: "महिनाको प्रगति:",
-                btnLogin: "लगइन",
-                logout: "बाहिरिनुहोस्",
-                membrosRestrito: "🔒 विशेष सामग्री (सुझावहरू हेर्न लगइन गर्नुहोस्)"
+                progressoMes: "महिनाको प्रगति:"
             }
         };
 
@@ -157,51 +134,6 @@
             const m = String(d.getMonth() + 1).padStart(2, '0');
             const dd = String(d.getDate()).padStart(2, '0');
             return `${y}-${m}-${dd}`;
-        }
-
-        // --- SISTEMA DE AUTENTICAÇÃO E SINCRONIZAÇÃO BD ---
-        onAuthStateChanged(auth, async (user) => {
-            usuarioLogado = user;
-            if (user) {
-                // Sincroniza o utilizador na nódoa "usuarios" da Realtime Database
-                try {
-                    const uRef = ref(db, `usuarios/${user.uid}`);
-                    const snap = await get(uRef);
-                    if (!snap.exists()) {
-                        await set(uRef, {
-                            email: user.email,
-                            criadoEm: new Date().getTime(),
-                            ativo: true
-                        });
-                    } else {
-                        // Garante que o email está atualizado
-                        await update(uRef, {
-                            email: user.email
-                        });
-                    }
-                } catch (err) {
-                    console.error("Erro ao registar utilizador na BD:", err);
-                }
-            }
-            atualizarUIAutenticacao();
-            renderizarJogos();
-        });
-
-        function atualizarUIAutenticacao() {
-            const btnLoginText = document.getElementById('txtLoginBtn');
-            const userBadge = document.getElementById('userStatusBadge');
-            
-            if (usuarioLogado) {
-                if (btnLoginText) btnLoginText.textContent = usuarioLogado.displayName || usuarioLogado.email.split('@')[0];
-                if (userBadge) {
-                    userBadge.style.display = 'inline-block';
-                    userBadge.textContent = 'CONTA ATIVA';
-                }
-            } else {
-                const lang = traducoes[idiomaAtual] || traducoes['pt'];
-                if (btnLoginText) btnLoginText.textContent = lang.btnLogin;
-                if (userBadge) userBadge.style.display = 'none';
-            }
         }
 
         function atualizarBarraProgressoMensal() {
@@ -308,7 +240,7 @@
             atualizarBarraProgressoMensal();
             escutarROIMensal();
 
-            // Escuta a configuração global
+            // Escuta a configuração global (minFsOdd e minFsEdge) enviada pela App de Gestão
             onValue(ref(db, "config"), (snapshot) => {
                 const config = snapshot.val() || {};
                 let recalcular = false;
@@ -342,7 +274,6 @@
                     localStorage.setItem('idiomaPreferido', idiomaAtual);
                     atualizarTextosEstaticos();
                     atualizarBannersDinamicos();
-                    atualizarUIAutenticacao();
                     renderizarJogos();
                 });
             }
@@ -370,7 +301,6 @@
             
             configurarProximoBanner();
 
-            // Modal Info
             const btnInfo = document.getElementById('btnInfo');
             const disclaimerModal = document.getElementById('disclaimerModal');
             const closeDisclaimer = document.getElementById('closeDisclaimer');
@@ -385,109 +315,6 @@
                 closeDisclaimer.addEventListener('click', () => disclaimerModal.classList.remove('active'));
                 disclaimerModal.addEventListener('click', (e) => {
                     if (e.target === disclaimerModal) disclaimerModal.classList.remove('active');
-                });
-            }
-
-            // Modal de Autenticação / Login
-            const btnLogin = document.getElementById('btnLogin');
-            const authModal = document.getElementById('authModal');
-            const closeAuth = document.getElementById('closeAuth');
-            const btnAuthSubmit = document.getElementById('btnAuthSubmit');
-            const btnGoogleAuth = document.getElementById('btnGoogleAuth');
-            const btnLogout = document.getElementById('btnLogout');
-            const toggleAuthMode = document.getElementById('toggleAuthMode');
-            const containerTermos = document.getElementById('containerTermosRegisto');
-            let isSignUp = false;
-
-            if (btnLogin && authModal) {
-                btnLogin.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    authModal.classList.add('active');
-                    document.getElementById('authLoggedBox').style.display = usuarioLogado ? 'block' : 'none';
-                    document.getElementById('authFormBox').style.display = usuarioLogado ? 'none' : 'block';
-                    if(usuarioLogado) {
-                        document.getElementById('authLoggedEmail').textContent = usuarioLogado.email;
-                    }
-                });
-            }
-
-            if (closeAuth && authModal) {
-                closeAuth.addEventListener('click', () => authModal.classList.remove('active'));
-                authModal.addEventListener('click', (e) => {
-                    if (e.target === authModal) authModal.classList.remove('active');
-                });
-            }
-
-            if (toggleAuthMode) {
-                toggleAuthMode.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    isSignUp = !isSignUp;
-                    document.getElementById('authModalTitle').textContent = isSignUp ? 'Criar Conta' : 'Iniciar Sessão';
-                    btnAuthSubmit.textContent = isSignUp ? 'Registar' : 'Entrar';
-                    toggleAuthMode.textContent = isSignUp ? 'Já tem conta? Iniciar Sessão' : 'Não tem conta? Registar-se';
-                    if (containerTermos) containerTermos.style.display = isSignUp ? 'flex' : 'none';
-                });
-            }
-
-            if (btnAuthSubmit) {
-                btnAuthSubmit.addEventListener('click', async () => {
-                    const email = document.getElementById('authEmail').value;
-                    const pass = document.getElementById('authPassword').value;
-                    const chkTermos = document.getElementById('chkTermos');
-                    const errEl = document.getElementById('authError');
-                    errEl.textContent = '';
-
-                    if (isSignUp && (!chkTermos || !chkTermos.checked)) {
-                        errEl.textContent = 'Tem de aceitar os Termos e Condições para efetuar o registo.';
-                        return;
-                    }
-
-                    try {
-                        if (isSignUp) {
-                            await createUserWithEmailAndPassword(auth, email, pass);
-                        } else {
-                            await signInWithEmailAndPassword(auth, email, pass);
-                        }
-                        authModal.classList.remove('active');
-                    } catch (err) {
-                        errEl.textContent = err.message.replace('Firebase:', '');
-                    }
-                });
-            }
-
-            if (btnGoogleAuth) {
-                btnGoogleAuth.addEventListener('click', async () => {
-                    try {
-                        await signInWithPopup(auth, googleProvider);
-                        authModal.classList.remove('active');
-                    } catch (err) {
-                        document.getElementById('authError').textContent = err.message;
-                    }
-                });
-            }
-
-            if (btnLogout) {
-                btnLogout.addEventListener('click', async () => {
-                    await signOut(auth);
-                    authModal.classList.remove('active');
-                });
-            }
-
-            // Modal de Termos e Condições
-            const linkAbrirTermos = document.getElementById('linkAbrirTermos');
-            const termosModal = document.getElementById('termosModal');
-            const closeTermos = document.getElementById('closeTermos');
-
-            if (linkAbrirTermos && termosModal) {
-                linkAbrirTermos.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    termosModal.classList.add('active');
-                });
-            }
-            if (closeTermos && termosModal) {
-                closeTermos.addEventListener('click', () => termosModal.classList.remove('active'));
-                termosModal.addEventListener('click', (e) => {
-                    if (e.target === termosModal) termosModal.classList.remove('active');
                 });
             }
 
@@ -515,12 +342,6 @@
                     const minVal = parseFloat(document.getElementById('inputOddMin').value);
                     const maxVal = parseFloat(document.getElementById('inputOddMax').value);
                     const fightOnly = document.getElementById('chkFightSelected').checked;
-
-                    if (fightOnly && !usuarioLogado) {
-                        alert("Para filtrar por 'Fight Selected', é necessário iniciar sessão na sua conta.");
-                        document.getElementById('chkFightSelected').checked = false;
-                        return;
-                    }
 
                     filtros.oddMin = !isNaN(minVal) ? minVal : null;
                     filtros.oddMax = !isNaN(maxVal) ? maxVal : null;
@@ -580,7 +401,7 @@
             const elProg = document.getElementById('lblProgressoMes');
             if (elProg) elProg.textContent = lang.progressoMes;
 
-            const discHeader = document.querySelector('#disclaimerModal .disclaimer-title');
+            const discHeader = document.querySelector('.disclaimer-title');
             if (discHeader) discHeader.textContent = lang.infoTitle;
 
             // Filtros - Textos
@@ -602,7 +423,7 @@
             const btnClearFilters = document.getElementById('btnClearFilters');
             if (btnClearFilters) btnClearFilters.textContent = lang.limparFiltros;
 
-            const discBody = document.querySelector('#disclaimerModal .disclaimer-body');
+            const discBody = document.querySelector('.disclaimer-body');
             if (discBody) {
                 discBody.innerHTML = `
                     <p>${lang.infoWelcome}</p>
@@ -727,6 +548,7 @@
             return `${partes[2]}/${partes[1]}/${partes[0].substring(2)}`;
         }
 
+        // Validação dinâmica usando MIN_FS_ODD e MIN_FS_EDGE do Firebase
         function testarValueBetSingular(selecao, percentagem, oddStr) {
             const o = parseFloat(oddStr);
             if (isNaN(o) || o < MIN_FS_ODD) return null;
@@ -735,6 +557,7 @@
             const probImplicita = 1 / o;
             const edge = percDec - probImplicita;
 
+            // VALIDAÇÃO: Aceita APENAS desacertos onde o edge seja superior ao MIN_FS_EDGE configurado na App de Gestão
             if (edge >= MIN_FS_EDGE) {
                 let confianca = Math.min((edge * 2) * 100, 95);
                 let cor = '';
@@ -838,6 +661,7 @@
                     return false;
                 }
 
+                // Validação EXCLUSIVA pela Odd do Palpite Simples
                 const oddSimplesVal = parseFloat(j.oddSimples);
 
                 if ((filtros.oddMin !== null || filtros.oddMax !== null) && (isNaN(oddSimplesVal) || !j.previsaoSimples)) {
@@ -910,8 +734,6 @@
                     let logoBFHtml = `<img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="Betfighter" style="width:18px; height:18px; object-fit:contain; vertical-align:middle;">`;
 
                     let badgesHtml = '';
-                    
-                    // 1. Palpite Simples (PÚBLICO - Sempre visível)
                     if (j.previsaoSimples) {
                         badgesHtml += `
                             <div class="mini-pred status-${corSimplesClass}">
@@ -922,45 +744,31 @@
                                 </div>
                             </div>`;
                     }
-
-                    // 2. CONTEÚDO RESTRITO A UTILIZADORES COM SESSÃO INICIADA
-                    if (usuarioLogado) {
-                        // Sugestão (G)
-                        if (j.previsaoSugestao) {
-                            badgesHtml += `
-                                <div class="mini-pred status-${corSugestaoClass}">
-                                    <div style="display:flex; align-items:center; gap:4px;">
-                                        <span class="lbl">G:</span> 
-                                        ${logoBFHtml}
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:4px;">
-                                        <span class="val">${j.previsaoSugestao.toUpperCase()}</span>
-                                        <span class="odd">@${Number(j.oddSugestao || 1).toFixed(2)}</span>
-                                    </div>
-                                </div>`;
-                        }
-
-                        // Fight Selected
-                        if (valuedBetCalculada) {
-                            let corValueClass = avaliarPrevisaoIndividualmente(valuedBetCalculada.selecao, valGolasA, valGolasB, j.estadoAposta);
-                            let inlineStyleBorder = corValueClass === 'pendente' ? `border-color:${valuedBetCalculada.cor};` : '';
-                            let inlineStyleColor = corValueClass === 'pendente' ? `color:${valuedBetCalculada.cor};` : '';
-
-                            badgesHtml += `
-                                <div class="mini-pred status-${corValueClass} fs-badge" style="${inlineStyleBorder}">
-                                    <div style="display:flex; align-items:center; gap:4px;">
-                                        <img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="BF" style="width:12px; height:12px; object-fit:contain;">
-                                        <span class="val" style="${inlineStyleColor} font-size: 0.6rem;">FIGHT SELECTION</span>
-                                    </div>
-                                    <span class="odd" style="${inlineStyleColor}">${valuedBetCalculada.selecao} (${valuedBetCalculada.confianca}%)</span>
-                                </div>
-                            `;
-                        }
-                    } else {
-                        // Mensagem de Bloqueio para não logados
+                    if (j.previsaoSugestao) {
                         badgesHtml += `
-                            <div class="user-locked-tag" onclick="document.getElementById('btnLogin').click();">
-                                🔒 Conteúdo Exclusivo
+                            <div class="mini-pred status-${corSugestaoClass}">
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <span class="lbl">G:</span> 
+                                    ${logoBFHtml}
+                                </div>
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <span class="val">${j.previsaoSugestao.toUpperCase()}</span>
+                                    <span class="odd">@${Number(j.oddSugestao || 1).toFixed(2)}</span>
+                                </div>
+                            </div>`;
+                    }
+                    if (valuedBetCalculada) {
+                        let corValueClass = avaliarPrevisaoIndividualmente(valuedBetCalculada.selecao, valGolasA, valGolasB, j.estadoAposta);
+                        let inlineStyleBorder = corValueClass === 'pendente' ? `border-color:${valuedBetCalculada.cor};` : '';
+                        let inlineStyleColor = corValueClass === 'pendente' ? `color:${valuedBetCalculada.cor};` : '';
+
+                        badgesHtml += `
+                            <div class="mini-pred status-${corValueClass} fs-badge" style="${inlineStyleBorder}">
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="BF" style="width:12px; height:12px; object-fit:contain;">
+                                    <span class="val" style="${inlineStyleColor} font-size: 0.6rem;">FIGHT SELECTION</span>
+                                </div>
+                                <span class="odd" style="${inlineStyleColor}">${valuedBetCalculada.selecao} (${valuedBetCalculada.confianca}%)</span>
                             </div>
                         `;
                     }
@@ -1046,27 +854,6 @@
         .nav-item:hover { color: #10b981; }
         .nav-item svg { width: 14px; height: 14px; stroke: currentColor; }
         
-        .user-btn-active {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: #ffffff !important;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-weight: 700;
-            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
-        }
-        .user-btn-active:hover {
-            opacity: 0.9;
-        }
-        .user-status-tag {
-            background: #38bdf8;
-            color: #0f172a;
-            font-size: 0.6rem;
-            padding: 2px 5px;
-            border-radius: 4px;
-            font-weight: 800;
-            margin-left: 4px;
-        }
-
         .lang-select { background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; padding: 4px 8px; font-size: 0.8rem; font-weight: 600; outline: none; cursor: pointer; font-family: 'Montserrat', sans-serif;}
 
         .main-container {
@@ -1275,22 +1062,6 @@
         
         .fs-badge { width: 100%; justify-content: space-between; border-style: dashed; }
 
-        .user-locked-tag {
-            font-size: 0.65rem;
-            color: #d97706;
-            background: #fef3c7;
-            border: 1px dashed #f59e0b;
-            padding: 4px 6px;
-            border-radius: 4px;
-            text-align: center;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .user-locked-tag:hover {
-            background: #fde68a;
-        }
-
         .loading-state, .no-games-fallback { text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem; font-weight: 500; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; }
 
         .animated-popup-overlay, .modal-overlay-custom { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.7); z-index: 99999; display: flex; justify-content: center; align-items: center; pointer-events: none; opacity: 0; transition: opacity 0.2s; backdrop-filter: blur(2px); }
@@ -1305,27 +1076,11 @@
         .filter-modal-body { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
         .filter-group { display: flex; flex-direction: column; gap: 4px; }
         .filter-group label { font-size: 0.8rem; font-weight: 600; color: #475569; }
-        .filter-input { border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px 10px; font-size: 0.85rem; outline: none; font-family: 'Montserrat', sans-serif; }
+        .filter-input { border: 1px solid #cbd5e1; border-radius: 4px; padding: 6px 10px; font-size: 0.85rem; outline: none; font-family: 'Montserrat', sans-serif; }
         .filter-checkbox { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #0f172a; cursor: pointer; margin-top: 4px; }
         .filter-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
         .btn-apply { background: #10b981; color: #fff; border: none; border-radius: 4px; padding: 8px 14px; font-weight: 700; cursor: pointer; font-family: 'Montserrat', sans-serif; }
         .btn-clear { background: #e2e8f0; color: #475569; border: none; border-radius: 4px; padding: 8px 14px; font-weight: 600; cursor: pointer; font-family: 'Montserrat', sans-serif; }
-
-        .btn-google {
-            background: #ffffff;
-            color: #0f172a;
-            border: 1px solid #cbd5e1;
-            padding: 8px 14px;
-            border-radius: 4px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            margin-top: 10px;
-        }
 
         .img-desktop { display: block; } .img-mobile { display: none; }
 
@@ -1376,11 +1131,6 @@
             <option value="en">English</option>
             <option value="nep">नेपाली</option>
         </select>
-        <a href="#" id="btnLogin" class="nav-item user-btn-active" title="Área de Utilizador">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span id="txtLoginBtn">Entrar</span>
-            <span id="userStatusBadge" class="user-status-tag" style="display:none;">CONTA ATIVA</span>
-        </a>
         <a href="bf_stats.html" class="nav-item" title="Estatísticas Betfighter">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
             <span>Stats</span>
@@ -1457,71 +1207,6 @@
     </div>
 </div>
 
-<!-- Modal de Autenticação / Menu de Utilizador -->
-<div id="authModal" class="modal-overlay-custom">
-    <div class="disclaimer-modal-content">
-        <button class="popup-close-btn" id="closeAuth">&times;</button>
-        <div class="disclaimer-header">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span id="authModalTitle">Iniciar Sessão</span>
-        </div>
-
-        <!-- Conteúdo Utilizador Logado -->
-        <div id="authLoggedBox" style="display:none; text-align:center;">
-            <p style="font-size:0.9rem; color:#475569;">Sessão iniciada como:</p>
-            <strong id="authLoggedEmail" style="font-size:1rem; color:#0f172a;">-</strong>
-            <p style="font-size:0.8rem; color:#10b981; font-weight:700; margin-top:10px;">✔ Acesso total a Sugestões e Fight Selected ativo!</p>
-            <button type="button" id="btnLogout" class="btn-clear" style="width:100%; margin-top:15px; background:#ef4444; color:#fff;">Sair da Conta</button>
-        </div>
-
-        <!-- Conteúdo Formulário de Login/Registo -->
-        <div id="authFormBox" class="filter-modal-body">
-            <div class="filter-group">
-                <label for="authEmail">Email:</label>
-                <input type="email" id="authEmail" class="filter-input" placeholder="seuemail@exemplo.com" />
-            </div>
-            <div class="filter-group">
-                <label for="authPassword">Palavra-passe:</label>
-                <input type="password" id="authPassword" class="filter-input" placeholder="******" />
-            </div>
-
-            <!-- Checkbox dos Termos e Condições (Visível apenas ao Registar) -->
-            <label id="containerTermosRegisto" class="filter-checkbox" style="display:none; font-size: 0.72rem; color: #64748b; margin-top: 4px; align-items: flex-start; gap: 6px;">
-                <input type="checkbox" id="chkTermos" style="margin-top:2px;" />
-                <span>Li e aceito os <a href="#" id="linkAbrirTermos" style="color: #10b981; text-decoration: underline;">Termos e Condições</a> (Fase Beta / Sem garantias).</span>
-            </label>
-
-            <span id="authError" style="color:#ef4444; font-size:0.75rem; font-weight:600;"></span>
-            
-            <div class="filter-actions" style="flex-direction:column; gap:10px;">
-                <button type="button" id="btnAuthSubmit" class="btn-apply" style="width:100%;">Entrar</button>
-                <button type="button" id="btnGoogleAuth" class="btn-google">
-                    <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.1 0-5.74-2.09-6.68-4.91H1.21v3.15C3.25 21.37 7.35 24 12 24z"/><path fill="#FBBC05" d="M5.32 14.29c-.24-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.56H1.21C.44 8.09 0 9.99 0 12s.44 3.91 1.21 5.44l4.11-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.25 2.63 1.21 6.56l4.11 3.15c.94-2.82 3.58-4.96 6.68-4.96z"/></svg>
-                    Entrar com Google
-                </button>
-                <a href="#" id="toggleAuthMode" style="text-align:center; font-size:0.8rem; color:#475569; margin-top:5px;">Não tem conta? Registar-se</a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal dos Termos e Condições -->
-<div id="termosModal" class="modal-overlay-custom">
-    <div class="disclaimer-modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
-        <button class="popup-close-btn" id="closeTermos">&times;</button>
-        <div class="disclaimer-header">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span class="disclaimer-title">Termos e Condições</span>
-        </div>
-        <div style="font-size: 0.8rem; line-height: 1.5; color: #475569; padding-top: 10px;">
-            <p><strong>1. Fase de Testes (Beta) e Gratuidade Temporária:</strong> O Betfighter encontra-se em fase de desenvolvimento e testes. O acesso atual é oferecido a título gratuito, mas o Betfighter reserva-se o direito de, a qualquer momento e <strong>sem aviso prévio</strong>, passar a cobrar pelo acesso ou alterar o modelo de disponibilização do serviço.</p>
-            <p><strong>2. Ausência de Garantias (Isenção de Responsabilidade):</strong> Todas as métricas, palpites, sugestões e indicações de 'Fight Selected' resultam exclusivamente do processamento estatístico e <strong>não garantem qualquer tipo de lucro ou resultado</strong>. O utilizador assume 100% da responsabilidade e do risco pelas suas decisões e apostas efetuadas.</p>
-            <p><strong>3. Caráter Informativo:</strong> O Betfighter é uma plataforma exclusivamente informativa e de análise de dados desportivos. Não somos uma casa de apostas, não aceitamos apostas nem gerimos fundos de terceiros.</p>
-            <p><strong>4. Alteração dos Termos:</strong> Reservamo-nos o direito de atualizar ou alterar estes termos a qualquer altura <strong>sem aviso prévio</strong>.</p>
-        </div>
-    </div>
-</div>
-
 <div id="animatedPopupBanner" class="animated-popup-overlay">
     <div class="animated-popup-content">
         <button class="popup-close-btn" onclick="fecharBannerAnimado()">&times;</button>
@@ -1539,7 +1224,7 @@
             <span class="disclaimer-title">Info</span>
         </div>
         <div class="disclaimer-body">
-            <!-- Conteúdo de Info / Sobre carregado via JS -->
+            <!-- Conteúdo carregado via JS -->
         </div>
     </div>
 </div>
@@ -1563,7 +1248,7 @@
             </div>
             <label class="filter-checkbox">
                 <input type="checkbox" id="chkFightSelected" />
-                <span id="lblFightSel">Apenas Fight Selected (Membros)</span>
+                <span id="lblFightSel">Apenas Fight Selected</span>
             </label>
             <div class="filter-actions">
                 <button type="button" id="btnClearFilters" class="btn-clear">Limpar</button>
