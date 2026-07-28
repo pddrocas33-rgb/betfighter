@@ -1041,10 +1041,10 @@
         .navbar-brand { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 1.2rem; font-style: italic; letter-spacing: -0.5px; }
         .brand-green { color: #10b981; }
         
-        .navbar-actions { display: flex; align-items: center; gap: 16px; }
-        .nav-item { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.85rem; color: #cbd5e1; transition: color 0.2s; cursor: pointer; }
+        .navbar-actions { display: flex; align-items: center; gap: 12px; }
+        .nav-item { display: flex; align-items: center; gap: 5px; font-weight: 600; font-size: 0.85rem; color: #cbd5e1; transition: color 0.2s; cursor: pointer; }
         .nav-item:hover { color: #10b981; }
-        .nav-item svg { width: 14px; height: 14px; stroke: currentColor; }
+        .nav-item svg { width: 15px; height: 15px; stroke: currentColor; flex-shrink: 0; }
         
         .user-btn-active {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -1067,7 +1067,7 @@
             margin-left: 4px;
         }
 
-        .lang-select { background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; padding: 4px 8px; font-size: 0.8rem; font-weight: 600; outline: none; cursor: pointer; font-family: 'Montserrat', sans-serif;}
+        .lang-select { background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; padding: 4px 6px; font-size: 0.75rem; font-weight: 600; outline: none; cursor: pointer; font-family: 'Montserrat', sans-serif;}
 
         .main-container {
             max-width: 1340px;
@@ -1341,9 +1341,16 @@
             .sidebar-banner.banner-pos-left { display: block; margin-bottom: 16px; position: static; max-width: 100%; }
             .img-desktop { display: none; } .img-mobile { display: block; width: 100%; }
         }
+        /* CORREÇÃO PARA ECRÃS MÓVEIS (<= 650px) */
         @media (max-width: 650px) {
-            .top-navbar { padding: 0 12px; }
-            .navbar-actions span { display: none; } 
+            .top-navbar { padding: 0 8px; }
+            .navbar-brand { font-size: 1rem; }
+            .navbar-actions { gap: 6px; }
+            .navbar-actions .nav-item { font-size: 0.72rem; gap: 3px; }
+            .navbar-actions span { display: inline !important; } /* Mantém visíveis as descrições dos links no móvel */
+            .user-status-tag { display: none !important; } /* Esconde o selo secundário para poupar espaço */
+            .user-btn-active { padding: 3px 6px; }
+            
             .tech-controls-bar { flex-direction: column; gap: 12px; align-items: stretch; }
             .tech-table-header { display: none; }
             
@@ -1372,9 +1379,9 @@
     </div>
     <div class="navbar-actions">
         <select id="langSelect" class="lang-select">
-            <option value="pt" selected>PT-BR</option>
-            <option value="en">English</option>
-            <option value="nep">नेपाली</option>
+            <option value="pt" selected>PT</option>
+            <option value="en">EN</option>
+            <option value="nep">NEP</option>
         </select>
         <a href="#" id="btnLogin" class="nav-item user-btn-active" title="Área de Utilizador">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
