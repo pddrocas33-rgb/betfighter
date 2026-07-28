@@ -163,7 +163,6 @@
         onAuthStateChanged(auth, async (user) => {
             usuarioLogado = user;
             if (user) {
-                // Sincroniza o utilizador na nódoa "usuarios" da Realtime Database
                 try {
                     const uRef = ref(db, `usuarios/${user.uid}`);
                     const snap = await get(uRef);
@@ -174,7 +173,6 @@
                             ativo: true
                         });
                     } else {
-                        // Garante que o email está atualizado
                         await update(uRef, {
                             email: user.email
                         });
@@ -252,7 +250,6 @@
                 const valGolasA = j.resGolosA !== undefined ? j.resGolosA : '';
                 const valGolasB = j.resGolosB !== undefined ? j.resGolosB : '';
 
-                // 1. ROI Simples
                 if (j.previsaoSimples && j.previsaoSimples.toString().trim() !== '') {
                     const oddS = parseFloat(j.oddSimples || j.odd || 0);
                     const stSimples = avaliarPrevisaoIndividualmente(j.previsaoSimples, valGolasA, valGolasB, j.estadoAposta);
@@ -266,7 +263,6 @@
                     }
                 }
 
-                // 2. ROI Fight Selected (FS)
                 let vbSimples = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let vbSugestao = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let valuedBetCalculada = vbSugestao || vbSimples;
@@ -308,7 +304,6 @@
             atualizarBarraProgressoMensal();
             escutarROIMensal();
 
-            // Escuta a configuração global
             onValue(ref(db, "config"), (snapshot) => {
                 const config = snapshot.val() || {};
                 let recalcular = false;
@@ -370,7 +365,6 @@
             
             configurarProximoBanner();
 
-            // Modal Info
             const btnInfo = document.getElementById('btnInfo');
             const disclaimerModal = document.getElementById('disclaimerModal');
             const closeDisclaimer = document.getElementById('closeDisclaimer');
@@ -388,7 +382,6 @@
                 });
             }
 
-            // Modal de Autenticação / Login
             const btnLogin = document.getElementById('btnLogin');
             const authModal = document.getElementById('authModal');
             const closeAuth = document.getElementById('closeAuth');
@@ -473,7 +466,6 @@
                 });
             }
 
-            // Modal de Termos e Condições
             const linkAbrirTermos = document.getElementById('linkAbrirTermos');
             const termosModal = document.getElementById('termosModal');
             const closeTermos = document.getElementById('closeTermos');
@@ -491,7 +483,6 @@
                 });
             }
 
-            // Modal de Filtros
             const btnFilter = document.getElementById('btnFilter');
             const filterModal = document.getElementById('filterModal');
             const closeFilter = document.getElementById('closeFilter');
@@ -583,7 +574,6 @@
             const discHeader = document.querySelector('#disclaimerModal .disclaimer-title');
             if (discHeader) discHeader.textContent = lang.infoTitle;
 
-            // Filtros - Textos
             const txtFilterTitle = document.getElementById('txtFilterTitle');
             if (txtFilterTitle) txtFilterTitle.textContent = lang.filtrosTitle;
             
@@ -828,7 +818,6 @@
                 .filter(j => j.arquivado)
                 .sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
 
-            // Aplicação dos Filtros Locais
             jogosArquivados = jogosArquivados.filter(j => {
                 let vbSimples = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let vbSugestao = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
@@ -911,7 +900,6 @@
 
                     let badgesHtml = '';
                     
-                    // 1. Palpite Simples (PÚBLICO - Sempre visível)
                     if (j.previsaoSimples) {
                         badgesHtml += `
                             <div class="mini-pred status-${corSimplesClass}">
@@ -923,9 +911,7 @@
                             </div>`;
                     }
 
-                    // 2. CONTEÚDO RESTRITO A UTILIZADORES COM SESSÃO INICIADA
                     if (usuarioLogado) {
-                        // Sugestão (G)
                         if (j.previsaoSugestao) {
                             badgesHtml += `
                                 <div class="mini-pred status-${corSugestaoClass}">
@@ -940,7 +926,6 @@
                                 </div>`;
                         }
 
-                        // Fight Selected
                         if (valuedBetCalculada) {
                             let corValueClass = avaliarPrevisaoIndividualmente(valuedBetCalculada.selecao, valGolasA, valGolasB, j.estadoAposta);
                             let inlineStyleBorder = corValueClass === 'pendente' ? `border-color:${valuedBetCalculada.cor};` : '';
@@ -957,7 +942,6 @@
                             `;
                         }
                     } else {
-                        // Mensagem de Bloqueio para não logados
                         badgesHtml += `
                             <div class="user-locked-tag" onclick="document.getElementById('btnLogin').click();">
                                 🔒 Conteúdo Exclusivo
@@ -1030,26 +1014,51 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
-            height: 56px;
+            padding: 0 16px;
+            min-height: 56px;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
             position: sticky;
             top: 0;
             z-index: 1000;
+            flex-wrap: wrap; /* Permite ajuste em ecrãs extremamente estreitos */
         }
 
-        .navbar-brand { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 1.2rem; font-style: italic; letter-spacing: -0.5px; }
+        .navbar-brand { 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            font-weight: 900; 
+            font-size: 1.1rem; 
+            font-style: italic; 
+            letter-spacing: -0.5px; 
+            flex-shrink: 0;
+        }
         .brand-green { color: #10b981; }
         
-        .navbar-actions { display: flex; align-items: center; gap: 12px; }
-        .nav-item { display: flex; align-items: center; gap: 5px; font-weight: 600; font-size: 0.85rem; color: #cbd5e1; transition: color 0.2s; cursor: pointer; }
+        .navbar-actions { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            flex-wrap: wrap; /* Garante que os botões não forcem a tela para os lados */
+        }
+        .nav-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 4px; 
+            font-weight: 600; 
+            font-size: 0.8rem; 
+            color: #cbd5e1; 
+            transition: color 0.2s; 
+            cursor: pointer; 
+            white-space: nowrap;
+        }
         .nav-item:hover { color: #10b981; }
-        .nav-item svg { width: 15px; height: 15px; stroke: currentColor; flex-shrink: 0; }
+        .nav-item svg { width: 14px; height: 14px; stroke: currentColor; flex-shrink: 0; }
         
         .user-btn-active {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: #ffffff !important;
-            padding: 4px 10px;
+            padding: 4px 8px;
             border-radius: 6px;
             font-weight: 700;
             box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
@@ -1060,22 +1069,22 @@
         .user-status-tag {
             background: #38bdf8;
             color: #0f172a;
-            font-size: 0.6rem;
-            padding: 2px 5px;
-            border-radius: 4px;
+            font-size: 0.55rem;
+            padding: 1px 4px;
+            border-radius: 3px;
             font-weight: 800;
-            margin-left: 4px;
+            margin-left: 2px;
         }
 
-        .lang-select { background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; padding: 4px 6px; font-size: 0.75rem; font-weight: 600; outline: none; cursor: pointer; font-family: 'Montserrat', sans-serif;}
+        .lang-select { background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; padding: 3px 5px; font-size: 0.75rem; font-weight: 600; outline: none; cursor: pointer; font-family: 'Montserrat', sans-serif;}
 
         .main-container {
             max-width: 1340px;
-            margin: 20px auto;
-            padding: 0 16px;
+            margin: 16px auto;
+            padding: 0 12px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
         }
 
         .top-hero-banner-container { width: 100%; border-radius: 8px; overflow: hidden; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
@@ -1341,15 +1350,35 @@
             .sidebar-banner.banner-pos-left { display: block; margin-bottom: 16px; position: static; max-width: 100%; }
             .img-desktop { display: none; } .img-mobile { display: block; width: 100%; }
         }
-        /* CORREÇÃO PARA ECRÃS MÓVEIS (<= 650px) */
+
+        /* REGRAS DE ADAPTAÇÃO TOTAL PARA MOBILE (<= 650px) */
         @media (max-width: 650px) {
-            .top-navbar { padding: 0 8px; }
-            .navbar-brand { font-size: 1rem; }
-            .navbar-actions { gap: 6px; }
-            .navbar-actions .nav-item { font-size: 0.72rem; gap: 3px; }
-            .navbar-actions span { display: inline !important; } /* Mantém visíveis as descrições dos links no móvel */
-            .user-status-tag { display: none !important; } /* Esconde o selo secundário para poupar espaço */
-            .user-btn-active { padding: 3px 6px; }
+            .top-navbar { 
+                padding: 6px 10px; 
+                height: auto; 
+                gap: 8px;
+            }
+            .navbar-brand { 
+                font-size: 0.95rem; 
+            }
+            .navbar-actions { 
+                gap: 6px; 
+                justify-content: flex-end; 
+                flex: 1;
+            }
+            .navbar-actions .nav-item { 
+                font-size: 0.7rem; 
+                gap: 2px; 
+            }
+            .navbar-actions .nav-item span { 
+                display: inline-block !important; /* Força a visibilidade das palavras Stats, Performance e Info */
+            }
+            .user-status-tag { 
+                display: none !important; /* Esconde o texto 'CONTA ATIVA' no mobile para poupar espaço */
+            }
+            .user-btn-active { 
+                padding: 2px 6px; 
+            }
             
             .tech-controls-bar { flex-direction: column; gap: 12px; align-items: stretch; }
             .tech-table-header { display: none; }
@@ -1473,7 +1502,6 @@
             <span id="authModalTitle">Iniciar Sessão</span>
         </div>
 
-        <!-- Conteúdo Utilizador Logado -->
         <div id="authLoggedBox" style="display:none; text-align:center;">
             <p style="font-size:0.9rem; color:#475569;">Sessão iniciada como:</p>
             <strong id="authLoggedEmail" style="font-size:1rem; color:#0f172a;">-</strong>
@@ -1481,7 +1509,6 @@
             <button type="button" id="btnLogout" class="btn-clear" style="width:100%; margin-top:15px; background:#ef4444; color:#fff;">Sair da Conta</button>
         </div>
 
-        <!-- Conteúdo Formulário de Login/Registo -->
         <div id="authFormBox" class="filter-modal-body">
             <div class="filter-group">
                 <label for="authEmail">Email:</label>
@@ -1492,7 +1519,6 @@
                 <input type="password" id="authPassword" class="filter-input" placeholder="******" />
             </div>
 
-            <!-- Checkbox dos Termos e Condições (Visível apenas ao Registar) -->
             <label id="containerTermosRegisto" class="filter-checkbox" style="display:none; font-size: 0.72rem; color: #64748b; margin-top: 4px; align-items: flex-start; gap: 6px;">
                 <input type="checkbox" id="chkTermos" style="margin-top:2px;" />
                 <span>Li e aceito os <a href="#" id="linkAbrirTermos" style="color: #10b981; text-decoration: underline;">Termos e Condições</a> (Fase Beta / Sem garantias).</span>
