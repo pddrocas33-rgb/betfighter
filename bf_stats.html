@@ -23,8 +23,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Limite padrão dinâmico de Odd Fight Selection
+        // Parâmetros dinâmicos do Fight Selection / Value Bet
         window.minFsOdd = 1.99;
+        window.minFsEdge = 0.10; // 10% por defeito
 
         // Dicionário de Traduções
         const i18n = {
@@ -99,7 +100,6 @@
             }
         };
 
-        // Função de Deteção Universal de Idioma
         function detectarIdioma() {
             const urlParams = new URLSearchParams(window.location.search);
             let lang = urlParams.get('lang') || 
@@ -164,13 +164,18 @@
             }
         });
 
-        // Escuta a configuração do limite dinâmico de Odd do Fight Selection
+        // Escuta as configurações globais (Odd Mínima e Edge Mínimo do Painel de Gestão)
         onValue(ref(db, "config"), (snapshot) => {
             const config = snapshot.val() || {};
             if (config.minFsOdd !== undefined) {
                 window.minFsOdd = parseFloat(config.minFsOdd);
             } else {
                 window.minFsOdd = 1.99;
+            }
+            if (config.minFsEdge !== undefined) {
+                window.minFsEdge = parseFloat(config.minFsEdge);
+            } else {
+                window.minFsEdge = 0.10;
             }
             renderizarEstatisticas(dadosJogosCache);
         });
@@ -190,15 +195,18 @@
 
         function testarValueBetSingular(selecao, percentagem, oddStr) {
             const o = parseFloat(oddStr);
-            const limiteMinimo = window.minFsOdd || 1.99;
-            if (isNaN(o) || o < limiteMinimo) return null;
+            const limiteMinimoOdd = window.minFsOdd || 1.99;
+            const limiteMinimoEdge = window.minFsEdge !== undefined ? window.minFsEdge : 0.10;
+
+            if (isNaN(o) || o < limiteMinimoOdd) return null;
             
             const percDec = parseFloat(percentagem) / 100;
             if (isNaN(percDec) || percDec <= 0) return null;
             const probImplicita = 1 / o;
             const edge = percDec - probImplicita;
             
-            if (edge > 0) {
+            // Valida se o edge é maior ou igual ao definido na Gestão
+            if (edge >= limiteMinimoEdge) {
                 let confianca = Math.min((edge * 2) * 100, 95);
                 let cat = '';
                 if (confianca >= 0.1 && confianca <= 15.99) cat = 'low';
@@ -230,7 +238,7 @@
                 r2 = testarValueBetSingular('X', pctX, oddX);
                 return extrairMelhorValueBet(r1, r2);
             } else if (p === '12' || p === 'v12') {
-                r1 = testarValueBetSingular('1', pctV1, pctV1, oddV1);
+                r1 = testarValueBetSingular('1', pctV1, oddV1);
                 r2 = testarValueBetSingular('2', pctV2, oddV2);
                 return extrairMelhorValueBet(r1, r2);
             }
@@ -300,7 +308,7 @@
                     if (isMonthly) { s.simples.pendentesM++; }
                 }
 
-                // Fighter Selection
+                // Fighter Selection / Value Bet
                 let vbS = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let vbSug = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let vb = vbSug || vbS;

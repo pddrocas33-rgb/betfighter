@@ -26,8 +26,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Limite padrão dinâmico de Odd do Fight Selection
+        // Parâmetros dinâmicos do Fight Selection / Value Bet
         window.minFsOdd = 1.99;
+        window.minFsEdge = 0.10; // 10% por defeito
 
         const traducoes = {
             pt: {
@@ -203,13 +204,18 @@
             alternarIdioma(idiomaAtual);
         });
 
-        // Escuta a configuração global do Firebase para a Odd Mínima do Fight Selection
+        // Escuta a configuração global do Firebase para Odd Mínima e Edge Mínimo do Fight Selection
         onValue(ref(db, "config"), (snapshot) => {
             const config = snapshot.val() || {};
             if (config.minFsOdd !== undefined) {
                 window.minFsOdd = parseFloat(config.minFsOdd);
             } else {
                 window.minFsOdd = 1.99;
+            }
+            if (config.minFsEdge !== undefined) {
+                window.minFsEdge = parseFloat(config.minFsEdge);
+            } else {
+                window.minFsEdge = 0.10;
             }
             processarEstatisticasGlobais();
         });
@@ -270,15 +276,17 @@
 
         function testarFightSelectionSingular(selecao, percentagem, oddStr) {
             const o = parseFloat(oddStr);
-            const limiteMinimo = window.minFsOdd || 1.99;
-            if (isNaN(o) || o < limiteMinimo) return null;
+            const limiteMinimoOdd = window.minFsOdd || 1.99;
+            const limiteMinimoEdge = window.minFsEdge !== undefined ? window.minFsEdge : 0.10;
+
+            if (isNaN(o) || o < limiteMinimoOdd) return null;
             
             const percDec = parseFloat(percentagem) / 100;
             if (isNaN(percDec) || percDec <= 0) return null;
             const probImplicita = 1 / o;
             const edge = percDec - probImplicita;
             
-            if (edge > 0) {
+            if (edge >= limiteMinimoEdge) {
                 let confianca = Math.min((edge * 2) * 100, 95);
                 let cat = '';
                 if (confianca >= 0.1 && confianca <= 15.99) cat = 'low';
