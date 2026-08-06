@@ -75,7 +75,11 @@
                 logout: "Sair",
                 membrosRestrito: "🔒 Conteúdo Exclusivo (Faça Login para ver Sugestões e Fight Selected)",
                 historicoTestes: "Histórico de Testes",
-                disclaimerBarText: "Plataforma informativa gratuita em fase de testes. As análises estatísticas não garantem lucros. Aposte com responsabilidade."
+                disclaimerBarText: "Plataforma informativa gratuita em fase de testes. As análises estatísticas não garantem lucros. Aposte com responsabilidade.",
+                cookieNotice: "Utilizamos cookies e armazenamento local para melhorar a tua experiência e gerir a tua sessão. Consulta os nossos ",
+                cookieLink: "Termos e Condições",
+                cookieAccept: "Aceitar",
+                cookieReject: "Recusar"
             },
             en: {
                 subtitle: "The fight against the odds",
@@ -105,7 +109,11 @@
                 logout: "Logout",
                 membrosRestrito: "🔒 Exclusive Content (Login to view Suggestions & Fight Selected)",
                 historicoTestes: "Test History",
-                disclaimerBarText: "Free informational platform in beta testing. Statistical picks do not guarantee profit. Gamble responsibly."
+                disclaimerBarText: "Free informational platform in beta testing. Statistical picks do not guarantee profit. Gamble responsibly.",
+                cookieNotice: "We use cookies and local storage to improve your experience and manage session. Check our ",
+                cookieLink: "Terms & Conditions",
+                cookieAccept: "Accept",
+                cookieReject: "Decline"
             },
             nep: {
                 subtitle: "अड्स विरुद्धको लडाईं",
@@ -135,7 +143,11 @@
                 logout: "बाहिरिनुहोस्",
                 membrosRestrito: "🔒 विशेष सामग्री (सुझावहरू हेर्न लगइन गर्नुहोस्)",
                 historicoTestes: "परीक्षण इतिहास",
-                disclaimerBarText: "निःशुल्क सूचनात्मक प्लेटफर्म। तथ्याङ्कीय विश्लेषणले नाफाको ग्यारेन्टी गर्दैन। जिम्मेवारीपूर्वक खेल्नुहोस्।"
+                disclaimerBarText: "निःशुल्क सूचनात्मक प्लेटफर्म। तथ्याङ्कीय विश्लेषणले नाफाको ग्यारेन्टी गर्दैन। जिम्मेवारीपूर्वक खेल्नुहोस्।",
+                cookieNotice: "हामी अनुभव सुधार गर्न र सेसन व्यवस्थापन गर्न कुकीहरू प्रयोग गर्छौं। हाम्रा नियमहरू हेर्नुहोस् ",
+                cookieLink: "शर्त र नियमहरू",
+                cookieAccept: "स्वीकार गर्नुहोस्",
+                cookieReject: "अस्वीकार गर्नुहोस्"
             }
         };
 
@@ -275,6 +287,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             atualizarBarraProgressoMensal();
             escutarROIMensal();
+            inicializarBannerCookies();
 
             onValue(ref(db, "config"), (snapshot) => {
                 const config = snapshot.val() || {};
@@ -470,6 +483,33 @@
             escutarJogosDaData(dataSelecionada);
         });
 
+        function inicializarBannerCookies() {
+            const banner = document.getElementById('cookieBanner');
+            const btnAccept = document.getElementById('btnAcceptCookies');
+            const btnReject = document.getElementById('btnRejectCookies');
+
+            if (!banner) return;
+
+            const consent = localStorage.getItem('cookie_consent');
+            if (!consent) {
+                banner.classList.add('active');
+            }
+
+            if (btnAccept) {
+                btnAccept.addEventListener('click', () => {
+                    localStorage.setItem('cookie_consent', 'accepted');
+                    banner.classList.remove('active');
+                });
+            }
+
+            if (btnReject) {
+                btnReject.addEventListener('click', () => {
+                    localStorage.setItem('cookie_consent', 'rejected');
+                    banner.classList.remove('active');
+                });
+            }
+        }
+
         // FUNCIONALIDADE DINÂMICA DA BARRA DE AVISOS COM SUPORTE MULTILINGUE
         function atualizarDisclaimerDinamico() {
             const b = dadosBannersCache;
@@ -550,6 +590,15 @@
             const lblFightSel = document.getElementById('lblFightSel'); if (lblFightSel) lblFightSel.textContent = lang.apenasFightSelected;
             const btnApplyFilters = document.getElementById('btnApplyFilters'); if (btnApplyFilters) btnApplyFilters.textContent = lang.aplicarFiltros;
             const btnClearFilters = document.getElementById('btnClearFilters'); if (btnClearFilters) btnClearFilters.textContent = lang.limparFiltros;
+
+            const txtCookieNotice = document.getElementById('txtCookieNotice');
+            const linkCookieTermos = document.getElementById('linkCookieTermos');
+            const btnAcceptCookies = document.getElementById('btnAcceptCookies');
+            const btnRejectCookies = document.getElementById('btnRejectCookies');
+            if (txtCookieNotice) txtCookieNotice.textContent = lang.cookieNotice;
+            if (linkCookieTermos) linkCookieTermos.textContent = lang.cookieLink;
+            if (btnAcceptCookies) btnAcceptCookies.textContent = lang.cookieAccept;
+            if (btnRejectCookies) btnRejectCookies.textContent = lang.cookieReject;
 
             atualizarDisclaimerDinamico();
 
@@ -1288,6 +1337,104 @@
 
         .img-desktop { display: block; } .img-mobile { display: none; }
 
+        /* Estilos do Banner Flutuante de Cookies */
+        .cookie-banner-bottom {
+            position: fixed;
+            bottom: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            max-width: 680px;
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 14px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            border: 1px solid #334155;
+            z-index: 999999;
+            transition: bottom 0.4s ease-in-out;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .cookie-banner-bottom.active {
+            bottom: 20px;
+        }
+
+        .cookie-banner-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .cookie-banner-text {
+            font-size: 0.78rem;
+            line-height: 1.4;
+            color: #cbd5e1;
+            margin: 0;
+        }
+
+        .cookie-banner-text a {
+            color: #10b981;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+
+        .cookie-banner-btns {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .cookie-btn-accept {
+            background-color: #10b981;
+            color: #ffffff;
+            border: none;
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .cookie-btn-accept:hover {
+            background-color: #059669;
+        }
+
+        .cookie-btn-reject {
+            background-color: #334155;
+            color: #cbd5e1;
+            border: none;
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .cookie-btn-reject:hover {
+            background-color: #475569;
+            color: #ffffff;
+        }
+
+        @media (max-width: 650px) {
+            .cookie-banner-container {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .cookie-banner-btns {
+                justify-content: flex-end;
+            }
+            .cookie-banner-bottom.active {
+                bottom: 12px;
+            }
+        }
+
         @media (max-width: 1024px) {
             .layout-grid { grid-template-columns: 160px minmax(0, 1fr) 160px; gap: 10px; }
             .sidebar-banner { max-width: 160px; }
@@ -1541,6 +1688,20 @@
                 <button type="button" id="btnClearFilters" class="btn-clear">Limpar</button>
                 <button type="button" id="btnApplyFilters" class="btn-apply">Aplicar Filtros</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Banner Flutuante de Cookies no Fundo -->
+<div id="cookieBanner" class="cookie-banner-bottom">
+    <div class="cookie-banner-container">
+        <p class="cookie-banner-text">
+            <span id="txtCookieNotice">Utilizamos cookies e armazenamento local para melhorar a tua experiência e gerir a tua sessão. Consulta os nossos </span>
+            <a href="#" id="linkCookieTermos" onclick="document.getElementById('termosModal').classList.add('active'); return false;">Termos e Condições</a>.
+        </p>
+        <div class="cookie-banner-btns">
+            <button type="button" id="btnRejectCookies" class="cookie-btn-reject">Recusar</button>
+            <button type="button" id="btnAcceptCookies" class="cookie-btn-accept">Aceitar</button>
         </div>
     </div>
 </div>
