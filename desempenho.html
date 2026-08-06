@@ -32,6 +32,10 @@
 
         const traducoes = {
             pt: {
+                txtVoltar: "Voltar a Palpites",
+                tabSimples: "Simples",
+                tabFS: "Fighter Selected",
+                tabGeral: "Geral (Simples + FS)",
                 txtDesempenhoGeral: "Desempenho Geral",
                 txtGraficos: "Gráficos de Evolução",
                 totalApostas: "Total Apostas",
@@ -72,6 +76,10 @@
                 avisoLegal4: "Aposte Responsavelmente: As apostas desportivas envolvem elevado risco de perda de capital. O utilizador assume 100% da responsabilidade por qualquer valor apostado. NUNCA aposte dinheiro que não se possa dar ao luxo de perder."
             },
             en: {
+                txtVoltar: "Back to Tips",
+                tabSimples: "Simple",
+                tabFS: "Fighter Selected",
+                tabGeral: "Overall (Simple + FS)",
                 txtDesempenhoGeral: "Overall Performance",
                 txtGraficos: "Evolution Charts",
                 totalApostas: "Total Bets",
@@ -112,6 +120,10 @@
                 avisoLegal4: "Gamble Responsibly: Sports betting involves high risk of financial loss. Users bear 100% responsibility for their choices. Never gamble money you cannot afford to lose."
             },
             nep: {
+                txtVoltar: "टिप्समा फर्कनुहोस्",
+                tabSimples: "साधारण",
+                tabFS: "फाइटर सेलेक्टेड",
+                tabGeral: "समग्र (साधारण + FS)",
                 txtDesempenhoGeral: "समग्र प्रदर्शन",
                 txtGraficos: "प्रगति चार्ट",
                 totalApostas: "कुल बाजी",
@@ -165,15 +177,16 @@
         let totalRoiGlobal = 0;
         let todosJogosGlobais = [];
         
-        let filtroPeriodoTabela = 'mensal'; // 'global', 'diaria', 'semanal', 'mensal', 'anual'
-        let linhaSelecionadaChave = null;  // Guarda a chave da linha clicada no Histórico
-        let tipoGraficoAtual = 'geral';
+        let filtroPeriodoTabela = 'mensal'; 
+        let linhaSelecionadaChave = null;  
+        let tipoGraficoAtual = 'simples'; // 'simples', 'fs', 'geral'
         
         let idiomaAtual = detectarIdioma();
         let agrupamentosGlobais = { diaria: {}, semanal: {}, mensal: {}, anual: {} };
         let totaisGlobais = {
-            geral: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 },
-            fs: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 }
+            simples: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 },
+            fs: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 },
+            geral: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 }
         };
         let graficosInstancias = {};
 
@@ -226,8 +239,18 @@
                 if (el) el.innerText = val;
             };
 
+            // Botão Voltar
+            const btnVoltarSpan = document.querySelector('#btnVoltar span');
+            if (btnVoltarSpan) btnVoltarSpan.innerText = t.txtVoltar;
+
+            // Abas Principais
+            setIfExists('btnTabSimples', t.tabSimples);
+            setIfExists('btnTabFS', t.tabFS);
+            setIfExists('btnTabGeral', t.tabGeral);
+
+            // Cabeçalho e Métricas
             setIfExists('txtDesempenhoGeral', t.txtDesempenhoGeral);
-            setIfExists('txtGraficos', t.txtGraficos);
+            setIfExists('lblTotalApostas', t.totalApostas);
             setIfExists('lblGanhas', t.ganhas);
             setIfExists('lblPerdidas', t.perdidas);
             setIfExists('lblWinrate', t.winrate);
@@ -235,6 +258,7 @@
             setIfExists('lblLucroLiquido', t.lucroLiquido);
             setIfExists('lblUltimaAtualizacao', t.ultimaAtualizacao);
 
+            // Filtros da Tabela Histórica
             setIfExists('txtHistorico', t.historico);
             setIfExists('optGlobal', t.tabelaGlobal);
             setIfExists('optDiaria', t.tabelaDiaria);
@@ -242,6 +266,10 @@
             setIfExists('optMensal', t.tabelaMensal);
             setIfExists('optAnual', t.tabelaAnual);
 
+            // Gráficos
+            setIfExists('txtGraficos', t.txtGraficos);
+
+            // Simulador
             setIfExists('txtSimulador', t.simulador);
             setIfExists('txtQuantoTeriaGanho', t.quantoTeriaGanho);
             setIfExists('txtSimuladorDesc', t.simuladorDesc);
@@ -250,6 +278,7 @@
             const simInput = document.getElementById('sim-input');
             if (simInput) simInput.placeholder = t.placeholderSim;
 
+            // Disclaimer
             setIfExists('txtInfoImportante', t.infoImportante);
             setIfExists('aviso1', t.avisoLegal1);
             setIfExists('aviso2', t.avisoLegal2);
@@ -338,8 +367,9 @@
         function processarEstatisticasGlobais() {
             agrupamentosGlobais = { diaria: {}, semanal: {}, mensal: {}, anual: {} };
             totaisGlobais = {
-                geral: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 },
-                fs: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 }
+                simples: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 },
+                fs: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 },
+                geral: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 }
             };
 
             const jogosArquivados = todosJogosGlobais.filter(j => j.arquivado && j.dataEvento);
@@ -358,23 +388,25 @@
                 ].forEach(grp => {
                     if (!agrupamentosGlobais[grp.key][grp.val]) {
                         agrupamentosGlobais[grp.key][grp.val] = {
-                            geral: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 },
-                            fs: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 }
+                            simples: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 },
+                            fs: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 },
+                            geral: { total: 0, ganhas: 0, perdidas: 0, lucro: 0, stake: 0 }
                         };
                     }
                 });
 
+                // 1. Processar Simples
                 const oddSimples = parseFloat(j.oddSimples || j.odd || 0);
                 let estGeral = j.estadoAposta;
 
                 if (estGeral === 'ganha' || estGeral === 'perdida') {
-                    totaisGlobais.geral.total++;
-                    totaisGlobais.geral.stake++;
+                    totaisGlobais.simples.total++;
+                    totaisGlobais.simples.stake++;
                     
                     const lucroG = estGeral === 'ganha' ? (oddSimples > 0 ? oddSimples - 1 : 0) : -1;
-                    totaisGlobais.geral.lucro += lucroG;
-                    if (estGeral === 'ganha') totaisGlobais.geral.ganhas++;
-                    else totaisGlobais.geral.perdidas++;
+                    totaisGlobais.simples.lucro += lucroG;
+                    if (estGeral === 'ganha') totaisGlobais.simples.ganhas++;
+                    else totaisGlobais.simples.perdidas++;
 
                     [
                         { key: 'diaria', val: dateStr },
@@ -382,7 +414,7 @@
                         { key: 'mensal', val: monthStr },
                         { key: 'anual', val: yearStr }
                     ].forEach(grp => {
-                        const target = agrupamentosGlobais[grp.key][grp.val].geral;
+                        const target = agrupamentosGlobais[grp.key][grp.val].simples;
                         target.total++;
                         target.stake++;
                         target.lucro += lucroG;
@@ -391,6 +423,7 @@
                     });
                 }
 
+                // 2. Processar Fight Selection
                 let vbS = calcularFightSelectionOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let vbSug = calcularFightSelectionOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let vb = vbSug || vbS;
@@ -428,6 +461,24 @@
                 }
             });
 
+            // 3. Consolidar Geral (Simples + Fight Selected)
+            totaisGlobais.geral.total = totaisGlobais.simples.total + totaisGlobais.fs.total;
+            totaisGlobais.geral.ganhas = totaisGlobais.simples.ganhas + totaisGlobais.fs.ganhas;
+            totaisGlobais.geral.perdidas = totaisGlobais.simples.perdidas + totaisGlobais.fs.perdidas;
+            totaisGlobais.geral.lucro = totaisGlobais.simples.lucro + totaisGlobais.fs.lucro;
+            totaisGlobais.geral.stake = totaisGlobais.simples.stake + totaisGlobais.fs.stake;
+
+            Object.keys(agrupamentosGlobais).forEach(grpKey => {
+                Object.keys(agrupamentosGlobais[grpKey]).forEach(valKey => {
+                    const obj = agrupamentosGlobais[grpKey][valKey];
+                    obj.geral.total = obj.simples.total + obj.fs.total;
+                    obj.geral.ganhas = obj.simples.ganhas + obj.fs.ganhas;
+                    obj.geral.perdidas = obj.simples.perdidas + obj.fs.perdidas;
+                    obj.geral.lucro = obj.simples.lucro + obj.fs.lucro;
+                    obj.geral.stake = obj.simples.stake + obj.fs.stake;
+                });
+            });
+
             atualizarCardsDesempenho();
             renderizarTabela();
             renderizarGraficos();
@@ -436,8 +487,9 @@
         window.mudarAbaTipo = function(tipo) {
             tipoGraficoAtual = tipo;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            if (tipo === 'geral') document.getElementById('btnTabGeral').classList.add('active');
-            else document.getElementById('btnTabFS').classList.add('active');
+            if (tipo === 'simples') document.getElementById('btnTabSimples').classList.add('active');
+            else if (tipo === 'fs') document.getElementById('btnTabFS').classList.add('active');
+            else if (tipo === 'geral') document.getElementById('btnTabGeral').classList.add('active');
 
             atualizarCardsDesempenho();
             renderizarTabela();
@@ -461,12 +513,11 @@
 
         window.selecionarLinhaHistorico = function(chave) {
             if (linhaSelecionadaChave === chave) {
-                linhaSelecionadaChave = null; // desmarca se clicar na mesma
+                linhaSelecionadaChave = null; 
             } else {
                 linhaSelecionadaChave = chave;
             }
             
-            // Destacar graficamente a linha selecionada
             document.querySelectorAll('.perf-table tbody tr').forEach(tr => {
                 if (tr.getAttribute('data-key') === linhaSelecionadaChave) {
                     tr.classList.add('selected-row');
@@ -531,7 +582,7 @@
                     <table class="perf-table">
                         <thead>
                             <tr>
-                                <th>Período</th>
+                                <th>${t.tabelaGlobal}</th>
                                 <th>${t.apostas}</th>
                                 <th>${t.ganhas}</th>
                                 <th>${t.perdidas}</th>
@@ -542,7 +593,7 @@
                         </thead>
                         <tbody>
                             <tr data-key="global" class="${linhaSelecionadaChave === 'global' ? 'selected-row' : ''}" onclick="selecionarLinhaHistorico('global')" style="cursor: pointer;">
-                                <td><strong>Global (Tudo)</strong></td>
+                                <td><strong>${t.tabelaGlobal}</strong></td>
                                 <td>${row.total}</td>
                                 <td style="color: #10b981; font-weight:700;">${row.ganhas}</td>
                                 <td style="color: #ef4444; font-weight:700;">${row.perdidas}</td>
@@ -628,7 +679,6 @@
             let dataRoi = [];
             let dataApostas = [];
 
-            // Se for 'global' ou se não houver linha específica selecionada para um agrupamento
             if (grpKey === 'global' || !linhaSelecionadaChave) {
                 if (grpKey === 'global') {
                     const jogosValidos = todosJogosGlobais
@@ -639,12 +689,18 @@
                     let acumuladoStake = 0;
 
                     jogosValidos.forEach((j) => {
-                        let d = null;
-                        if (tipoGraficoAtual === 'geral' && (j.estadoAposta === 'ganha' || j.estadoAposta === 'perdida')) {
+                        let entradas = [];
+
+                        // Entrada de Apostas Simples
+                        if ((tipoGraficoAtual === 'simples' || tipoGraficoAtual === 'geral') && 
+                            (j.estadoAposta === 'ganha' || j.estadoAposta === 'perdida')) {
                             const odd = parseFloat(j.oddSimples || j.odd || 0);
                             const l = j.estadoAposta === 'ganha' ? (odd > 0 ? odd - 1 : 0) : -1;
-                            d = { lucro: l, stake: 1 };
-                        } else if (tipoGraficoAtual === 'fs') {
+                            entradas.push({ lucro: l, stake: 1 });
+                        }
+
+                        // Entrada de Fight Selection
+                        if (tipoGraficoAtual === 'fs' || tipoGraficoAtual === 'geral') {
                             let vbS = calcularFightSelectionOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                             let vbSug = calcularFightSelectionOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                             let vb = vbSug || vbS;
@@ -657,22 +713,21 @@
                                 }
                                 if (estFS === 'ganha' || estFS === 'perdida') {
                                     const l = estFS === 'ganha' ? (vb.odd - 1) : -1;
-                                    d = { lucro: l, stake: 1 };
+                                    entradas.push({ lucro: l, stake: 1 });
                                 }
                             }
                         }
 
-                        if (d) {
-                            acumuladoLucro += d.lucro;
-                            acumuladoStake += d.stake;
+                        entradas.forEach(e => {
+                            acumuladoLucro += e.lucro;
+                            acumuladoStake += e.stake;
                             labels.push(`#${labels.length + 1}`);
                             dataLucro.push(parseFloat(acumuladoLucro.toFixed(2)));
                             dataRoi.push(parseFloat(((acumuladoLucro / acumuladoStake) * 100).toFixed(1)));
                             dataApostas.push(1);
-                        }
+                        });
                     });
                 } else {
-                    // Apresenta todas as chaves do agrupamento selecionado (Ex: todos os dias, todos os meses)
                     const dadosGrp = agrupamentosGlobais[grpKey] || {};
                     const chaves = Object.keys(dadosGrp).sort();
 
@@ -696,7 +751,6 @@
                     });
                 }
             } else {
-                // FILTRO ESPECÍFICO: Apresenta os jogos isolados pertencentes à linha clicada
                 const jogosFiltrados = todosJogosGlobais.filter(j => {
                     if (!j.arquivado || !j.dataEvento) return false;
                     if (grpKey === 'diaria') return j.dataEvento === linhaSelecionadaChave;
@@ -710,12 +764,16 @@
                 let acumuladoStake = 0;
 
                 jogosFiltrados.forEach((j) => {
-                    let d = null;
-                    if (tipoGraficoAtual === 'geral' && (j.estadoAposta === 'ganha' || j.estadoAposta === 'perdida')) {
+                    let entradas = [];
+
+                    if ((tipoGraficoAtual === 'simples' || tipoGraficoAtual === 'geral') && 
+                        (j.estadoAposta === 'ganha' || j.estadoAposta === 'perdida')) {
                         const odd = parseFloat(j.oddSimples || j.odd || 0);
                         const l = j.estadoAposta === 'ganha' ? (odd > 0 ? odd - 1 : 0) : -1;
-                        d = { lucro: l, stake: 1 };
-                    } else if (tipoGraficoAtual === 'fs') {
+                        entradas.push({ lucro: l, stake: 1 });
+                    }
+
+                    if (tipoGraficoAtual === 'fs' || tipoGraficoAtual === 'geral') {
                         let vbS = calcularFightSelectionOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                         let vbSug = calcularFightSelectionOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                         let vb = vbSug || vbS;
@@ -728,19 +786,19 @@
                             }
                             if (estFS === 'ganha' || estFS === 'perdida') {
                                 const l = estFS === 'ganha' ? (vb.odd - 1) : -1;
-                                d = { lucro: l, stake: 1 };
+                                entradas.push({ lucro: l, stake: 1 });
                             }
                         }
                     }
 
-                    if (d) {
-                        acumuladoLucro += d.lucro;
-                        acumuladoStake += d.stake;
+                    entradas.forEach(e => {
+                        acumuladoLucro += e.lucro;
+                        acumuladoStake += e.stake;
                         labels.push(`#${labels.length + 1}`);
                         dataLucro.push(parseFloat(acumuladoLucro.toFixed(2)));
                         dataRoi.push(parseFloat(((acumuladoLucro / acumuladoStake) * 100).toFixed(1)));
                         dataApostas.push(1);
-                    }
+                    });
                 });
             }
 
@@ -922,8 +980,9 @@
 
     <div class="container-master">
         <div class="tabs-wrapper">
-            <button id="btnTabGeral" class="tab-btn active" onclick="mudarAbaTipo('geral')">Geral (Simples)</button>
+            <button id="btnTabSimples" class="tab-btn active" onclick="mudarAbaTipo('simples')">Simples</button>
             <button id="btnTabFS" class="tab-btn" onclick="mudarAbaTipo('fs')">Fighter Selected</button>
+            <button id="btnTabGeral" class="tab-btn" onclick="mudarAbaTipo('geral')">Geral (Simples + FS)</button>
         </div>
 
         <!-- Bloco 1: Métricas Gerais -->
