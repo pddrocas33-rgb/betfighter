@@ -42,15 +42,13 @@
                 lucroLiquido: "Lucro Líquido",
                 ultimaAtualizacao: "Última Atualização",
                 historico: "Histórico",
-                tabelaDiaria: "Tabela Diária",
-                tabelaMensal: "Tabela Mensal",
-                tabelaAnual: "Tabela Anual",
-                optGrafGlobal: "Global",
-                optGrafDiario: "Diário",
-                optGrafSemanal: "Semanal",
-                optGrafMensal: "Mensal",
-                optGrafAnual: "Anual",
+                tabelaGlobal: "Global",
+                tabelaDiaria: "Diário",
+                tabelaSemanal: "Semanal",
+                tabelaMensal: "Mensal",
+                tabelaAnual: "Anual",
                 dia: "Dia",
+                semana: "Semana",
                 mes: "Mês",
                 ano: "Ano",
                 apostas: "Apostas",
@@ -84,15 +82,13 @@
                 lucroLiquido: "Net Profit",
                 ultimaAtualizacao: "Last Update",
                 historico: "History",
-                tabelaDiaria: "Daily Table",
-                tabelaMensal: "Monthly Table",
-                tabelaAnual: "Yearly Table",
-                optGrafGlobal: "Global",
-                optGrafDiario: "Daily",
-                optGrafSemanal: "Weekly",
-                optGrafMensal: "Monthly",
-                optGrafAnual: "Yearly",
+                tabelaGlobal: "Global",
+                tabelaDiaria: "Daily",
+                tabelaSemanal: "Weekly",
+                tabelaMensal: "Monthly",
+                tabelaAnual: "Yearly",
                 dia: "Day",
+                semana: "Week",
                 mes: "Month",
                 ano: "Year",
                 apostas: "Bets",
@@ -126,15 +122,13 @@
                 lucroLiquido: "खुद नाफा",
                 ultimaAtualizacao: "पछिल्लो अपडेट",
                 historico: "इतिहास",
-                tabelaDiaria: "दैनिक तालिका",
-                tabelaMensal: "मासिक तालिका",
-                tabelaAnual: "वार्षिक तालिका",
-                optGrafGlobal: "विश्वव्यापी",
-                optGrafDiario: "दैनिक",
-                optGrafSemanal: "साप्ताहिक",
-                optGrafMensal: "मासिक",
-                optGrafAnual: "वार्षिक",
+                tabelaGlobal: "विश्वव्यापी",
+                tabelaDiaria: "दैनिक",
+                tabelaSemanal: "साप्ताहिक",
+                tabelaMensal: "मासिक",
+                tabelaAnual: "वार्षिक",
                 dia: "दिन",
+                semana: "हप्ता",
                 mes: "महिना",
                 ano: "वर्ष",
                 apostas: "बाजीहरू",
@@ -171,8 +165,8 @@
         let totalRoiGlobal = 0;
         let todosJogosGlobais = [];
         
-        let filtroPeriodoTabela = 'mensal';
-        let filtroPeriodoGraficos = 'global';
+        let filtroPeriodoTabela = 'mensal'; // 'global', 'diaria', 'semanal', 'mensal', 'anual'
+        let linhaSelecionadaChave = null;  // Guarda a chave da linha clicada no Histórico
         let tipoGraficoAtual = 'geral';
         
         let idiomaAtual = detectarIdioma();
@@ -201,24 +195,19 @@
                 selectLang.value = idiomaAtual;
                 selectLang.addEventListener('change', (e) => alternarIdioma(e.target.value));
             }
-            // Executa após a árvore DOM estar totalmente carregada
             aplicarTraducoesEstaticas();
             alternarIdioma(idiomaAtual);
         });
 
-        // Escuta a configuração global do Firebase para Odd Mínima e Edge Mínimo do Fight Selection
+        // Escuta a configuração global do Firebase
         onValue(ref(db, "config"), (snapshot) => {
             const config = snapshot.val() || {};
-            if (config.minFsOdd !== undefined) {
-                window.minFsOdd = parseFloat(config.minFsOdd);
-            } else {
-                window.minFsOdd = 1.99;
-            }
-            if (config.minFsEdge !== undefined) {
-                window.minFsEdge = parseFloat(config.minFsEdge);
-            } else {
-                window.minFsEdge = 0.10;
-            }
+            if (config.minFsOdd !== undefined) window.minFsOdd = parseFloat(config.minFsOdd);
+            else window.minFsOdd = 1.99;
+            
+            if (config.minFsEdge !== undefined) window.minFsEdge = parseFloat(config.minFsEdge);
+            else window.minFsEdge = 0.10;
+            
             processarEstatisticasGlobais();
         });
 
@@ -247,15 +236,11 @@
             setIfExists('lblUltimaAtualizacao', t.ultimaAtualizacao);
 
             setIfExists('txtHistorico', t.historico);
+            setIfExists('optGlobal', t.tabelaGlobal);
             setIfExists('optDiaria', t.tabelaDiaria);
+            setIfExists('optSemanal', t.tabelaSemanal);
             setIfExists('optMensal', t.tabelaMensal);
             setIfExists('optAnual', t.tabelaAnual);
-            
-            setIfExists('optGrafGlobal', t.optGrafGlobal);
-            setIfExists('optGrafDiario', t.optGrafDiario);
-            setIfExists('optGrafSemanal', t.optGrafSemanal);
-            setIfExists('optGrafMensal', t.optGrafMensal);
-            setIfExists('optGrafAnual', t.optGrafAnual);
 
             setIfExists('txtSimulador', t.simulador);
             setIfExists('txtQuantoTeriaGanho', t.quantoTeriaGanho);
@@ -461,23 +446,34 @@
 
         window.mudarFiltroTabela = function(periodo) {
             filtroPeriodoTabela = periodo;
+            linhaSelecionadaChave = null; // Reinicia a linha selecionada ao trocar de aba
             document.querySelectorAll('.table-filter-btn').forEach(b => b.classList.remove('active'));
+            
+            if(periodo === 'global') document.getElementById('optGlobal').classList.add('active');
             if(periodo === 'diaria') document.getElementById('optDiaria').classList.add('active');
+            if(periodo === 'semanal') document.getElementById('optSemanal').classList.add('active');
             if(periodo === 'mensal') document.getElementById('optMensal').classList.add('active');
             if(periodo === 'anual') document.getElementById('optAnual').classList.add('active');
 
             renderizarTabela();
+            renderizarGraficos();
         };
 
-        window.mudarFiltroGraficos = function(periodo) {
-            filtroPeriodoGraficos = periodo;
-            document.querySelectorAll('.chart-filter-btn').forEach(b => b.classList.remove('active'));
+        window.selecionarLinhaHistorico = function(chave) {
+            if (linhaSelecionadaChave === chave) {
+                linhaSelecionadaChave = null; // desmarca se clicar na mesma
+            } else {
+                linhaSelecionadaChave = chave;
+            }
             
-            if(periodo === 'global') document.getElementById('optGrafGlobal').classList.add('active');
-            if(periodo === 'diario') document.getElementById('optGrafDiario').classList.add('active');
-            if(periodo === 'semanal') document.getElementById('optGrafSemanal').classList.add('active');
-            if(periodo === 'mensal') document.getElementById('optGrafMensal').classList.add('active');
-            if(periodo === 'anual') document.getElementById('optGrafAnual').classList.add('active');
+            // Destacar graficamente a linha selecionada
+            document.querySelectorAll('.perf-table tbody tr').forEach(tr => {
+                if (tr.getAttribute('data-key') === linhaSelecionadaChave) {
+                    tr.classList.add('selected-row');
+                } else {
+                    tr.classList.remove('selected-row');
+                }
+            });
 
             renderizarGraficos();
         };
@@ -524,8 +520,44 @@
             
             const t = traducoes[idiomaAtual];
             const grpKey = filtroPeriodoTabela; 
-            const dadosAgrupados = agrupamentosGlobais[grpKey] || {};
 
+            if (grpKey === 'global') {
+                const row = totaisGlobais[tipoGraficoAtual];
+                const wr = row.total > 0 ? ((row.ganhas / row.total) * 100).toFixed(1) : "0.0";
+                const roi = row.stake > 0 ? ((row.lucro / row.stake) * 100).toFixed(1) : "0.0";
+                const isPos = row.lucro >= 0;
+
+                let html = `
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>Período</th>
+                                <th>${t.apostas}</th>
+                                <th>${t.ganhas}</th>
+                                <th>${t.perdidas}</th>
+                                <th>${t.acerto}</th>
+                                <th>${t.roi}</th>
+                                <th>${t.lucro}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr data-key="global" class="${linhaSelecionadaChave === 'global' ? 'selected-row' : ''}" onclick="selecionarLinhaHistorico('global')" style="cursor: pointer;">
+                                <td><strong>Global (Tudo)</strong></td>
+                                <td>${row.total}</td>
+                                <td style="color: #10b981; font-weight:700;">${row.ganhas}</td>
+                                <td style="color: #ef4444; font-weight:700;">${row.perdidas}</td>
+                                <td>${wr}%</td>
+                                <td style="color: ${isPos ? '#10b981' : '#ef4444'}; font-weight:700;">${roi}%</td>
+                                <td style="color: ${isPos ? '#10b981' : '#ef4444'}; font-weight:800;">${isPos ? '+' : ''}${row.lucro.toFixed(2)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+                container.innerHTML = html;
+                return;
+            }
+
+            const dadosAgrupados = agrupamentosGlobais[grpKey] || {};
             const chavesOrdenadas = Object.keys(dadosAgrupados).sort().reverse();
 
             if (chavesOrdenadas.length === 0) {
@@ -535,6 +567,7 @@
 
             let colHeader = t.mes;
             if (grpKey === 'diaria') colHeader = t.dia;
+            if (grpKey === 'semanal') colHeader = t.semana;
             if (grpKey === 'anual') colHeader = t.ano;
 
             let html = `
@@ -567,8 +600,10 @@
                     if(p.length === 3) labelDisplay = `${p[2]}/${p[1]}/${p[0]}`;
                 }
 
+                const isSelected = linhaSelecionadaChave === key;
+
                 html += `
-                    <tr>
+                    <tr data-key="${key}" class="${isSelected ? 'selected-row' : ''}" onclick="selecionarLinhaHistorico('${key}')" style="cursor: pointer;">
                         <td><strong>${labelDisplay}</strong></td>
                         <td>${row.total}</td>
                         <td style="color: #10b981; font-weight:700;">${row.ganhas}</td>
@@ -586,30 +621,95 @@
 
         function renderizarGraficos() {
             const t = traducoes[idiomaAtual];
-            const p = filtroPeriodoGraficos; 
-
-            let grpKey = 'diaria';
-            if (p === 'semanal') grpKey = 'semanal';
-            if (p === 'mensal') grpKey = 'mensal';
-            if (p === 'anual') grpKey = 'anual';
-
-            const dadosGrp = agrupamentosGlobais[grpKey] || {};
-            const chaves = Object.keys(dadosGrp).sort();
+            const grpKey = filtroPeriodoTabela;
 
             let labels = [];
             let dataLucro = [];
             let dataRoi = [];
             let dataApostas = [];
 
-            if (p === 'global') {
-                const jogosValidos = todosJogosGlobais
-                    .filter(j => j.arquivado && j.dataEvento)
-                    .sort((a, b) => a.dataEvento.localeCompare(b.dataEvento));
+            // Se for 'global' ou se não houver linha específica selecionada para um agrupamento
+            if (grpKey === 'global' || !linhaSelecionadaChave) {
+                if (grpKey === 'global') {
+                    const jogosValidos = todosJogosGlobais
+                        .filter(j => j.arquivado && j.dataEvento)
+                        .sort((a, b) => a.dataEvento.localeCompare(b.dataEvento));
+
+                    let acumuladoLucro = 0;
+                    let acumuladoStake = 0;
+
+                    jogosValidos.forEach((j) => {
+                        let d = null;
+                        if (tipoGraficoAtual === 'geral' && (j.estadoAposta === 'ganha' || j.estadoAposta === 'perdida')) {
+                            const odd = parseFloat(j.oddSimples || j.odd || 0);
+                            const l = j.estadoAposta === 'ganha' ? (odd > 0 ? odd - 1 : 0) : -1;
+                            d = { lucro: l, stake: 1 };
+                        } else if (tipoGraficoAtual === 'fs') {
+                            let vbS = calcularFightSelectionOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
+                            let vbSug = calcularFightSelectionOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
+                            let vb = vbSug || vbS;
+                            if (vb) {
+                                let estFS = 'pendente';
+                                if (j.estadoAposta === 'ganha' || j.estadoAposta === 'perdida') {
+                                    const gA = parseInt(j.resGolosA); const gB = parseInt(j.resGolosB);
+                                    if (!isNaN(gA) && !isNaN(gB)) estFS = avaliarResultadoFinal(vb.selecao, gA, gB);
+                                    else estFS = j.estadoAposta;
+                                }
+                                if (estFS === 'ganha' || estFS === 'perdida') {
+                                    const l = estFS === 'ganha' ? (vb.odd - 1) : -1;
+                                    d = { lucro: l, stake: 1 };
+                                }
+                            }
+                        }
+
+                        if (d) {
+                            acumuladoLucro += d.lucro;
+                            acumuladoStake += d.stake;
+                            labels.push(`#${labels.length + 1}`);
+                            dataLucro.push(parseFloat(acumuladoLucro.toFixed(2)));
+                            dataRoi.push(parseFloat(((acumuladoLucro / acumuladoStake) * 100).toFixed(1)));
+                            dataApostas.push(1);
+                        }
+                    });
+                } else {
+                    // Apresenta todas as chaves do agrupamento selecionado (Ex: todos os dias, todos os meses)
+                    const dadosGrp = agrupamentosGlobais[grpKey] || {};
+                    const chaves = Object.keys(dadosGrp).sort();
+
+                    let acLucro = 0;
+                    let acStake = 0;
+                    chaves.forEach(k => {
+                        const item = dadosGrp[k][tipoGraficoAtual];
+                        if (item && item.total > 0) {
+                            let lbl = k;
+                            if (grpKey === 'diaria') {
+                                const partes = k.split('-');
+                                if(partes.length === 3) lbl = `${partes[2]}/${partes[1]}`;
+                            }
+                            labels.push(lbl);
+                            acLucro += item.lucro;
+                            acStake += item.stake;
+                            dataLucro.push(parseFloat(acLucro.toFixed(2)));
+                            dataRoi.push(parseFloat(((acLucro / acStake) * 100).toFixed(1)));
+                            dataApostas.push(item.total);
+                        }
+                    });
+                }
+            } else {
+                // FILTRO ESPECÍFICO: Apresenta os jogos isolados pertencentes à linha clicada
+                const jogosFiltrados = todosJogosGlobais.filter(j => {
+                    if (!j.arquivado || !j.dataEvento) return false;
+                    if (grpKey === 'diaria') return j.dataEvento === linhaSelecionadaChave;
+                    if (grpKey === 'semanal') return getWeekYear(j.dataEvento) === linhaSelecionadaChave;
+                    if (grpKey === 'mensal') return j.dataEvento.substring(0, 7) === linhaSelecionadaChave;
+                    if (grpKey === 'anual') return j.dataEvento.substring(0, 4) === linhaSelecionadaChave;
+                    return false;
+                }).sort((a, b) => a.dataEvento.localeCompare(b.dataEvento));
 
                 let acumuladoLucro = 0;
                 let acumuladoStake = 0;
 
-                jogosValidos.forEach((j, idx) => {
+                jogosFiltrados.forEach((j) => {
                     let d = null;
                     if (tipoGraficoAtual === 'geral' && (j.estadoAposta === 'ganha' || j.estadoAposta === 'perdida')) {
                         const odd = parseFloat(j.oddSimples || j.odd || 0);
@@ -642,28 +742,9 @@
                         dataApostas.push(1);
                     }
                 });
-            } else {
-                let acLucro = 0;
-                let acStake = 0;
-                chaves.forEach(k => {
-                    const item = dadosGrp[k][tipoGraficoAtual];
-                    if (item && item.total > 0) {
-                        let lbl = k;
-                        if (grpKey === 'diaria') {
-                            const partes = k.split('-');
-                            if(partes.length === 3) lbl = `${partes[2]}/${partes[1]}`;
-                        }
-                        labels.push(lbl);
-                        acLucro += item.lucro;
-                        acStake += item.stake;
-                        dataLucro.push(parseFloat(acLucro.toFixed(2)));
-                        dataRoi.push(parseFloat(((acLucro / acStake) * 100).toFixed(1)));
-                        dataApostas.push(item.total);
-                    }
-                });
             }
 
-            // Destruir gráficos anteriores se existirem
+            // Destruir gráficos anteriores
             if (graficosInstancias.lucro) graficosInstancias.lucro.destroy();
             if (graficosInstancias.roi) graficosInstancias.roi.destroy();
             if (graficosInstancias.volume) graficosInstancias.volume.destroy();
@@ -800,6 +881,9 @@
         .perf-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
         .perf-table th { background: #f1f5f9; padding: 12px; font-weight: 800; color: #475569; border-bottom: 2px solid #e2e8f0; }
         .perf-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; }
+        .perf-table tbody tr { transition: background-color 0.15s ease; }
+        .perf-table tbody tr:hover { background-color: #f1f5f9; }
+        .perf-table tbody tr.selected-row { background-color: #dcfce7 !important; border-left: 4px solid #22c55e; }
 
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .chart-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; height: 260px; }
@@ -881,9 +965,11 @@
         <div class="section-block">
             <h2 class="block-title" id="txtHistorico">Histórico</h2>
             <div class="filters-toolbar">
-                <button id="optDiaria" class="filter-btn table-filter-btn" onclick="mudarFiltroTabela('diaria')">Tabela Diária</button>
-                <button id="optMensal" class="filter-btn table-filter-btn active" onclick="mudarFiltroTabela('mensal')">Tabela Mensal</button>
-                <button id="optAnual" class="filter-btn table-filter-btn" onclick="mudarFiltroTabela('anual')">Tabela Anual</button>
+                <button id="optGlobal" class="filter-btn table-filter-btn" onclick="mudarFiltroTabela('global')">Global</button>
+                <button id="optDiaria" class="filter-btn table-filter-btn" onclick="mudarFiltroTabela('diaria')">Diário</button>
+                <button id="optSemanal" class="filter-btn table-filter-btn" onclick="mudarFiltroTabela('semanal')">Semanal</button>
+                <button id="optMensal" class="filter-btn table-filter-btn active" onclick="mudarFiltroTabela('mensal')">Mensal</button>
+                <button id="optAnual" class="filter-btn table-filter-btn" onclick="mudarFiltroTabela('anual')">Anual</button>
             </div>
             <div id="tabelaHistoricoContainer" style="overflow-x: auto;"></div>
         </div>
@@ -891,13 +977,6 @@
         <!-- Bloco 3: Gráficos -->
         <div class="section-block">
             <h2 class="block-title" id="txtGraficos">Gráficos de Evolução</h2>
-            <div class="filters-toolbar">
-                <button id="optGrafGlobal" class="filter-btn chart-filter-btn active" onclick="mudarFiltroGraficos('global')">Global</button>
-                <button id="optGrafDiario" class="filter-btn chart-filter-btn" onclick="mudarFiltroGraficos('diario')">Diário</button>
-                <button id="optGrafSemanal" class="filter-btn chart-filter-btn" onclick="mudarFiltroGraficos('semanal')">Semanal</button>
-                <button id="optGrafMensal" class="filter-btn chart-filter-btn" onclick="mudarFiltroGraficos('mensal')">Mensal</button>
-                <button id="optGrafAnual" class="filter-btn chart-filter-btn" onclick="mudarFiltroGraficos('anual')">Anual</button>
-            </div>
             <div class="charts-grid">
                 <div class="chart-card"><canvas id="chartLucro"></canvas></div>
                 <div class="chart-card"><canvas id="chartRoi"></canvas></div>

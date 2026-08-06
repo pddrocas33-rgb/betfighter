@@ -517,7 +517,6 @@
             }
         }
 
-        // FUNCIONALIDADE DINÂMICA DA BARRA DE AVISOS COM SUPORTE MULTILINGUE
         function atualizarDisclaimerDinamico() {
             const b = dadosBannersCache;
             const bar = document.getElementById('techDisclaimerBar');
@@ -530,7 +529,6 @@
 
             const langFallback = (traducoes[idiomaAtual] || traducoes['pt']).disclaimerBarText;
             
-            // Seleção de Mensagem de Acordo com o Idioma Selecionado
             let mensagem = b.disclaimerText;
             if (idiomaAtual === 'en' && b.disclaimerTextEn) mensagem = b.disclaimerTextEn;
             if (idiomaAtual === 'nep' && b.disclaimerTextNep) mensagem = b.disclaimerTextNep;
@@ -538,7 +536,6 @@
             if (!mensagem || mensagem.trim() === '') mensagem = langFallback;
             const modo = b.disclaimerMode || 'estatico';
 
-            // 1. Mensagem, Modo e Cor do Texto da Mensagem
             txtNotice.textContent = mensagem;
             if (b.disclaimerTextColor) {
                 txtNotice.style.color = b.disclaimerTextColor;
@@ -554,7 +551,6 @@
                 txtNotice.className = '';
             }
 
-            // 2. Tag (Texto Multilíngue, Visibilidade, Cores)
             let tagTexto = b.disclaimerTagText !== undefined ? b.disclaimerTagText : 'Importante';
             if (idiomaAtual === 'en' && b.disclaimerTagTextEn) tagTexto = b.disclaimerTagTextEn;
             if (idiomaAtual === 'nep' && b.disclaimerTagTextNep) tagTexto = b.disclaimerTagTextNep;
@@ -566,14 +562,12 @@
                 if (b.disclaimerTagColor) tagBox.style.color = b.disclaimerTagColor;
             }
 
-            // 3. Símbolo / Ícone
             const iconeOuHtml = b.disclaimerIcon || '⚠️';
             if (iconBox) {
                 iconBox.innerHTML = iconeOuHtml;
                 if (b.disclaimerIconColor) iconBox.style.color = b.disclaimerIconColor;
             }
 
-            // 4. Estilos da Barra Principal (Cor do Bordo / Fundo)
             if (b.disclaimerBorderColor) bar.style.borderLeftColor = b.disclaimerBorderColor;
             if (b.disclaimerBgColor) bar.style.backgroundColor = b.disclaimerBgColor;
         }
@@ -1494,6 +1488,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             <span id="txtLoginBtn">Entrar</span>
             <span id="userStatusBadge" class="user-status-tag" style="display:none;">CONTA ATIVA</span>
+        </a>
+        <a href="faqs.html" class="nav-item" title="Perguntas Frequentes">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>FAQs</span>
         </a>
         <a href="bf_stats.html" class="nav-item" title="Estatísticas Betfighter">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
