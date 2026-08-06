@@ -5,37 +5,108 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BETFIGHTER - Histórico de Testes</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         body { font-family: 'Montserrat', sans-serif; background: #f1f5f9; color: #0f172a; margin: 0; padding: 20px; }
         .container { max-width: 800px; margin: 20px auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .btn-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 20px; color: #10b981; font-weight: 700; text-decoration: none; font-size: 0.9rem; }
         .btn-back:hover { text-decoration: underline; }
-        h1 { font-size: 1.4rem; margin-bottom: 20px; border-bottom: 2px solid #10b981; padding-bottom: 8px; font-weight: 800; color: #0f172a; }
+        .header-zone { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #10b981; padding-bottom: 8px; margin-bottom: 20px; }
+        h1 { font-size: 1.4rem; margin: 0; font-weight: 800; color: #0f172a; }
+        .btn-refresh { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .btn-refresh:hover { background: #e2e8f0; }
         .pdf-list { list-style: none; padding: 0; margin: 0; }
         .pdf-item { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 12px; gap: 10px; flex-wrap: wrap; }
         .pdf-title { font-weight: 600; font-size: 0.9rem; color: #334155; display: flex; align-items: center; gap: 8px; }
+        .pdf-info { font-size: 0.75rem; color: #64748b; margin-left: 6px; }
         .pdf-item a { background: #0f172a; color: #fff; text-decoration: none; padding: 8px 14px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; transition: background 0.2s; white-space: nowrap; }
         .pdf-item a:hover { background: #10b981; }
+        .status-msg { text-align: center; color: #64748b; padding: 20px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <a href="index.html" class="btn-back">← Voltar à Página Principal</a>
-    <h1>Histórico de Testes (PDFs)</h1>
+    
+    <div class="header-zone">
+        <h1>Histórico de Testes (PDFs)</h1>
+        <button class="btn-refresh" onclick="carregarHistoricoPDFs()"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+    </div>
 
-    <ul class="pdf-list">
-        <li class="pdf-item">
-            <span class="pdf-title">📄 Relatório de Teste 01</span>
-            <a href="./historicos-de-testes/teste-01.pdf" target="_blank">Abrir PDF</a>
-        </li>
-        <li class="pdf-item">
-            <span class="pdf-title">📄 Relatório de Teste 02</span>
-            <a href="./historicos-de-testes/teste-02.pdf" target="_blank">Abrir PDF</a>
-        </li>
+    <ul class="pdf-list" id="listaPDFsContainer">
+        <li class="status-msg"><i class="fa-solid fa-spinner fa-spin"></i> A carregar relatórios do GitHub...</li>
     </ul>
 </div>
+
+<script>
+    const GH_OWNER = "pddrocas33-rgb";
+    const GH_REPO = "betfighter";
+
+    async function carregarHistoricoPDFs() {
+        const container = document.getElementById('listaPDFsContainer');
+        if (!container) return;
+
+        container.innerHTML = '<li class="status-msg"><i class="fa-solid fa-spinner fa-spin"></i> A carregar relatórios...</li>';
+
+        // Lê o token guardado no navegador (sem expor segredos no código)
+        const token = localStorage.getItem('gh_token') || "";
+
+        // Anti-cache com timestamp
+        const timestamp = new Date().getTime();
+        const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/historicos-de-testes?t=${timestamp}`;
+
+        try {
+            const headers = { 'Cache-Control': 'no-cache' };
+            if (token) {
+                headers['Authorization'] = `token ${token}`;
+            }
+
+            const response = await fetch(url, { headers });
+
+            if (response.status === 404) {
+                container.innerHTML = '<li class="status-msg">Nenhum relatório encontrado na pasta.</li>';
+                return;
+            }
+
+            if (!response.ok) throw new Error(`Status ${response.status}: ${response.statusText}`);
+
+            const ficheiros = await response.json();
+            const pdfs = ficheiros.filter(f => f.type === 'file' && f.name.toLowerCase().endsWith('.pdf'));
+
+            if (pdfs.length === 0) {
+                container.innerHTML = '<li class="status-msg">Nenhum ficheiro PDF disponível de momento.</li>';
+                return;
+            }
+
+            // Ordena do mais recente para o mais antigo
+            pdfs.reverse();
+
+            container.innerHTML = '';
+            pdfs.forEach(f => {
+                const tamanhoKB = (f.size / 1024).toFixed(1);
+                container.innerHTML += `
+                    <li class="pdf-item">
+                        <span class="pdf-title">
+                            📄 ${f.name}
+                            <span class="pdf-info">(${tamanhoKB} KB)</span>
+                        </span>
+                        <a href="${f.download_url}" target="_blank"><i class="fa-solid fa-file-pdf"></i> Abrir PDF</a>
+                    </li>
+                `;
+            });
+
+        } catch (err) {
+            console.error(err);
+            container.innerHTML = `<li class="status-msg" style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Falha ao carregar ficheiros: ${err.message}</li>`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', carregarHistoricoPDFs);
+</script>
 
 </body>
 </html>
