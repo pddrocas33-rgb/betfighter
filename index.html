@@ -470,7 +470,7 @@
             escutarJogosDaData(dataSelecionada);
         });
 
-        // FUNCIONALIDADE DINÂMICA COMPLETA DA BARRA DE AVISOS
+        // FUNCIONALIDADE DINÂMICA DA BARRA DE AVISOS COM SUPORTE MULTILINGUE
         function atualizarDisclaimerDinamico() {
             const b = dadosBannersCache;
             const bar = document.getElementById('techDisclaimerBar');
@@ -482,7 +482,13 @@
             if (!bar || !txtNotice || !containerNotice) return;
 
             const langFallback = (traducoes[idiomaAtual] || traducoes['pt']).disclaimerBarText;
-            const mensagem = (b.disclaimerText && b.disclaimerText.trim() !== '') ? b.disclaimerText : langFallback;
+            
+            // Seleção de Mensagem de Acordo com o Idioma Selecionado
+            let mensagem = b.disclaimerText;
+            if (idiomaAtual === 'en' && b.disclaimerTextEn) mensagem = b.disclaimerTextEn;
+            if (idiomaAtual === 'nep' && b.disclaimerTextNep) mensagem = b.disclaimerTextNep;
+
+            if (!mensagem || mensagem.trim() === '') mensagem = langFallback;
             const modo = b.disclaimerMode || 'estatico';
 
             // 1. Mensagem, Modo e Cor do Texto da Mensagem
@@ -501,8 +507,11 @@
                 txtNotice.className = '';
             }
 
-            // 2. Tag (Texto, Visibilidade, Cores)
-            const tagTexto = b.disclaimerTagText !== undefined ? b.disclaimerTagText : 'Importante';
+            // 2. Tag (Texto Multilíngue, Visibilidade, Cores)
+            let tagTexto = b.disclaimerTagText !== undefined ? b.disclaimerTagText : 'Importante';
+            if (idiomaAtual === 'en' && b.disclaimerTagTextEn) tagTexto = b.disclaimerTagTextEn;
+            if (idiomaAtual === 'nep' && b.disclaimerTagTextNep) tagTexto = b.disclaimerTagTextNep;
+
             if (tagBox) {
                 tagBox.textContent = tagTexto;
                 tagBox.style.display = tagTexto.trim() === '' ? 'none' : 'inline-block';
@@ -518,12 +527,8 @@
             }
 
             // 4. Estilos da Barra Principal (Cor do Bordo / Fundo)
-            if (b.disclaimerBorderColor) {
-                bar.style.borderLeftColor = b.disclaimerBorderColor;
-            }
-            if (b.disclaimerBgColor) {
-                bar.style.backgroundColor = b.disclaimerBgColor;
-            }
+            if (b.disclaimerBorderColor) bar.style.borderLeftColor = b.disclaimerBorderColor;
+            if (b.disclaimerBgColor) bar.style.backgroundColor = b.disclaimerBgColor;
         }
 
         function atualizarDataFormatada() {
