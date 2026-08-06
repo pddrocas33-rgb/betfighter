@@ -42,14 +42,10 @@
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
 
-        // ESTADO DE AUTENTICAÇÃO
         let usuarioLogado = null;
-
-        // PARÂMETROS DINÂMICOS: Sincronizados via Firebase
         let MIN_FS_ODD = 1.99;
         let MIN_FS_EDGE = 0.10; 
 
-        // Traduções
         const traducoes = {
             pt: {
                 subtitle: "A luta contra as odds",
@@ -150,12 +146,7 @@
         let unsubscribeJogos = null;
         let todosJogosGlobalCache = {};
 
-        // Estado dos Filtros Locais
-        let filtros = {
-            oddMin: null,
-            oddMax: null,
-            fightSelectedOnly: false
-        };
+        let filtros = { oddMin: null, oddMax: null, fightSelectedOnly: false };
 
         function hojeISO() {
             const d = new Date();
@@ -165,7 +156,6 @@
             return `${y}-${m}-${dd}`;
         }
 
-        // --- SISTEMA DE AUTENTICAÇÃO E SINCRONIZAÇÃO BD ---
         onAuthStateChanged(auth, async (user) => {
             usuarioLogado = user;
             if (user) {
@@ -173,15 +163,9 @@
                     const uRef = ref(db, `usuarios/${user.uid}`);
                     const snap = await get(uRef);
                     if (!snap.exists()) {
-                        await set(uRef, {
-                            email: user.email,
-                            criadoEm: new Date().getTime(),
-                            ativo: true
-                        });
+                        await set(uRef, { email: user.email, criadoEm: new Date().getTime(), ativo: true });
                     } else {
-                        await update(uRef, {
-                            email: user.email
-                        });
+                        await update(uRef, { email: user.email });
                     }
                 } catch (err) {
                     console.error("Erro ao registar utilizador na BD:", err);
@@ -244,11 +228,7 @@
         }
 
         function calcularROIMensal(todosJogosObj, mesAnoStr) {
-            let apostasSimples = 0;
-            let lucroSimples = 0;
-
-            let apostasFS = 0;
-            let lucroFS = 0;
+            let apostasSimples = 0, lucroSimples = 0, apostasFS = 0, lucroFS = 0;
 
             Object.values(todosJogosObj).forEach(j => {
                 if (!j.arquivado || !j.dataEvento || !j.dataEvento.startsWith(mesAnoStr)) return;
@@ -259,14 +239,8 @@
                 if (j.previsaoSimples && j.previsaoSimples.toString().trim() !== '') {
                     const oddS = parseFloat(j.oddSimples || j.odd || 0);
                     const stSimples = avaliarPrevisaoIndividualmente(j.previsaoSimples, valGolasA, valGolasB, j.estadoAposta);
-                    
-                    if (stSimples === 'ganha') {
-                        apostasSimples++;
-                        if (oddS > 0) lucroSimples += (oddS - 1);
-                    } else if (stSimples === 'perdida') {
-                        apostasSimples++;
-                        lucroSimples -= 1;
-                    }
+                    if (stSimples === 'ganha') { apostasSimples++; if (oddS > 0) lucroSimples += (oddS - 1); }
+                    else if (stSimples === 'perdida') { apostasSimples++; lucroSimples -= 1; }
                 }
 
                 let vbSimples = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
@@ -276,14 +250,8 @@
                 if (valuedBetCalculada) {
                     const stFS = avaliarPrevisaoIndividualmente(valuedBetCalculada.selecao, valGolasA, valGolasB, j.estadoAposta);
                     const oddFS = parseFloat(valuedBetCalculada.odd);
-
-                    if (stFS === 'ganha') {
-                        apostasFS++;
-                        if (oddFS > 0) lucroFS += (oddFS - 1);
-                    } else if (stFS === 'perdida') {
-                        apostasFS++;
-                        lucroFS -= 1;
-                    }
+                    if (stFS === 'ganha') { apostasFS++; if (oddFS > 0) lucroFS += (oddFS - 1); }
+                    else if (stFS === 'perdida') { apostasFS++; lucroFS -= 1; }
                 }
             });
 
@@ -294,14 +262,12 @@
             const elRoiFS = document.getElementById('roiFSVal');
 
             if (elRoiSimples) {
-                const txtSimples = `${roiSimples >= 0 ? '+' : ''}${roiSimples.toFixed(1)}%`;
-                elRoiSimples.textContent = txtSimples;
+                elRoiSimples.textContent = `${roiSimples >= 0 ? '+' : ''}${roiSimples.toFixed(1)}%`;
                 elRoiSimples.className = roiSimples >= 0 ? 'roi-positive' : 'roi-negative';
             }
 
             if (elRoiFS) {
-                const txtFS = `${roiFS >= 0 ? '+' : ''}${roiFS.toFixed(1)}%`;
-                elRoiFS.textContent = txtFS;
+                elRoiFS.textContent = `${roiFS >= 0 ? '+' : ''}${roiFS.toFixed(1)}%`;
                 elRoiFS.className = roiFS >= 0 ? 'roi-positive' : 'roi-negative';
             }
         }
@@ -313,22 +279,11 @@
             onValue(ref(db, "config"), (snapshot) => {
                 const config = snapshot.val() || {};
                 let recalcular = false;
-
-                if (config.minFsOdd !== undefined && !isNaN(config.minFsOdd)) {
-                    MIN_FS_ODD = parseFloat(config.minFsOdd);
-                    recalcular = true;
-                }
-
-                if (config.minFsEdge !== undefined && !isNaN(config.minFsEdge)) {
-                    MIN_FS_EDGE = parseFloat(config.minFsEdge);
-                    recalcular = true;
-                }
-
+                if (config.minFsOdd !== undefined && !isNaN(config.minFsOdd)) { MIN_FS_ODD = parseFloat(config.minFsOdd); recalcular = true; }
+                if (config.minFsEdge !== undefined && !isNaN(config.minFsEdge)) { MIN_FS_EDGE = parseFloat(config.minFsEdge); recalcular = true; }
                 if (recalcular) {
                     const agora = new Date();
-                    const ano = agora.getFullYear();
-                    const mes = String(agora.getMonth() + 1).padStart(2, '0');
-                    calcularROIMensal(todosJogosGlobalCache, `${ano}-${mes}`);
+                    calcularROIMensal(todosJogosGlobalCache, `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`);
                     renderizarJogos();
                 }
             });
@@ -337,12 +292,12 @@
             if (langSelect) {
                 idiomaAtual = localStorage.getItem('idiomaPreferido') || 'pt';
                 langSelect.value = idiomaAtual;
-
                 langSelect.addEventListener('change', (e) => {
                     idiomaAtual = e.target.value;
                     localStorage.setItem('idiomaPreferido', idiomaAtual);
                     atualizarTextosEstaticos();
                     atualizarBannersDinamicos();
+                    atualizarDisclaimerDinamico();
                     atualizarUIAutenticacao();
                     renderizarJogos();
                 });
@@ -374,18 +329,10 @@
             const btnInfo = document.getElementById('btnInfo');
             const disclaimerModal = document.getElementById('disclaimerModal');
             const closeDisclaimer = document.getElementById('closeDisclaimer');
-
-            if (btnInfo && disclaimerModal) {
-                btnInfo.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    disclaimerModal.classList.add('active');
-                });
-            }
+            if (btnInfo && disclaimerModal) btnInfo.addEventListener('click', (e) => { e.preventDefault(); disclaimerModal.classList.add('active'); });
             if (closeDisclaimer && disclaimerModal) {
                 closeDisclaimer.addEventListener('click', () => disclaimerModal.classList.remove('active'));
-                disclaimerModal.addEventListener('click', (e) => {
-                    if (e.target === disclaimerModal) disclaimerModal.classList.remove('active');
-                });
+                disclaimerModal.addEventListener('click', (e) => { if (e.target === disclaimerModal) disclaimerModal.classList.remove('active'); });
             }
 
             const btnLogin = document.getElementById('btnLogin');
@@ -404,17 +351,13 @@
                     authModal.classList.add('active');
                     document.getElementById('authLoggedBox').style.display = usuarioLogado ? 'block' : 'none';
                     document.getElementById('authFormBox').style.display = usuarioLogado ? 'none' : 'block';
-                    if(usuarioLogado) {
-                        document.getElementById('authLoggedEmail').textContent = usuarioLogado.email;
-                    }
+                    if(usuarioLogado) document.getElementById('authLoggedEmail').textContent = usuarioLogado.email;
                 });
             }
 
             if (closeAuth && authModal) {
                 closeAuth.addEventListener('click', () => authModal.classList.remove('active'));
-                authModal.addEventListener('click', (e) => {
-                    if (e.target === authModal) authModal.classList.remove('active');
-                });
+                authModal.addEventListener('click', (e) => { if (e.target === authModal) authModal.classList.remove('active'); });
             }
 
             if (toggleAuthMode) {
@@ -435,33 +378,19 @@
                     const chkTermos = document.getElementById('chkTermos');
                     const errEl = document.getElementById('authError');
                     errEl.textContent = '';
-
-                    if (isSignUp && (!chkTermos || !chkTermos.checked)) {
-                        errEl.textContent = 'Tem de aceitar os Termos e Condições para efetuar o registo.';
-                        return;
-                    }
-
+                    if (isSignUp && (!chkTermos || !chkTermos.checked)) { errEl.textContent = 'Tem de aceitar os Termos e Condições para efetuar o registo.'; return; }
                     try {
-                        if (isSignUp) {
-                            await createUserWithEmailAndPassword(auth, email, pass);
-                        } else {
-                            await signInWithEmailAndPassword(auth, email, pass);
-                        }
+                        if (isSignUp) await createUserWithEmailAndPassword(auth, email, pass);
+                        else await signInWithEmailAndPassword(auth, email, pass);
                         authModal.classList.remove('active');
-                    } catch (err) {
-                        errEl.textContent = err.message.replace('Firebase:', '');
-                    }
+                    } catch (err) { errEl.textContent = err.message.replace('Firebase:', ''); }
                 });
             }
 
             if (btnGoogleAuth) {
                 btnGoogleAuth.addEventListener('click', async () => {
-                    try {
-                        await signInWithPopup(auth, googleProvider);
-                        authModal.classList.remove('active');
-                    } catch (err) {
-                        document.getElementById('authError').textContent = err.message;
-                    }
+                    try { await signInWithPopup(auth, googleProvider); authModal.classList.remove('active'); } 
+                    catch (err) { document.getElementById('authError').textContent = err.message; }
                 });
             }
 
@@ -476,17 +405,10 @@
             const termosModal = document.getElementById('termosModal');
             const closeTermos = document.getElementById('closeTermos');
 
-            if (linkAbrirTermos && termosModal) {
-                linkAbrirTermos.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    termosModal.classList.add('active');
-                });
-            }
+            if (linkAbrirTermos && termosModal) linkAbrirTermos.addEventListener('click', (e) => { e.preventDefault(); termosModal.classList.add('active'); });
             if (closeTermos && termosModal) {
                 closeTermos.addEventListener('click', () => termosModal.classList.remove('active'));
-                termosModal.addEventListener('click', (e) => {
-                    if (e.target === termosModal) termosModal.classList.remove('active');
-                });
+                termosModal.addEventListener('click', (e) => { if (e.target === termosModal) termosModal.classList.remove('active'); });
             }
 
             const btnFilter = document.getElementById('btnFilter');
@@ -495,16 +417,10 @@
             const btnApplyFilters = document.getElementById('btnApplyFilters');
             const btnClearFilters = document.getElementById('btnClearFilters');
 
-            if (btnFilter && filterModal) {
-                btnFilter.addEventListener('click', () => {
-                    filterModal.classList.add('active');
-                });
-            }
+            if (btnFilter && filterModal) btnFilter.addEventListener('click', () => filterModal.classList.add('active'));
             if (closeFilter && filterModal) {
                 closeFilter.addEventListener('click', () => filterModal.classList.remove('active'));
-                filterModal.addEventListener('click', (e) => {
-                    if (e.target === filterModal) filterModal.classList.remove('active');
-                });
+                filterModal.addEventListener('click', (e) => { if (e.target === filterModal) filterModal.classList.remove('active'); });
             }
 
             if (btnApplyFilters) {
@@ -523,11 +439,8 @@
                     filtros.oddMax = !isNaN(maxVal) ? maxVal : null;
                     filtros.fightSelectedOnly = fightOnly;
 
-                    if (filtros.oddMin !== null || filtros.oddMax !== null || filtros.fightSelectedOnly) {
-                        btnFilter.classList.add('active-filter');
-                    } else {
-                        btnFilter.classList.remove('active-filter');
-                    }
+                    if (filtros.oddMin !== null || filtros.oddMax !== null || filtros.fightSelectedOnly) btnFilter.classList.add('active-filter');
+                    else btnFilter.classList.remove('active-filter');
 
                     filterModal.classList.remove('active');
                     renderizarJogos();
@@ -539,7 +452,6 @@
                     document.getElementById('inputOddMin').value = '';
                     document.getElementById('inputOddMax').value = '';
                     document.getElementById('chkFightSelected').checked = false;
-
                     filtros = { oddMin: null, oddMax: null, fightSelectedOnly: false };
                     btnFilter.classList.remove('active-filter');
                     renderizarJogos();
@@ -552,10 +464,67 @@
             onValue(ref(db, "banners"), (snapshot) => {
                 dadosBannersCache = snapshot.val() || {};
                 atualizarBannersDinamicos();
+                atualizarDisclaimerDinamico();
             });
 
             escutarJogosDaData(dataSelecionada);
         });
+
+        // FUNCIONALIDADE DINÂMICA COMPLETA DA BARRA DE AVISOS
+        function atualizarDisclaimerDinamico() {
+            const b = dadosBannersCache;
+            const bar = document.getElementById('techDisclaimerBar');
+            const iconBox = document.getElementById('techDisclaimerIcon');
+            const tagBox = document.getElementById('techDisclaimerTag');
+            const txtNotice = document.getElementById('txtDisclaimerNotice');
+            const containerNotice = document.querySelector('.tech-disclaimer-content');
+            
+            if (!bar || !txtNotice || !containerNotice) return;
+
+            const langFallback = (traducoes[idiomaAtual] || traducoes['pt']).disclaimerBarText;
+            const mensagem = (b.disclaimerText && b.disclaimerText.trim() !== '') ? b.disclaimerText : langFallback;
+            const modo = b.disclaimerMode || 'estatico';
+
+            // 1. Mensagem, Modo e Cor do Texto da Mensagem
+            txtNotice.textContent = mensagem;
+            if (b.disclaimerTextColor) {
+                txtNotice.style.color = b.disclaimerTextColor;
+            } else {
+                txtNotice.style.color = '';
+            }
+
+            if (modo === 'movimento') {
+                containerNotice.classList.add('disclaimer-marquee-wrapper');
+                txtNotice.className = 'disclaimer-marquee-text';
+            } else {
+                containerNotice.classList.remove('disclaimer-marquee-wrapper');
+                txtNotice.className = '';
+            }
+
+            // 2. Tag (Texto, Visibilidade, Cores)
+            const tagTexto = b.disclaimerTagText !== undefined ? b.disclaimerTagText : 'Importante';
+            if (tagBox) {
+                tagBox.textContent = tagTexto;
+                tagBox.style.display = tagTexto.trim() === '' ? 'none' : 'inline-block';
+                if (b.disclaimerTagBg) tagBox.style.backgroundColor = b.disclaimerTagBg;
+                if (b.disclaimerTagColor) tagBox.style.color = b.disclaimerTagColor;
+            }
+
+            // 3. Símbolo / Ícone
+            const iconeOuHtml = b.disclaimerIcon || '⚠️';
+            if (iconBox) {
+                iconBox.innerHTML = iconeOuHtml;
+                if (b.disclaimerIconColor) iconBox.style.color = b.disclaimerIconColor;
+            }
+
+            // 4. Estilos da Barra Principal (Cor do Bordo / Fundo)
+            if (b.disclaimerBorderColor) {
+                bar.style.borderLeftColor = b.disclaimerBorderColor;
+            }
+            if (b.disclaimerBgColor) {
+                bar.style.backgroundColor = b.disclaimerBgColor;
+            }
+        }
 
         function atualizarDataFormatada() {
             const txtData = document.getElementById('txtDataFormatada');
@@ -564,45 +533,20 @@
 
         function atualizarTextosEstaticos() {
             const lang = traducoes[idiomaAtual] || traducoes['pt'];
-            
-            const elSub = document.getElementById('uiSubtitle');
-            if (elSub) elSub.textContent = lang.subtitle;
+            const elSub = document.getElementById('uiSubtitle'); if (elSub) elSub.textContent = lang.subtitle;
+            const elDiaLbl = document.getElementById('lblDiaSelecionadoText'); if (elDiaLbl) elDiaLbl.textContent = lang.diaSelecionado;
+            const elBtnHoje = document.getElementById('btnHoje'); if (elBtnHoje) elBtnHoje.textContent = lang.hoje;
+            const elProg = document.getElementById('lblProgressoMes'); if (elProg) elProg.textContent = lang.progressoMes;
+            const elHist = document.getElementById('txtHistoricoTestes'); if (elHist) elHist.textContent = lang.historicoTestes;
+            const discHeader = document.querySelector('#disclaimerModal .disclaimer-title'); if (discHeader) discHeader.textContent = lang.infoTitle;
+            const txtFilterTitle = document.getElementById('txtFilterTitle'); if (txtFilterTitle) txtFilterTitle.textContent = lang.filtrosTitle;
+            const lblOddMin = document.getElementById('lblOddMin'); if (lblOddMin) lblOddMin.textContent = lang.oddMin;
+            const lblOddMax = document.getElementById('lblOddMax'); if (lblOddMax) lblOddMax.textContent = lang.oddMax;
+            const lblFightSel = document.getElementById('lblFightSel'); if (lblFightSel) lblFightSel.textContent = lang.apenasFightSelected;
+            const btnApplyFilters = document.getElementById('btnApplyFilters'); if (btnApplyFilters) btnApplyFilters.textContent = lang.aplicarFiltros;
+            const btnClearFilters = document.getElementById('btnClearFilters'); if (btnClearFilters) btnClearFilters.textContent = lang.limparFiltros;
 
-            const elDiaLbl = document.getElementById('lblDiaSelecionadoText');
-            if (elDiaLbl) elDiaLbl.textContent = lang.diaSelecionado;
-
-            const elBtnHoje = document.getElementById('btnHoje');
-            if (elBtnHoje) elBtnHoje.textContent = lang.hoje;
-
-            const elProg = document.getElementById('lblProgressoMes');
-            if (elProg) elProg.textContent = lang.progressoMes;
-
-            const elHist = document.getElementById('txtHistoricoTestes');
-            if (elHist) elHist.textContent = lang.historicoTestes;
-
-            const discHeader = document.querySelector('#disclaimerModal .disclaimer-title');
-            if (discHeader) discHeader.textContent = lang.infoTitle;
-
-            const txtFilterTitle = document.getElementById('txtFilterTitle');
-            if (txtFilterTitle) txtFilterTitle.textContent = lang.filtrosTitle;
-            
-            const lblOddMin = document.getElementById('lblOddMin');
-            if (lblOddMin) lblOddMin.textContent = lang.oddMin;
-
-            const lblOddMax = document.getElementById('lblOddMax');
-            if (lblOddMax) lblOddMax.textContent = lang.oddMax;
-
-            const lblFightSel = document.getElementById('lblFightSel');
-            if (lblFightSel) lblFightSel.textContent = lang.apenasFightSelected;
-
-            const btnApplyFilters = document.getElementById('btnApplyFilters');
-            if (btnApplyFilters) btnApplyFilters.textContent = lang.aplicarFiltros;
-
-            const btnClearFilters = document.getElementById('btnClearFilters');
-            if (btnClearFilters) btnClearFilters.textContent = lang.limparFiltros;
-
-            const txtDiscNotice = document.getElementById('txtDisclaimerNotice');
-            if (txtDiscNotice) txtDiscNotice.textContent = lang.disclaimerBarText;
+            atualizarDisclaimerDinamico();
 
             const discBody = document.querySelector('#disclaimerModal .disclaimer-body');
             if (discBody) {
@@ -616,17 +560,10 @@
         }
 
         function escutarJogosDaData(dataStr) {
-            if (unsubscribeJogos) {
-                unsubscribeJogos();
-                unsubscribeJogos = null;
-            }
-
+            if (unsubscribeJogos) { unsubscribeJogos(); unsubscribeJogos = null; }
             const lang = traducoes[idiomaAtual] || traducoes['pt'];
             const containerCenter = document.getElementById('gamesCenterColumn');
-            if (containerCenter) {
-                containerCenter.innerHTML = `<div class="loading-state">${lang.carregando}</div>`;
-            }
-
+            if (containerCenter) containerCenter.innerHTML = `<div class="loading-state">${lang.carregando}</div>`;
             const q = query(ref(db, "jogos"), orderByChild("dataEvento"), equalTo(dataStr));
             unsubscribeJogos = onValue(q, (snapshot) => {
                 dadosJogosCache = snapshot.val() || {};
@@ -745,14 +682,7 @@
                 else if (confianca >= 27) cor = '#10b981'; 
                 else cor = '#64748b'; 
                 
-                return {
-                    margem: (edge * 100).toFixed(2),
-                    confianca: confianca.toFixed(0),
-                    cor: cor,
-                    selecao: selecao.toUpperCase(),
-                    edge: edge,
-                    odd: o
-                };
+                return { margem: (edge * 100).toFixed(2), confianca: confianca.toFixed(0), cor: cor, selecao: selecao.toUpperCase(), edge: edge, odd: o };
             }
             return null;
         }
@@ -835,23 +765,11 @@
                 let vbSugestao = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let valuedBetCalculada = vbSugestao || vbSimples;
 
-                if (filtros.fightSelectedOnly && !valuedBetCalculada) {
-                    return false;
-                }
-
+                if (filtros.fightSelectedOnly && !valuedBetCalculada) return false;
                 const oddSimplesVal = parseFloat(j.oddSimples);
-
-                if ((filtros.oddMin !== null || filtros.oddMax !== null) && (isNaN(oddSimplesVal) || !j.previsaoSimples)) {
-                    return false;
-                }
-
-                if (filtros.oddMin !== null && oddSimplesVal < filtros.oddMin) {
-                    return false;
-                }
-
-                if (filtros.oddMax !== null && oddSimplesVal > filtros.oddMax) {
-                    return false;
-                }
+                if ((filtros.oddMin !== null || filtros.oddMax !== null) && (isNaN(oddSimplesVal) || !j.previsaoSimples)) return false;
+                if (filtros.oddMin !== null && oddSimplesVal < filtros.oddMin) return false;
+                if (filtros.oddMax !== null && oddSimplesVal > filtros.oddMax) return false;
 
                 return true;
             });
@@ -1032,7 +950,7 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            flex-wrap: wrap; /* Permite ajuste em ecrãs extremamente estreitos */
+            flex-wrap: wrap;
         }
 
         .navbar-brand { 
@@ -1051,7 +969,7 @@
             display: flex; 
             align-items: center; 
             gap: 8px; 
-            flex-wrap: wrap; /* Garante que os botões não forcem a tela para os lados */
+            flex-wrap: wrap;
         }
         .nav-item { 
             display: flex; 
@@ -1075,9 +993,7 @@
             font-weight: 700;
             box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
         }
-        .user-btn-active:hover {
-            opacity: 0.9;
-        }
+        .user-btn-active:hover { opacity: 0.9; }
         .user-status-tag {
             background: #38bdf8;
             color: #0f172a;
@@ -1115,6 +1031,8 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.02);
             font-size: 0.78rem;
             color: #7f1d1d;
+            overflow: hidden;
+            transition: all 0.3s ease;
         }
         .tech-disclaimer-icon {
             display: flex;
@@ -1122,6 +1040,8 @@
             justify-content: center;
             color: #ef4444;
             flex-shrink: 0;
+            z-index: 2;
+            font-size: 1.1rem;
         }
         .tech-disclaimer-content {
             display: flex;
@@ -1129,6 +1049,7 @@
             gap: 6px;
             flex-wrap: wrap;
             line-height: 1.4;
+            width: 100%;
         }
         .tech-disclaimer-tag {
             background: #ef4444;
@@ -1139,6 +1060,28 @@
             border-radius: 4px;
             letter-spacing: 0.5px;
             text-transform: uppercase;
+            flex-shrink: 0;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        /* Estilos da Animação do Disclaimer */
+        .disclaimer-marquee-wrapper {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .disclaimer-marquee-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 18s linear infinite;
+        }
+
+        @keyframes marquee {
+            0%   { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
         }
 
         .monthly-progress-card {
@@ -1214,11 +1157,7 @@
             transition: left 0.4s ease;
         }
 
-        .monthly-progress-icon img {
-            width: 14px;
-            height: 14px;
-            object-fit: contain;
-        }
+        .monthly-progress-icon img { width: 14px; height: 14px; object-fit: contain; }
 
         .tech-controls-bar {
             display: flex;
@@ -1237,29 +1176,15 @@
         .btn-hoje:hover { background: #10b981; }
 
         .btn-filter-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            padding: 6px;
-            cursor: pointer;
-            color: #475569;
-            transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px;
+            padding: 6px; cursor: pointer; color: #475569; transition: all 0.2s;
         }
-        .btn-filter-icon:hover, .btn-filter-icon.active-filter {
-            background: #10b981;
-            color: #ffffff;
-            border-color: #10b981;
-        }
+        .btn-filter-icon:hover, .btn-filter-icon.active-filter { background: #10b981; color: #ffffff; border-color: #10b981; }
 
         .layout-grid {
-            display: grid;
-            grid-template-columns: 200px minmax(0, 1fr) 200px;
-            gap: 20px;
-            align-items: start;
-            width: 100%;
+            display: grid; grid-template-columns: 200px minmax(0, 1fr) 200px;
+            gap: 20px; align-items: start; width: 100%;
         }
 
         .sidebar-banner { display: block; width: 100%; max-width: 200px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 76px; }
@@ -1270,27 +1195,16 @@
         .tech-league-header { background: #0f172a; color: #ffffff; padding: 10px 16px; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #10b981; }
         
         .tech-table-header {
-            display: grid;
-            grid-template-columns: 65px minmax(0, 1.4fr) 120px 110px minmax(0, 1fr);
-            gap: 10px;
-            padding: 8px 16px;
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 0.65rem;
-            font-weight: 800;
-            color: #64748b;
+            display: grid; grid-template-columns: 65px minmax(0, 1.4fr) 120px 110px minmax(0, 1fr);
+            gap: 10px; padding: 8px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+            font-size: 0.65rem; font-weight: 800; color: #64748b;
         }
 
         .tech-table-body { display: flex; flex-direction: column; }
         
         .tech-row {
-            display: grid;
-            grid-template-columns: 65px minmax(0, 1.4fr) 120px 110px minmax(0, 1fr);
-            align-items: center;
-            gap: 10px;
-            padding: 10px 16px;
-            border-bottom: 1px solid #f1f5f9;
-            transition: background 0.15s;
+            display: grid; grid-template-columns: 65px minmax(0, 1.4fr) 120px 110px minmax(0, 1fr);
+            align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid #f1f5f9; transition: background 0.15s;
         }
         .tech-row:last-child { border-bottom: none; }
         .tech-row:hover { background-color: #f8fafc; }
@@ -1336,20 +1250,10 @@
         .fs-badge { width: 100%; justify-content: space-between; border-style: dashed; }
 
         .user-locked-tag {
-            font-size: 0.65rem;
-            color: #d97706;
-            background: #fef3c7;
-            border: 1px dashed #f59e0b;
-            padding: 4px 6px;
-            border-radius: 4px;
-            text-align: center;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
+            font-size: 0.65rem; color: #d97706; background: #fef3c7; border: 1px dashed #f59e0b;
+            padding: 4px 6px; border-radius: 4px; text-align: center; font-weight: 700; cursor: pointer; transition: all 0.2s;
         }
-        .user-locked-tag:hover {
-            background: #fde68a;
-        }
+        .user-locked-tag:hover { background: #fde68a; }
 
         .loading-state, .no-games-fallback { text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem; font-weight: 500; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; }
 
@@ -1372,19 +1276,9 @@
         .btn-clear { background: #e2e8f0; color: #475569; border: none; border-radius: 4px; padding: 8px 14px; font-weight: 600; cursor: pointer; font-family: 'Montserrat', sans-serif; }
 
         .btn-google {
-            background: #ffffff;
-            color: #0f172a;
-            border: 1px solid #cbd5e1;
-            padding: 8px 14px;
-            border-radius: 4px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            margin-top: 10px;
+            background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1;
+            padding: 8px 14px; border-radius: 4px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px;
         }
 
         .img-desktop { display: block; } .img-mobile { display: none; }
@@ -1402,45 +1296,19 @@
             .img-desktop { display: none; } .img-mobile { display: block; width: 100%; }
         }
 
-        /* REGRAS DE ADAPTAÇÃO TOTAL PARA MOBILE (<= 650px) */
         @media (max-width: 650px) {
-            .top-navbar { 
-                padding: 6px 10px; 
-                height: auto; 
-                gap: 8px;
-            }
-            .navbar-brand { 
-                font-size: 0.95rem; 
-            }
-            .navbar-actions { 
-                gap: 6px; 
-                justify-content: flex-end; 
-                flex: 1;
-            }
-            .navbar-actions .nav-item { 
-                font-size: 0.7rem; 
-                gap: 2px; 
-            }
-            .navbar-actions .nav-item span { 
-                display: inline-block !important; /* Força a visibilidade das palavras Stats, Performance e Info */
-            }
-            .user-status-tag { 
-                display: none !important; /* Esconde o texto 'CONTA ATIVA' no mobile para poupar espaço */
-            }
-            .user-btn-active { 
-                padding: 2px 6px; 
-            }
+            .top-navbar { padding: 6px 10px; height: auto; gap: 8px; }
+            .navbar-brand { font-size: 0.95rem; }
+            .navbar-actions { gap: 6px; justify-content: flex-end; flex: 1; }
+            .navbar-actions .nav-item { font-size: 0.7rem; gap: 2px; }
+            .navbar-actions .nav-item span { display: inline-block !important; }
+            .user-status-tag { display: none !important; }
+            .user-btn-active { padding: 2px 6px; }
             
             .tech-controls-bar { flex-direction: column; gap: 12px; align-items: stretch; }
             .tech-table-header { display: none; }
             
-            .tech-row {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto;
-                gap: 8px;
-                padding: 12px;
-                border-left-width: 4px;
-            }
+            .tech-row { grid-template-columns: 1fr; grid-template-rows: auto; gap: 8px; padding: 12px; border-left-width: 4px; }
             .col-time { justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 6px; }
             .col-match { margin: 4px 0; }
             .col-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: center; }
@@ -1494,13 +1362,13 @@
         </a>
     </div>
 
-    <!-- Barra de Aviso Técnico / Disclaimer de Segurança e Isenção de Responsabilidade -->
-    <div class="tech-disclaimer-bar">
-        <div class="tech-disclaimer-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <!-- Barra de Aviso Técnico 100% Editável Dinamicamente -->
+    <div class="tech-disclaimer-bar" id="techDisclaimerBar">
+        <div class="tech-disclaimer-icon" id="techDisclaimerIcon">
+            ⚠️
         </div>
         <div class="tech-disclaimer-content">
-            <span class="tech-disclaimer-tag">Importante</span>
+            <span class="tech-disclaimer-tag" id="techDisclaimerTag">Importante</span>
             <span id="txtDisclaimerNotice">Plataforma informativa gratuita em fase de testes. As análises estatísticas não garantem lucros. Aposte com responsabilidade.</span>
         </div>
     </div>
