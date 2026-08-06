@@ -45,6 +45,7 @@
         let usuarioLogado = null;
         let MIN_FS_ODD = 1.99;
         let MIN_FS_EDGE = 0.10; 
+        let MIN_FS_DISCREPANCY = 0.15; // Factor de Discrepância Mínimo padrão (15%)
 
         const traducoes = {
             pt: {
@@ -74,7 +75,7 @@
                 btnLogin: "Entrar",
                 logout: "Sair",
                 membrosRestrito: "🔒 Conteúdo Exclusivo (Faça Login para ver Sugestões e Fight Selected)",
-                historicoTestes: "Historico de testes", // CORRIGIDO: H Maiúsculo
+                historicoTestes: "Historico de testes",
                 disclaimerBarText: "Plataforma informativa gratuita em fase de testes. As análises estatísticas não garantem lucros. Aposte com responsabilidade.",
                 cookieNotice: "Utilizamos cookies e armazenamento local para melhorar a tua experiência e gerir a tua sessão. Consulta os nossos ",
                 cookieLink: "Termos e Condições",
@@ -139,7 +140,7 @@
                 aplicarFiltros: "फिल्टर लागू गर्नुहोस्",
                 limparFiltros: "हटाउनुहोस्",
                 progressoMes: "महिनाको प्रगति:",
-                btnLogin: "लगइन",
+                btnLogin: " लगइन",
                 logout: "बाहिरिनुहोस्",
                 membrosRestrito: "🔒 विशेष सामग्री (सुझावहरू हेर्न लगइन गर्नुहोस्)",
                 historicoTestes: "परीक्षण इतिहास",
@@ -301,6 +302,7 @@
                 let recalcular = false;
                 if (config.minFsOdd !== undefined && !isNaN(config.minFsOdd)) { MIN_FS_ODD = parseFloat(config.minFsOdd); recalcular = true; }
                 if (config.minFsEdge !== undefined && !isNaN(config.minFsEdge)) { MIN_FS_EDGE = parseFloat(config.minFsEdge); recalcular = true; }
+                if (config.minFsDiscrepancy !== undefined && !isNaN(config.minFsDiscrepancy)) { MIN_FS_DISCREPANCY = parseFloat(config.minFsDiscrepancy); recalcular = true; }
                 if (recalcular) {
                     const agora = new Date();
                     calcularROIMensal(todosJogosGlobalCache, `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`);
@@ -749,6 +751,13 @@
 
         function calcularValueBetOculta(previsao, oddFormulario, pctV1, pctX, pctV2, oddV1, oddX, oddV2) {
             if (!previsao) return null;
+
+            // NOVO: Validação do Factor de Discrepância Mínimo entre a Equipa 1 e a Equipa 2
+            const p1 = parseFloat(pctV1) || 0;
+            const p2 = parseFloat(pctV2) || 0;
+            const discrepancia = Math.abs(p1 - p2) / 100;
+            if (discrepancia < MIN_FS_DISCREPANCY) return null;
+
             let p = previsao.toString().toLowerCase().trim();
             let r1 = null; let r2 = null;
 
@@ -1498,7 +1507,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             <span>Performance</span>
         </a>
-        <!-- CORRIGIDO: Texto do link com H Maiúsculo -->
         <a href="historico_testes.html" class="nav-item" title="Historico de testes">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             <span id="txtHistoricoTestes">Historico de testes</span>
