@@ -25,7 +25,8 @@
 
         // Parâmetros dinâmicos do Fight Selection / Value Bet
         window.minFsOdd = 1.99;
-        window.minFsEdge = 0.10; // 10% por defeito
+        window.minFsEdge = 0.10;
+        window.minFsDiscrepancy = 0.15; // NOVO: Factor de Discrepância
 
         // Dicionário de Traduções
         const i18n = {
@@ -170,19 +171,18 @@
             }
         });
 
-        // Escuta as configurações globais (Odd Mínima e Edge Mínimo do Painel de Gestão)
+        // Escuta as configurações globais (Odd Mínima, Edge Mínimo e Discrepância da BD)
         onValue(ref(db, "config"), (snapshot) => {
             const config = snapshot.val() || {};
-            if (config.minFsOdd !== undefined) {
-                window.minFsOdd = parseFloat(config.minFsOdd);
-            } else {
-                window.minFsOdd = 1.99;
-            }
-            if (config.minFsEdge !== undefined) {
-                window.minFsEdge = parseFloat(config.minFsEdge);
-            } else {
-                window.minFsEdge = 0.10;
-            }
+            if (config.minFsOdd !== undefined) window.minFsOdd = parseFloat(config.minFsOdd);
+            else window.minFsOdd = 1.99;
+            
+            if (config.minFsEdge !== undefined) window.minFsEdge = parseFloat(config.minFsEdge);
+            else window.minFsEdge = 0.10;
+
+            if (config.minFsDiscrepancy !== undefined) window.minFsDiscrepancy = parseFloat(config.minFsDiscrepancy);
+            else window.minFsDiscrepancy = 0.15;
+
             renderizarEstatisticas(dadosJogosCache);
         });
 
@@ -211,7 +211,6 @@
             const probImplicita = 1 / o;
             const edge = percDec - probImplicita;
             
-            // Valida se o edge é maior ou igual ao definido na Gestão
             if (edge >= limiteMinimoEdge) {
                 let confianca = Math.min((edge * 2) * 100, 95);
                 let cat = '';
@@ -232,6 +231,14 @@
 
         function calcularValueBetOculta(previsao, oddFormulario, pctV1, pctX, pctV2, oddV1, oddX, oddV2) {
             if (!previsao) return null;
+
+            // NOVO: Aplicação do filtro do Factor de Discrepância
+            const p1 = parseFloat(pctV1) || 0;
+            const p2 = parseFloat(pctV2) || 0;
+            const discrepancia = Math.abs(p1 - p2) / 100;
+            const limiteMinimoDiscrepancy = window.minFsDiscrepancy !== undefined ? window.minFsDiscrepancy : 0.15;
+            if (discrepancia < limiteMinimoDiscrepancy) return null;
+
             let p = previsao.toLowerCase().trim();
             let r1 = null, r2 = null;
 

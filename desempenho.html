@@ -28,7 +28,8 @@
 
         // Parâmetros dinâmicos do Fight Selection / Value Bet
         window.minFsOdd = 1.99;
-        window.minFsEdge = 0.10; // 10% por defeito
+        window.minFsEdge = 0.10;
+        window.minFsDiscrepancy = 0.15; // NOVO: Factor de Discrepância
 
         const traducoes = {
             pt: {
@@ -179,7 +180,7 @@
         
         let filtroPeriodoTabela = 'mensal'; 
         let linhaSelecionadaChave = null;  
-        let tipoGraficoAtual = 'simples'; // 'simples', 'fs', 'geral'
+        let tipoGraficoAtual = 'simples'; 
         
         let idiomaAtual = detectarIdioma();
         let agrupamentosGlobais = { diaria: {}, semanal: {}, mensal: {}, anual: {} };
@@ -220,6 +221,9 @@
             
             if (config.minFsEdge !== undefined) window.minFsEdge = parseFloat(config.minFsEdge);
             else window.minFsEdge = 0.10;
+
+            if (config.minFsDiscrepancy !== undefined) window.minFsDiscrepancy = parseFloat(config.minFsDiscrepancy);
+            else window.minFsDiscrepancy = 0.15;
             
             processarEstatisticasGlobais();
         });
@@ -239,16 +243,13 @@
                 if (el) el.innerText = val;
             };
 
-            // Botão Voltar
             const btnVoltarSpan = document.querySelector('#btnVoltar span');
             if (btnVoltarSpan) btnVoltarSpan.innerText = t.txtVoltar;
 
-            // Abas Principais
             setIfExists('btnTabSimples', t.tabSimples);
             setIfExists('btnTabFS', t.tabFS);
             setIfExists('btnTabGeral', t.tabGeral);
 
-            // Cabeçalho e Métricas
             setIfExists('txtDesempenhoGeral', t.txtDesempenhoGeral);
             setIfExists('lblTotalApostas', t.totalApostas);
             setIfExists('lblGanhas', t.ganhas);
@@ -258,7 +259,6 @@
             setIfExists('lblLucroLiquido', t.lucroLiquido);
             setIfExists('lblUltimaAtualizacao', t.ultimaAtualizacao);
 
-            // Filtros da Tabela Histórica
             setIfExists('txtHistorico', t.historico);
             setIfExists('optGlobal', t.tabelaGlobal);
             setIfExists('optDiaria', t.tabelaDiaria);
@@ -266,10 +266,8 @@
             setIfExists('optMensal', t.tabelaMensal);
             setIfExists('optAnual', t.tabelaAnual);
 
-            // Gráficos
             setIfExists('txtGraficos', t.txtGraficos);
 
-            // Simulador
             setIfExists('txtSimulador', t.simulador);
             setIfExists('txtQuantoTeriaGanho', t.quantoTeriaGanho);
             setIfExists('txtSimuladorDesc', t.simuladorDesc);
@@ -278,7 +276,6 @@
             const simInput = document.getElementById('sim-input');
             if (simInput) simInput.placeholder = t.placeholderSim;
 
-            // Disclaimer
             setIfExists('txtInfoImportante', t.infoImportante);
             setIfExists('aviso1', t.avisoLegal1);
             setIfExists('aviso2', t.avisoLegal2);
@@ -330,6 +327,14 @@
 
         function calcularFightSelectionOculta(previsao, oddFormulario, pctV1, pctX, pctV2, oddV1, oddX, oddV2) {
             if (!previsao) return null;
+
+            // NOVO: Aplicação do filtro do Factor de Discrepância
+            const p1 = parseFloat(pctV1) || 0;
+            const p2 = parseFloat(pctV2) || 0;
+            const discrepancia = Math.abs(p1 - p2) / 100;
+            const limiteMinimoDiscrepancy = window.minFsDiscrepancy !== undefined ? window.minFsDiscrepancy : 0.15;
+            if (discrepancia < limiteMinimoDiscrepancy) return null;
+
             let p = previsao.toLowerCase().trim();
             let r1 = null, r2 = null;
 
@@ -498,7 +503,7 @@
 
         window.mudarFiltroTabela = function(periodo) {
             filtroPeriodoTabela = periodo;
-            linhaSelecionadaChave = null; // Reinicia a linha selecionada ao trocar de aba
+            linhaSelecionadaChave = null;
             document.querySelectorAll('.table-filter-btn').forEach(b => b.classList.remove('active'));
             
             if(periodo === 'global') document.getElementById('optGlobal').classList.add('active');
@@ -691,7 +696,6 @@
                     jogosValidos.forEach((j) => {
                         let entradas = [];
 
-                        // Entrada de Apostas Simples
                         if ((tipoGraficoAtual === 'simples' || tipoGraficoAtual === 'geral') && 
                             (j.estadoAposta === 'ganha' || j.estadoAposta === 'perdida')) {
                             const odd = parseFloat(j.oddSimples || j.odd || 0);
@@ -699,7 +703,6 @@
                             entradas.push({ lucro: l, stake: 1 });
                         }
 
-                        // Entrada de Fight Selection
                         if (tipoGraficoAtual === 'fs' || tipoGraficoAtual === 'geral') {
                             let vbS = calcularFightSelectionOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                             let vbSug = calcularFightSelectionOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
@@ -802,12 +805,10 @@
                 });
             }
 
-            // Destruir gráficos anteriores
             if (graficosInstancias.lucro) graficosInstancias.lucro.destroy();
             if (graficosInstancias.roi) graficosInstancias.roi.destroy();
             if (graficosInstancias.volume) graficosInstancias.volume.destroy();
 
-            // 1. Gráfico Lucro
             const elChartLucro = document.getElementById('chartLucro');
             if (elChartLucro) {
                 const ctxLucro = elChartLucro.getContext('2d');
@@ -829,7 +830,6 @@
                 });
             }
 
-            // 2. Gráfico ROI
             const elChartRoi = document.getElementById('chartRoi');
             if (elChartRoi) {
                 const ctxRoi = elChartRoi.getContext('2d');
@@ -851,7 +851,6 @@
                 });
             }
 
-            // 3. Gráfico Volume
             const elChartVol = document.getElementById('chartVolume');
             if (elChartVol) {
                 const ctxVol = elChartVol.getContext('2d');
