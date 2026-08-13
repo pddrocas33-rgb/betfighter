@@ -244,6 +244,7 @@
             onValue(ref(db, "jogos"), (snapshot) => {
                 todosJogosGlobalCache = snapshot.val() || {};
                 calcularROIMensal(todosJogosGlobalCache, mesAnoPrefix);
+                renderizarJogos();
             });
         }
 
@@ -813,6 +814,34 @@
             return estadoGeral || 'pendente';
         }
 
+        function calcularLeagueRateGlobal(nomeLiga) {
+            const lang = traducoes[idiomaAtual] || traducoes['pt'];
+            let totalApostas = 0;
+            let acertos = 0;
+
+            Object.values(todosJogosGlobalCache).forEach(j => {
+                if (!j.arquivado) return;
+                const ligaJogo = (j.liga || lang.outrasLigas).toUpperCase().trim();
+                if (ligaJogo !== nomeLiga) return;
+
+                const valGolasA = j.resGolosA !== undefined ? j.resGolosA : '';
+                const valGolasB = j.resGolosB !== undefined ? j.resGolosB : '';
+
+                if (j.previsaoSimples && j.previsaoSimples.toString().trim() !== '') {
+                    const status = avaliarPrevisaoIndividualmente(j.previsaoSimples, valGolasA, valGolasB, j.estadoAposta);
+                    if (status === 'ganha') {
+                        acertos++;
+                        totalApostas++;
+                    } else if (status === 'perdida') {
+                        totalApostas++;
+                    }
+                }
+            });
+
+            if (totalApostas === 0) return null;
+            return (acertos / totalApostas) * 100;
+        }
+
         function renderizarJogos() {
             const container = document.getElementById('gamesCenterColumn');
             if (!container) return;
@@ -852,9 +881,32 @@
 
             let htmlLista = '';
             Object.keys(gruposPorLiga).forEach(nomeLiga => {
+                const jogosDaLiga = gruposPorLiga[nomeLiga];
+                const leagueRate = calcularLeagueRateGlobal(nomeLiga);
+
+                let rateTexto = 'N/D';
+                let corTag = '#64748b'; // Cinza caso N/D
+
+                if (leagueRate !== null) {
+                    rateTexto = `${leagueRate.toFixed(1)}%`;
+
+                    if (leagueRate >= 60) {
+                        corTag = '#10b981'; // Verde (60% a 100%)
+                    } else if (leagueRate >= 50) {
+                        corTag = '#f97316'; // Laranja (50% a 59%)
+                    } else {
+                        corTag = '#ef4444'; // Vermelho (Abaixo de 50%)
+                    }
+                }
+
                 htmlLista += `
                     <div class="tech-league-section">
-                        <div class="tech-league-header">${nomeLiga}</div>
+                        <div class="tech-league-header" style="background: #0f172a; border-bottom: 2px solid #10b981; display: flex; justify-content: space-between; align-items: center;">
+                            <span>${nomeLiga}</span>
+                            <span style="font-size: 0.75rem; font-weight: 800; background: ${corTag}; color: #ffffff; padding: 3px 8px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                                League Rate: ${rateTexto}
+                            </span>
+                        </div>
                         <div class="tech-table-header">
                             <div class="th-col">${lang.colData}</div>
                             <div class="th-col">${lang.colJogo}</div>
@@ -865,7 +917,7 @@
                         <div class="tech-table-body">
                 `;
 
-                gruposPorLiga[nomeLiga].forEach(j => {
+                jogosDaLiga.forEach(j => {
                     const valGolasA = j.resGolosA !== undefined ? j.resGolosA : '';
                     const valGolasB = j.resGolosB !== undefined ? j.resGolosB : '';
                     const dataJogoFormatada = formatarDataEvento(j.dataEvento);
