@@ -26,7 +26,7 @@
         // Parâmetros dinâmicos do Fight Selection / Value Bet
         window.minFsOdd = 1.99;
         window.minFsEdge = 0.10;
-        window.minFsDiscrepancy = 0.15; // NOVO: Factor de Discrepância
+        window.minFsDiscrepancy = 0.15;
 
         // Dicionário de Traduções
         const i18n = {
@@ -36,6 +36,7 @@
                 today: "Hoje",
                 loading: "A carregar linhas...",
                 statsNormais: "Apostas Normais (Simples)",
+                statsOU: "Mercado Over / Under",
                 statsFSAll: "Fighter Selected (Todas)",
                 statsFSLow: "Low FS",
                 statsFSMed: "Medium FS",
@@ -60,6 +61,7 @@
                 today: "Today",
                 loading: "Loading lines...",
                 statsNormais: "Normal Bets (Singles)",
+                statsOU: "Over / Under Market",
                 statsFSAll: "Fighter Selected (All)",
                 statsFSLow: "Low FS",
                 statsFSMed: "Medium FS",
@@ -84,6 +86,7 @@
                 today: "आज",
                 loading: "लोड हुँदैछ...",
                 statsNormais: "सामान्य बाजी (एकल)",
+                statsOU: "Over / Under बजार",
                 statsFSAll: "Fighter Selected (सबै)",
                 statsFSLow: "Low FS",
                 statsFSMed: "Medium FS",
@@ -171,7 +174,7 @@
             }
         });
 
-        // Escuta as configurações globais (Odd Mínima, Edge Mínimo e Discrepância da BD)
+        // Escuta as configurações globais
         onValue(ref(db, "config"), (snapshot) => {
             const config = snapshot.val() || {};
             if (config.minFsOdd !== undefined) window.minFsOdd = parseFloat(config.minFsOdd);
@@ -232,7 +235,6 @@
         function calcularValueBetOculta(previsao, oddFormulario, pctV1, pctX, pctV2, oddV1, oddX, oddV2) {
             if (!previsao) return null;
 
-            // NOVO: Aplicação do filtro do Factor de Discrepância
             const p1 = parseFloat(pctV1) || 0;
             const p2 = parseFloat(pctV2) || 0;
             const discrepancia = Math.abs(p1 - p2) / 100;
@@ -273,6 +275,28 @@
             return 'pendente';
         }
 
+        function avaliarResultadoOverUnder(previsaoOU, gA, gB) {
+            if (isNaN(gA) || isNaN(gB)) return 'pendente';
+            if (!previsaoOU || previsaoOU.trim() === '' || previsaoOU.trim() === '-') return 'pendente';
+
+            const p = previsaoOU.toString().toLowerCase().trim();
+            const totalGolos = gA + gB;
+            const numMatch = p.match(/[\d.]+/);
+
+            if (numMatch) {
+                const linha = parseFloat(numMatch[0]);
+                if (!isNaN(linha)) {
+                    if (p.includes('over') || p.includes('o') || p.includes('acima') || p.includes('+')) {
+                        return totalGolos > linha ? 'ganha' : 'perdida';
+                    }
+                    if (p.includes('under') || p.includes('u') || p.includes('abaixo') || p.includes('-')) {
+                        return totalGolos < linha ? 'ganha' : 'perdida';
+                    }
+                }
+            }
+            return 'pendente';
+        }
+
         function renderizarEstatisticas(dadosJogos) {
             const container = document.getElementById('statsContainer');
             if(!container) return;
@@ -282,11 +306,12 @@
             const todosJogos = Object.values(dadosJogos).filter(j => j.arquivado);
 
             const s = {
-                simples: { ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] },
-                fs_all:  { ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] },
-                fs_low:  { ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] },
+                simples:  { ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] },
+                ou:       { ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] },
+                fs_all:   { ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] },
+                fs_low:   { ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] },
                 fs_medium:{ ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] },
-                fs_high: { ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] }
+                fs_high:  { ganhas: 0, perdidas: 0, pendentes: 0, ganhasM: 0, perdidasM: 0, pendentesM: 0, lucro: 0, stake: 0, somaOdds: 0, lucroMensal: 0, stakeMensal: 0, jogosDia: [] }
             };
 
             todosJogos.forEach(j => {
@@ -295,46 +320,78 @@
                 if (!isDaily && !isMonthly) return;
 
                 const oddSimples = parseFloat(j.oddSimples || j.odd || 0);
-                
-                // Simples
-                if (isDaily) {
-                    s.simples.jogosDia.push({
-                        equipaA: j.equipaA,
-                        equipaB: j.equipaB,
-                        liga: j.liga || '',
-                        resA: j.resGolosA,
-                        resB: j.resGolosB,
-                        aposta: j.previsaoSimples || '-',
-                        odd: oddSimples,
-                        estado: j.estadoAposta || 'pendente'
-                    });
+                const gA = parseInt(j.resGolosA, 10);
+                const gB = parseInt(j.resGolosB, 10);
+                const temResultado = !isNaN(gA) && !isNaN(gB) && j.resGolosA !== '' && j.resGolosB !== '';
+
+                // 1. APOSTAS SIMPLES (1X2)
+                if (j.previsaoSimples && j.previsaoSimples.toString().trim() !== '') {
+                    if (isDaily) {
+                        s.simples.jogosDia.push({
+                            equipaA: j.equipaA,
+                            equipaB: j.equipaB,
+                            liga: j.liga || '',
+                            resA: j.resGolosA,
+                            resB: j.resGolosB,
+                            aposta: j.previsaoSimples || '-',
+                            odd: oddSimples,
+                            estado: j.estadoAposta || 'pendente'
+                        });
+                    }
+
+                    if (j.estadoAposta === 'ganha') {
+                        if (isDaily) { s.simples.ganhas++; s.simples.stake++; if(oddSimples>0) { s.simples.lucro += (oddSimples-1); s.simples.somaOdds += oddSimples; } }
+                        if (isMonthly) { s.simples.ganhasM++; s.simples.stakeMensal++; if(oddSimples>0) s.simples.lucroMensal += (oddSimples-1); }
+                    } else if (j.estadoAposta === 'perdida') {
+                        if (isDaily) { s.simples.perdidas++; s.simples.stake++; s.simples.lucro -= 1; if(oddSimples>0) s.simples.somaOdds += oddSimples; }
+                        if (isMonthly) { s.simples.perdidasM++; s.simples.stakeMensal++; s.simples.lucroMensal -= 1; }
+                    } else {
+                        if (isDaily) { s.simples.pendentes++; if(oddSimples>0) s.simples.somaOdds += oddSimples; }
+                        if (isMonthly) { s.simples.pendentesM++; }
+                    }
                 }
 
-                if (j.estadoAposta === 'ganha') {
-                    if (isDaily) { s.simples.ganhas++; s.simples.stake++; if(oddSimples>0) { s.simples.lucro += (oddSimples-1); s.simples.somaOdds += oddSimples; } }
-                    if (isMonthly) { s.simples.ganhasM++; s.simples.stakeMensal++; if(oddSimples>0) s.simples.lucroMensal += (oddSimples-1); }
-                } else if (j.estadoAposta === 'perdida') {
-                    if (isDaily) { s.simples.perdidas++; s.simples.stake++; s.simples.lucro -= 1; if(oddSimples>0) s.simples.somaOdds += oddSimples; }
-                    if (isMonthly) { s.simples.perdidasM++; s.simples.stakeMensal++; s.simples.lucroMensal -= 1; }
-                } else {
-                    if (isDaily) { s.simples.pendentes++; if(oddSimples>0) s.simples.somaOdds += oddSimples; }
-                    if (isMonthly) { s.simples.pendentesM++; }
+                // 2. MERCADO OVER / UNDER
+                if (j.overUnder && j.overUnder.toString().trim() !== '' && j.overUnder !== '-') {
+                    const oddOU = parseFloat(j.oddOverUnder || j.oddOU || 1.90);
+                    const estadoOU = temResultado ? avaliarResultadoOverUnder(j.overUnder, gA, gB) : (j.estadoAposta || 'pendente');
+
+                    if (isDaily) {
+                        s.ou.jogosDia.push({
+                            equipaA: j.equipaA,
+                            equipaB: j.equipaB,
+                            liga: j.liga || '',
+                            resA: j.resGolosA,
+                            resB: j.resGolosB,
+                            aposta: j.overUnder,
+                            odd: oddOU,
+                            estado: estadoOU
+                        });
+                    }
+
+                    if (estadoOU === 'ganha') {
+                        if (isDaily) { s.ou.ganhas++; s.ou.stake++; if(oddOU>0) { s.ou.lucro += (oddOU-1); s.ou.somaOdds += oddOU; } }
+                        if (isMonthly) { s.ou.ganhasM++; s.ou.stakeMensal++; if(oddOU>0) s.ou.lucroMensal += (oddOU-1); }
+                    } else if (estadoOU === 'perdida') {
+                        if (isDaily) { s.ou.perdidas++; s.ou.stake++; s.ou.lucro -= 1; if(oddOU>0) s.ou.somaOdds += oddOU; }
+                        if (isMonthly) { s.ou.perdidasM++; s.ou.stakeMensal++; s.ou.lucroMensal -= 1; }
+                    } else {
+                        if (isDaily) { s.ou.pendentes++; if(oddOU>0) s.ou.somaOdds += oddOU; }
+                        if (isMonthly) { s.ou.pendentesM++; }
+                    }
                 }
 
-                // Fighter Selection / Value Bet
+                // 3. FIGHTER SELECTED / VALUE BET
                 let vbS = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let vbSug = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                 let vb = vbSug || vbS;
 
                 if (vb) {
                     let estadoVB = 'pendente';
-                    if (j.estadoAposta === 'ganha' || j.estadoAposta === 'perdida') {
-                        const gA = parseInt(j.resGolosA); const gB = parseInt(j.resGolosB);
-                        if (!isNaN(gA) && !isNaN(gB)) {
-                            estadoVB = avaliarResultadoFinal(vb.selecao, gA, gB);
-                        } else {
-                            estadoVB = j.estadoAposta;
-                        }
+                    if (temResultado) {
+                        estadoVB = avaliarResultadoFinal(vb.selecao, gA, gB);
+                    } else {
+                        estadoVB = j.estadoAposta || 'pendente';
                     }
 
                     const subCats = ['fs_all', `fs_${vb.cat}`];
@@ -469,6 +526,7 @@
 
             container.innerHTML = `
                 ${gerarLinhaHTML("normais", t.statsNormais, "#64748b", s.simples)}
+                ${gerarLinhaHTML("ou", t.statsOU, "#8b5cf6", s.ou)}
                 ${gerarLinhaHTML("fs_all", t.statsFSAll, "#3b82f6", s.fs_all)}
                 ${gerarLinhaHTML("fs_low", t.statsFSLow, "#f97316", s.fs_low)}
                 ${gerarLinhaHTML("fs_med", t.statsFSMed, "#eab308", s.fs_medium)}
@@ -559,7 +617,7 @@
         .pill-res.loss { background: #ef4444; }
         .pill-res.pend { background: #64748b; }
 
-        /* PAINEL DE JOGOS EXPANSÍVEL (DENTRO DE CADA CATEGORIA) */
+        /* PAINEL DE JOGOS EXPANSÍVEL */
         .games-accordion { border-top: 1px solid #f1f5f9; }
         .games-summary { padding: 12px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; list-style: none; background-color: #fafafa; font-weight: 700; font-size: 0.85rem; color: #475569; transition: background-color 0.2s; }
         .games-summary::-webkit-details-marker { display: none; }

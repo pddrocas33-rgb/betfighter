@@ -45,7 +45,7 @@
         let usuarioLogado = null;
         let MIN_FS_ODD = 1.99;
         let MIN_FS_EDGE = 0.10; 
-        let MIN_FS_DISCREPANCY = 0.15;
+        let MIN_FS_DISCREPANCY = 0.15; // Factor de Discrepância Mínimo padrão (15%)
 
         const traducoes = {
             pt: {
@@ -249,9 +249,7 @@
         }
 
         function calcularROIMensal(todosJogosObj, mesAnoStr) {
-            let apostasSimples = 0, lucroSimples = 0;
-            let apostasFS = 0, lucroFS = 0;
-            let apostasOU = 0, lucroOU = 0;
+            let apostasSimples = 0, lucroSimples = 0, apostasFS = 0, lucroFS = 0;
 
             Object.values(todosJogosObj).forEach(j => {
                 if (!j.arquivado || !j.dataEvento || !j.dataEvento.startsWith(mesAnoStr)) return;
@@ -276,29 +274,13 @@
                     if (stFS === 'ganha') { apostasFS++; if (oddFS > 0) lucroFS += (oddFS - 1); }
                     else if (stFS === 'perdida') { apostasFS++; lucroFS -= 1; }
                 }
-
-                // Cálculo Estatístico de Over / Under
-                if (j.overUnder && j.overUnder.toString().trim() !== '' && j.overUnder !== '-') {
-                    const stOU = avaliarPrevisaoIndividualmente(j.overUnder, valGolasA, valGolasB, j.estadoAposta);
-                    const oddOU = parseFloat(j.oddOverUnder || j.oddOU || 1.90);
-                    if (stOU === 'ganha') {
-                        apostasOU++;
-                        lucroOU += (oddOU - 1);
-                    } else if (stOU === 'perdida') {
-                        apostasOU++;
-                        lucroOU -= 1;
-                    }
-                }
             });
 
             const roiSimples = apostasSimples > 0 ? (lucroSimples / apostasSimples) * 100 : 0;
             const roiFS = apostasFS > 0 ? (lucroFS / apostasFS) * 100 : 0;
-            const roiOU = apostasOU > 0 ? (lucroOU / apostasOU) * 100 : 0;
 
             const elRoiSimples = document.getElementById('roiSimplesVal');
             const elRoiFS = document.getElementById('roiFSVal');
-            const elRoiOU = document.getElementById('roiOUVal');
-            const elProfitOU = document.getElementById('profitOUVal');
 
             if (elRoiSimples) {
                 elRoiSimples.textContent = `${roiSimples >= 0 ? '+' : ''}${roiSimples.toFixed(1)}%`;
@@ -308,16 +290,6 @@
             if (elRoiFS) {
                 elRoiFS.textContent = `${roiFS >= 0 ? '+' : ''}${roiFS.toFixed(1)}%`;
                 elRoiFS.className = roiFS >= 0 ? 'roi-positive' : 'roi-negative';
-            }
-
-            if (elRoiOU) {
-                elRoiOU.textContent = `${roiOU >= 0 ? '+' : ''}${roiOU.toFixed(1)}%`;
-                elRoiOU.className = roiOU >= 0 ? 'roi-positive' : 'roi-negative';
-            }
-
-            if (elProfitOU) {
-                elProfitOU.textContent = `${lucroOU >= 0 ? '+' : ''}${lucroOU.toFixed(2)}u`;
-                elProfitOU.className = lucroOU >= 0 ? 'roi-positive' : 'roi-negative';
             }
         }
 
@@ -781,6 +753,7 @@
         function calcularValueBetOculta(previsao, oddFormulario, pctV1, pctX, pctV2, oddV1, oddX, oddV2) {
             if (!previsao) return null;
 
+            // NOVO: Validação do Factor de Discrepância Mínimo entre a Equipa 1 e a Equipa 2
             const p1 = parseFloat(pctV1) || 0;
             const p2 = parseFloat(pctV2) || 0;
             const discrepancia = Math.abs(p1 - p2) / 100;
@@ -912,13 +885,18 @@
                 const leagueRate = calcularLeagueRateGlobal(nomeLiga);
 
                 let rateTexto = 'N/D';
-                let corTag = '#64748b';
+                let corTag = '#64748b'; // Cinza caso N/D
 
                 if (leagueRate !== null) {
                     rateTexto = `${leagueRate.toFixed(1)}%`;
-                    if (leagueRate >= 60) corTag = '#10b981';
-                    else if (leagueRate >= 50) corTag = '#f97316';
-                    else corTag = '#ef4444';
+
+                    if (leagueRate >= 60) {
+                        corTag = '#10b981'; // Verde (60% a 100%)
+                    } else if (leagueRate >= 50) {
+                        corTag = '#f97316'; // Laranja (50% a 59%)
+                    } else {
+                        corTag = '#ef4444'; // Vermelho (Abaixo de 50%)
+                    }
                 }
 
                 htmlLista += `
@@ -949,18 +927,12 @@
                     let corSimplesClass = j.previsaoSimples ? avaliarPrevisaoIndividualmente(j.previsaoSimples, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
                     let corSugestaoClass = j.previsaoSugestao ? avaliarPrevisaoIndividualmente(j.previsaoSugestao, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
 
-                    // Avaliação Verificável de Over/Under
-                    let corOUClass = 'pendente';
-                    const ouVal = j.overUnder || '-';
-                    if (ouVal !== '-') {
-                        corOUClass = avaliarPrevisaoIndividualmente(ouVal, valGolasA, valGolasB, j.estadoAposta);
-                    }
-
                     const pV1 = j.pctV1 !== undefined && j.pctV1 !== '' ? `${j.pctV1}%` : '0%';
                     const pX = j.pctX !== undefined && j.pctX !== '' ? `${j.pctX}%` : '0%';
                     const pV2 = j.pctV2 !== undefined && j.pctV2 !== '' ? `${j.pctV2}%` : '0%';
                     
                     const xgVal = j.xg !== undefined && j.xg !== '' ? Number(j.xg).toFixed(2) : '-';
+                    const ouVal = j.overUnder || '-';
                     
                     const oddV1_disp = j.oddV1 ? Number(j.oddV1).toFixed(2) : '-';
                     const oddX_disp = j.oddX ? Number(j.oddX).toFixed(2) : '-';
@@ -1044,7 +1016,7 @@
                                 </div>
                                 <div class="metrics-txt">
                                     <span>xG: <strong>${xgVal}</strong></span>
-                                    <span>O/U: <strong class="ou-verificavel ou-status-${corOUClass}">${ouVal}</strong></span>
+                                    <span>O/U: <strong>${ouVal}</strong></span>
                                 </div>
                             </div>
 
@@ -1256,25 +1228,14 @@
             border: 1px solid #e2e8f0;
             padding: 3px 10px;
             border-radius: 6px;
-            font-size: 0.72rem;
+            font-size: 0.75rem;
             font-weight: 700;
-            flex-wrap: wrap;
         }
 
         .roi-badge-box .roi-item-title { color: #64748b; font-weight: 600; }
         .roi-badge-box .roi-divider { color: #cbd5e1; }
         .roi-positive { color: #10b981; font-weight: 800; }
         .roi-negative { color: #ef4444; font-weight: 800; }
-
-        .ou-verificavel {
-            padding: 1px 4px;
-            border-radius: 3px;
-            font-weight: 800;
-            display: inline-block;
-        }
-        .ou-status-ganha { background: #ecfdf5; color: #047857; border: 1px solid #10b981; }
-        .ou-status-perdida { background: #fef2f2; color: #b91c1c; border: 1px solid #ef4444; }
-        .ou-status-pendente { color: #0f172a; }
 
         .monthly-progress-track {
             position: relative;
@@ -1636,12 +1597,6 @@
                     <span class="roi-divider">|</span>
                     <span class="roi-item-title">FS:</span>
                     <span id="roiFSVal" class="roi-positive">+0.0%</span>
-                    <span class="roi-divider">|</span>
-                    <span class="roi-item-title">O/U ROI:</span>
-                    <span id="roiOUVal" class="roi-positive">+0.0%</span>
-                    <span class="roi-divider">|</span>
-                    <span class="roi-item-title">O/U Profit:</span>
-                    <span id="profitOUVal" class="roi-positive">+0.00u</span>
                 </div>
             </div>
             <span id="monthlyProgressText" style="color: #10b981; font-weight: 800;">0%</span>
