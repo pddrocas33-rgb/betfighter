@@ -8,10 +8,10 @@
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png">
     <link rel="apple-touch-icon" href="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png">
     
-    <!-- Tipografia Elegante: Montserrat -->
+    <!-- Tipografia: Montserrat + JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700;800&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,900&display=swap" rel="stylesheet">
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -54,7 +54,7 @@
                 hoje: "Hoje",
                 nenhumJogo: "Nenhum prognóstico arquivado para",
                 outrasLigas: "OUTRAS LIGAS",
-                colData: "DATA",
+                colData: "DATA / HORA",
                 colJogo: "JOGO",
                 colPerc: "PERCENTAGENS",
                 colMercado: "MERCADO EXTERIOR",
@@ -88,7 +88,7 @@
                 hoje: "Today",
                 nenhumJogo: "No predictions archived for",
                 outrasLigas: "OTHER LEAGUES",
-                colData: "DATE",
+                colData: "DATE / TIME",
                 colJogo: "MATCH",
                 colPerc: "PERCENTAGES",
                 colMercado: "EXTERNAL MARKET",
@@ -122,7 +122,7 @@
                 hoje: "आज",
                 nenhumJogo: "को लागि कुनै भविष्यवाणीहरू भेटिएन",
                 outrasLigas: "अन्य लिगहरू",
-                colData: "मिति",
+                colData: "मिति / समय",
                 colJogo: "खेल",
                 colPerc: "प्रतिशत",
                 colMercado: "बाह्य बजार",
@@ -277,7 +277,6 @@
                     else if (stFS === 'perdida') { apostasFS++; lucroFS -= 1; }
                 }
 
-                // Cálculo Estatístico de Over / Under
                 if (j.overUnder && j.overUnder.toString().trim() !== '' && j.overUnder !== '-') {
                     const stOU = avaliarPrevisaoIndividualmente(j.overUnder, valGolasA, valGolasB, j.estadoAposta);
                     const oddOU = parseFloat(j.oddOverUnder || j.oddOU || 1.90);
@@ -878,7 +877,12 @@
             
             let jogosArquivados = todosJogosArr
                 .filter(j => j.arquivado)
-                .sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+                .sort((a, b) => {
+                    const horaA = a.horaEvento || "99:99";
+                    const horaB = b.horaEvento || "99:99";
+                    if (horaA !== horaB) return horaA.localeCompare(horaB);
+                    return (b.criadoEm || 0) - (a.criadoEm || 0);
+                });
 
             jogosArquivados = jogosArquivados.filter(j => {
                 let vbSimples = calcularValueBetOculta(j.previsaoSimples, j.oddSimples, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
@@ -923,9 +927,12 @@
 
                 htmlLista += `
                     <div class="tech-league-section">
-                        <div class="tech-league-header" style="background: #0f172a; border-bottom: 2px solid #10b981; display: flex; justify-content: space-between; align-items: center;">
-                            <span>${nomeLiga}</span>
-                            <span style="font-size: 0.75rem; font-weight: 800; background: ${corTag}; color: #ffffff; padding: 3px 8px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                        <div class="tech-league-header">
+                            <div class="league-title-group">
+                                <span class="league-name">${nomeLiga}</span>
+                                <span class="league-count-badge">${jogosDaLiga.length}</span>
+                            </div>
+                            <span class="league-rate-pill" style="background: ${corTag};">
                                 League Rate: ${rateTexto}
                             </span>
                         </div>
@@ -943,22 +950,26 @@
                     const valGolasA = j.resGolosA !== undefined ? j.resGolosA : '';
                     const valGolasB = j.resGolosB !== undefined ? j.resGolosB : '';
                     const dataJogoFormatada = formatarDataEvento(j.dataEvento);
+                    const horaJogoFormatada = (j.horaEvento && j.horaEvento.trim() !== '') ? j.horaEvento.trim() : '--:--';
                     const resultadoFinalStr = (valGolasA !== '' && valGolasB !== '') ? `${valGolasA}-${valGolasB}` : 'vs';
                     
                     let corPrevisaoClass = j.estadoAposta || 'pendente';
                     let corSimplesClass = j.previsaoSimples ? avaliarPrevisaoIndividualmente(j.previsaoSimples, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
                     let corSugestaoClass = j.previsaoSugestao ? avaliarPrevisaoIndividualmente(j.previsaoSugestao, valGolasA, valGolasB, j.estadoAposta) : 'pendente';
 
-                    // Avaliação Verificável de Over/Under
                     let corOUClass = 'pendente';
                     const ouVal = j.overUnder || '-';
                     if (ouVal !== '-') {
                         corOUClass = avaliarPrevisaoIndividualmente(ouVal, valGolasA, valGolasB, j.estadoAposta);
                     }
 
-                    const pV1 = j.pctV1 !== undefined && j.pctV1 !== '' ? `${j.pctV1}%` : '0%';
-                    const pX = j.pctX !== undefined && j.pctX !== '' ? `${j.pctX}%` : '0%';
-                    const pV2 = j.pctV2 !== undefined && j.pctV2 !== '' ? `${j.pctV2}%` : '0%';
+                    const numV1 = (j.pctV1 !== undefined && j.pctV1 !== '') ? j.pctV1 : 0;
+                    const numX  = (j.pctX !== undefined && j.pctX !== '')   ? j.pctX  : 0;
+                    const numV2 = (j.pctV2 !== undefined && j.pctV2 !== '') ? j.pctV2 : 0;
+
+                    const pV1 = `${numV1}%`;
+                    const pX  = `${numX}%`;
+                    const pV2 = `${numV2}%`;
                     
                     const xgVal = j.xg !== undefined && j.xg !== '' ? Number(j.xg).toFixed(2) : '-';
                     
@@ -970,7 +981,7 @@
                     let vbSugestao = calcularValueBetOculta(j.previsaoSugestao, j.oddSugestao, j.pctV1, j.pctX, j.pctV2, j.oddV1, j.oddX, j.oddV2);
                     let valuedBetCalculada = vbSugestao || vbSimples; 
 
-                    let logoBFHtml = `<img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="Betfighter" style="width:18px; height:18px; object-fit:contain; vertical-align:middle;">`;
+                    let logoBFHtml = `<img src="https://res.cloudinary.com/yp2cprpk/image/upload/v1784504527/ChatGPT_Image_19_de_jul._de_2026_21_20_51_u4mctn.png" alt="Betfighter" style="width:16px; height:16px; object-fit:contain; vertical-align:middle;">`;
 
                     let badgesHtml = '';
                     
@@ -1027,16 +1038,24 @@
                         <div class="tech-row status-border-${corPrevisaoClass}">
                             <div class="col-time">
                                 <div class="dot-status ${corPrevisaoClass}"></div>
-                                <span>${dataJogoFormatada}</span>
+                                <div class="time-container">
+                                    <span class="match-hour">${horaJogoFormatada}</span>
+                                    <span class="match-date">${dataJogoFormatada}</span>
+                                </div>
                             </div>
 
                             <div class="col-match">
-                                <div class="team">${j.equipaA}</div>
+                                <div class="team team-home" title="${j.equipaA}">${j.equipaA}</div>
                                 <div class="score-badge">${resultadoFinalStr}</div>
-                                <div class="team">${j.equipaB}</div>
+                                <div class="team team-away" title="${j.equipaB}">${j.equipaB}</div>
                             </div>
 
                             <div class="col-metrics">
+                                <div class="prob-labels">
+                                    <span class="lbl-v1" style="width:${pV1};">${numV1}%</span>
+                                    <span class="lbl-x" style="width:${pX};">${numX}%</span>
+                                    <span class="lbl-v2" style="width:${pV2};">${numV2}%</span>
+                                </div>
                                 <div class="prob-bar">
                                     <div class="bar-v1" style="width: ${pV1}" title="Casa: ${pV1}"></div>
                                     <div class="bar-x" style="width: ${pX}" title="Empate: ${pX}"></div>
@@ -1069,12 +1088,20 @@
     </script>
 
     <style>
+        :root {
+            --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+            --primary-dark: #0f172a;
+            --accent-green: #10b981;
+            --border-subtle: #e2e8f0;
+            --bg-body: #f1f5f9;
+        }
+
         *, *::before, *::after { box-sizing: border-box; }
         html, body { max-width: 100vw; overflow-x: hidden; margin: 0; padding: 0; }
         
         body { 
             font-family: 'Montserrat', 'Segoe UI', system-ui, sans-serif; 
-            background-color: #f1f5f9; 
+            background-color: var(--bg-body); 
             color: #1e293b;
             font-size: 13px;
         }
@@ -1083,7 +1110,7 @@
         img:not([src]), img[src=""] { opacity: 0 !important; }
 
         .top-navbar {
-            background-color: #0f172a;
+            background-color: var(--primary-dark);
             color: #f8fafc;
             display: flex;
             justify-content: space-between;
@@ -1102,12 +1129,12 @@
             align-items: center; 
             gap: 6px; 
             font-weight: 900; 
-            font-size: 1.1rem; 
+            font-size: 1.15rem; 
             font-style: italic; 
             letter-spacing: -0.5px; 
             flex-shrink: 0;
         }
-        .brand-green { color: #10b981; }
+        .brand-green { color: var(--accent-green); }
         
         .navbar-actions { 
             display: flex; 
@@ -1118,26 +1145,28 @@
         .nav-item { 
             display: flex; 
             align-items: center; 
-            gap: 4px; 
+            gap: 5px; 
             font-weight: 600; 
             font-size: 0.8rem; 
             color: #cbd5e1; 
-            transition: color 0.2s; 
+            transition: all 0.2s; 
             cursor: pointer; 
             white-space: nowrap;
+            padding: 4px 6px;
+            border-radius: 6px;
         }
-        .nav-item:hover { color: #10b981; }
+        .nav-item:hover { color: var(--accent-green); background: rgba(255,255,255,0.05); }
         .nav-item svg { width: 14px; height: 14px; stroke: currentColor; flex-shrink: 0; }
         
         .user-btn-active {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, var(--accent-green) 0%, #059669 100%);
             color: #ffffff !important;
-            padding: 4px 8px;
+            padding: 5px 10px;
             border-radius: 6px;
             font-weight: 700;
-            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.25);
         }
-        .user-btn-active:hover { opacity: 0.9; }
+        .user-btn-active:hover { opacity: 0.95; }
         .user-status-tag {
             background: #38bdf8;
             color: #0f172a;
@@ -1148,7 +1177,18 @@
             margin-left: 2px;
         }
 
-        .lang-select { background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; padding: 3px 5px; font-size: 0.75rem; font-weight: 600; outline: none; cursor: pointer; font-family: 'Montserrat', sans-serif;}
+        .lang-select { 
+            background: #1e293b; 
+            color: #f8fafc; 
+            border: 1px solid #334155; 
+            border-radius: 6px; 
+            padding: 4px 6px; 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            outline: none; 
+            cursor: pointer; 
+            font-family: 'Montserrat', sans-serif;
+        }
 
         .main-container {
             max-width: 1340px;
@@ -1156,10 +1196,10 @@
             padding: 0 12px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
         }
 
-        .top-hero-banner-container { width: 100%; border-radius: 8px; overflow: hidden; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .top-hero-banner-container { width: 100%; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .top-hero-banner-container img { width: 100%; display: block; object-fit: cover; }
 
         .tech-disclaimer-bar {
@@ -1228,10 +1268,10 @@
 
         .monthly-progress-card {
             background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
             padding: 12px 16px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -1243,7 +1283,7 @@
             align-items: center;
             font-size: 0.8rem;
             font-weight: 700;
-            color: #0f172a;
+            color: var(--primary-dark);
             flex-wrap: wrap;
             gap: 8px;
         }
@@ -1253,8 +1293,8 @@
             align-items: center;
             gap: 6px;
             background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 3px 10px;
+            border: 1px solid var(--border-subtle);
+            padding: 4px 10px;
             border-radius: 6px;
             font-size: 0.72rem;
             font-weight: 700;
@@ -1263,14 +1303,15 @@
 
         .roi-badge-box .roi-item-title { color: #64748b; font-weight: 600; }
         .roi-badge-box .roi-divider { color: #cbd5e1; }
-        .roi-positive { color: #10b981; font-weight: 800; }
-        .roi-negative { color: #ef4444; font-weight: 800; }
+        .roi-positive { color: var(--accent-green); font-weight: 800; font-family: var(--font-mono); }
+        .roi-negative { color: #ef4444; font-weight: 800; font-family: var(--font-mono); }
 
         .ou-verificavel {
             padding: 1px 4px;
             border-radius: 3px;
             font-weight: 800;
             display: inline-block;
+            font-family: var(--font-mono);
         }
         .ou-status-ganha { background: #ecfdf5; color: #047857; border: 1px solid #10b981; }
         .ou-status-perdida { background: #fef2f2; color: #b91c1c; border: 1px solid #ef4444; }
@@ -1300,7 +1341,7 @@
             width: 24px;
             height: 24px;
             background: #ffffff;
-            border: 2px solid #10b981;
+            border: 2px solid var(--accent-green);
             border-radius: 50%;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             display: flex;
@@ -1317,83 +1358,224 @@
             justify-content: space-between;
             align-items: center;
             background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
             padding: 10px 16px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .controls-left { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.9rem; color: #475569; }
-        .controls-right { display: flex; gap: 10px; align-items: center; }
-        .date-input { border: 1px solid #cbd5e1; border-radius: 4px; padding: 6px 10px; font-size: 0.85rem; background: #f8fafc; outline: none; color: #0f172a; font-family: 'Montserrat', sans-serif; }
-        .btn-hoje { background: #0f172a; color: #fff; border: none; border-radius: 4px; padding: 6px 12px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; font-family: 'Montserrat', sans-serif;}
-        .btn-hoje:hover { background: #10b981; }
+        .controls-right { display: flex; gap: 8px; align-items: center; }
+        .date-input { border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; font-size: 0.85rem; background: #f8fafc; outline: none; color: #0f172a; font-family: 'Montserrat', sans-serif; font-weight: 600; }
+        .btn-hoje { background: var(--primary-dark); color: #fff; border: none; border-radius: 6px; padding: 7px 14px; font-weight: 700; font-size: 0.82rem; cursor: pointer; transition: background 0.2s; font-family: 'Montserrat', sans-serif;}
+        .btn-hoje:hover { background: var(--accent-green); }
 
         .btn-filter-icon {
             display: flex; align-items: center; justify-content: center;
-            background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px;
-            padding: 6px; cursor: pointer; color: #475569; transition: all 0.2s;
+            background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;
+            padding: 6px 8px; cursor: pointer; color: #475569; transition: all 0.2s;
         }
-        .btn-filter-icon:hover, .btn-filter-icon.active-filter { background: #10b981; color: #ffffff; border-color: #10b981; }
+        .btn-filter-icon:hover, .btn-filter-icon.active-filter { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
 
         .layout-grid {
             display: grid; grid-template-columns: 200px minmax(0, 1fr) 200px;
-            gap: 20px; align-items: start; width: 100%;
+            gap: 16px; align-items: start; width: 100%;
         }
 
-        .sidebar-banner { display: block; width: 100%; max-width: 200px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 76px; }
+        .sidebar-banner { display: block; width: 100%; max-width: 200px; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 76px; }
         .sidebar-banner img { width: 100%; display: block; }
 
         .games-center-column { display: flex; flex-direction: column; gap: 16px; min-height: 400px; width: 100%; }
-        .tech-league-section { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-        .tech-league-header { background: #0f172a; color: #ffffff; padding: 10px 16px; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #10b981; }
+        
+        .tech-league-section { 
+            background: #ffffff; 
+            border: 1px solid var(--border-subtle); 
+            border-radius: 10px; 
+            overflow: hidden; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+        }
+        .tech-league-header { 
+            background: var(--primary-dark); 
+            color: #ffffff; 
+            padding: 10px 16px; 
+            font-weight: 700; 
+            font-size: 0.88rem; 
+            border-bottom: 2px solid var(--accent-green); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            gap: 10px;
+        }
+        .league-title-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .league-name {
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .league-count-badge {
+            background: rgba(255,255,255,0.15);
+            font-size: 0.7rem;
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-family: var(--font-mono);
+        }
+        .league-rate-pill {
+            font-size: 0.72rem; 
+            font-weight: 800; 
+            color: #ffffff; 
+            padding: 3px 9px; 
+            border-radius: 4px; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
         
         .tech-table-header {
-            display: grid; grid-template-columns: 65px minmax(0, 1.4fr) 120px 110px minmax(0, 1fr);
-            gap: 10px; padding: 8px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
-            font-size: 0.65rem; font-weight: 800; color: #64748b;
+            display: grid; 
+            grid-template-columns: 95px minmax(0, 1.4fr) 130px 110px minmax(0, 1.1fr);
+            gap: 12px; 
+            padding: 8px 16px; 
+            background: #f8fafc; 
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.68rem; 
+            font-weight: 800; 
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .tech-table-body { display: flex; flex-direction: column; }
         
         .tech-row {
-            display: grid; grid-template-columns: 65px minmax(0, 1.4fr) 120px 110px minmax(0, 1fr);
-            align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid #f1f5f9; transition: background 0.15s;
+            display: grid; 
+            grid-template-columns: 95px minmax(0, 1.4fr) 130px 110px minmax(0, 1.1fr);
+            align-items: center; 
+            gap: 12px; 
+            padding: 11px 16px; 
+            border-bottom: 1px solid #f1f5f9; 
+            transition: background 0.15s;
         }
         .tech-row:last-child { border-bottom: none; }
         .tech-row:hover { background-color: #f8fafc; }
 
-        .status-border-ganha { border-left: 3px solid #10b981; padding-left: 13px; }
-        .status-border-perdida { border-left: 3px solid #ef4444; padding-left: 13px; }
-        .status-border-pendente { border-left: 3px solid #94a3b8; padding-left: 13px; }
+        .status-border-ganha { border-left: 4px solid var(--accent-green); padding-left: 12px; }
+        .status-border-perdida { border-left: 4px solid #ef4444; padding-left: 12px; }
+        .status-border-pendente { border-left: 4px solid #cbd5e1; padding-left: 12px; }
 
-        .col-time { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #64748b; font-weight: 600; }
-        .dot-status { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-        .dot-status.ganha { background: #10b981; }
-        .dot-status.perdida { background: #ef4444; }
+        .col-time { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+        .time-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            line-height: 1.1;
+        }
+        .match-hour {
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+        }
+        .match-date {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .dot-status { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .dot-status.ganha { background: var(--accent-green); box-shadow: 0 0 4px rgba(16, 185, 129, 0.4); }
+        .dot-status.perdida { background: #ef4444; box-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
         .dot-status.pendente { background: #94a3b8; }
 
-        .col-match { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-weight: 600; font-size: 0.85rem; color: #0f172a; }
-        .col-match .team { flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; line-height: 1.2; text-align: center; }
-        .col-match .team:first-child { text-align: right; }
-        .col-match .team:last-child { text-align: left; }
-        .score-badge { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', monospace; font-weight: 700; color: #0f172a; font-size: 0.8rem; flex-shrink: 0; }
+        .col-match { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 8px; 
+            font-weight: 700; 
+            font-size: 0.85rem; 
+            color: #0f172a; 
+        }
+        .col-match .team { 
+            flex: 1; 
+            display: -webkit-box; 
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical; 
+            overflow: hidden; 
+            white-space: normal; 
+            line-height: 1.25; 
+        }
+        .col-match .team-home { text-align: right; color: #1e293b; }
+        .col-match .team-away { text-align: left; color: #1e293b; }
+        .score-badge { 
+            background: #f1f5f9; 
+            border: 1px solid var(--border-subtle); 
+            padding: 3px 8px; 
+            border-radius: 6px; 
+            font-family: var(--font-mono); 
+            font-weight: 800; 
+            color: var(--primary-dark); 
+            font-size: 0.85rem; 
+            flex-shrink: 0; 
+            min-width: 44px;
+            text-align: center;
+        }
 
-        .col-metrics { display: flex; flex-direction: column; gap: 4px; }
-        .prob-bar { display: flex; height: 5px; border-radius: 2px; overflow: hidden; background: #e2e8f0; width: 100%; }
+        .col-metrics { display: flex; flex-direction: column; gap: 3px; }
+        
+        .prob-labels {
+            display: flex;
+            width: 100%;
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 1px;
+            overflow: hidden;
+        }
+        .prob-labels span {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .lbl-v1 { color: #2563eb; text-align: left; }
+        .lbl-x  { color: #64748b; text-align: center; }
+        .lbl-v2 { color: #d97706; text-align: right; }
+
+        .prob-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: #e2e8f0; width: 100%; }
         .prob-bar div { height: 100%; }
         .bar-v1 { background: #3b82f6; } .bar-x { background: #94a3b8; } .bar-v2 { background: #f59e0b; }
-        .metrics-txt { display: flex; justify-content: space-between; font-size: 0.65rem; color: #64748b; font-weight: 600; }
+        
+        .metrics-txt { display: flex; justify-content: space-between; font-size: 0.65rem; color: #64748b; font-weight: 600; margin-top: 2px; }
         
         .col-odds { display: flex; gap: 4px; }
-        .odd-item { display: flex; flex-direction: column; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 2px 4px; width: 33%; }
+        .odd-item { display: flex; flex-direction: column; align-items: center; background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: 4px; padding: 3px 4px; width: 33%; }
         .odd-item span { font-size: 0.55rem; color: #94a3b8; font-weight: 800; }
-        .odd-item strong { font-size: 0.7rem; color: #0f172a; font-family: 'Courier New', monospace; }
+        .odd-item strong { font-size: 0.72rem; color: #0f172a; font-family: var(--font-mono); font-weight: 700; }
 
-        .col-preds { display: flex; flex-direction: column; gap: 3px; }
-        .mini-pred { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 3px 6px; border-radius: 4px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 0.65rem; }
+        .col-preds { display: flex; flex-direction: column; gap: 4px; }
+        .mini-pred { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 6px; 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            border: 1px solid var(--border-subtle); 
+            background: #f8fafc; 
+            font-size: 0.68rem; 
+        }
         .mini-pred .lbl { font-weight: 700; color: #94a3b8; display: none; } 
         .mini-pred .val { font-weight: 800; color: #1e293b; }
-        .mini-pred .odd { font-family: 'Courier New', monospace; font-weight: 700; color: #475569; }
+        .mini-pred .odd { font-family: var(--font-mono); font-weight: 700; color: #475569; }
         
         .mini-pred.status-ganha { background: #ecfdf5 !important; border-color: #10b981 !important; }
         .mini-pred.status-ganha .val, .mini-pred.status-ganha .odd { color: #047857 !important; }
@@ -1403,34 +1585,34 @@
         .fs-badge { width: 100%; justify-content: space-between; border-style: dashed; }
 
         .user-locked-tag {
-            font-size: 0.65rem; color: #d97706; background: #fef3c7; border: 1px dashed #f59e0b;
-            padding: 4px 6px; border-radius: 4px; text-align: center; font-weight: 700; cursor: pointer; transition: all 0.2s;
+            font-size: 0.68rem; color: #d97706; background: #fef3c7; border: 1px dashed #f59e0b;
+            padding: 6px 8px; border-radius: 6px; text-align: center; font-weight: 700; cursor: pointer; transition: all 0.2s;
         }
         .user-locked-tag:hover { background: #fde68a; }
 
-        .loading-state, .no-games-fallback { text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem; font-weight: 500; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; }
+        .loading-state, .no-games-fallback { text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem; font-weight: 600; background: #fff; border: 1px solid var(--border-subtle); border-radius: 10px; }
 
         .animated-popup-overlay, .modal-overlay-custom { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.7); z-index: 99999; display: flex; justify-content: center; align-items: center; pointer-events: none; opacity: 0; transition: opacity 0.2s; backdrop-filter: blur(2px); }
-        .animated-popup-content, .disclaimer-modal-content { background: #ffffff; padding: 20px; border-radius: 8px; position: relative; max-width: 400px; width: 90%; transform: scale(0.95); transition: transform 0.2s; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .animated-popup-content, .disclaimer-modal-content { background: #ffffff; padding: 20px; border-radius: 12px; position: relative; max-width: 420px; width: 90%; transform: scale(0.95); transition: transform 0.2s; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
         .animated-popup-overlay.active, .modal-overlay-custom.active { pointer-events: auto; opacity: 1; }
         .animated-popup-overlay.active .animated-popup-content, .modal-overlay-custom.active .disclaimer-modal-content { transform: scale(1); }
-        .popup-close-btn { position: absolute; top: 8px; right: 12px; background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; }
+        .popup-close-btn { position: absolute; top: 10px; right: 12px; background: none; border: none; font-size: 22px; color: #94a3b8; cursor: pointer; }
         
-        .disclaimer-header { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px; font-size: 1.1rem; font-weight: 800; color: #0f172a; }
+        .disclaimer-header { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px; margin-bottom: 12px; font-size: 1.1rem; font-weight: 800; color: #0f172a; }
         .disclaimer-body { font-size: 0.85rem; color: #475569; line-height: 1.5; }
 
         .filter-modal-body { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
         .filter-group { display: flex; flex-direction: column; gap: 4px; }
         .filter-group label { font-size: 0.8rem; font-weight: 600; color: #475569; }
-        .filter-input { border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px 10px; font-size: 0.85rem; outline: none; font-family: 'Montserrat', sans-serif; }
+        .filter-input { border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 10px; font-size: 0.85rem; outline: none; font-family: 'Montserrat', sans-serif; }
         .filter-checkbox { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #0f172a; cursor: pointer; margin-top: 4px; }
         .filter-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
-        .btn-apply { background: #10b981; color: #fff; border: none; border-radius: 4px; padding: 8px 14px; font-weight: 700; cursor: pointer; font-family: 'Montserrat', sans-serif; }
-        .btn-clear { background: #e2e8f0; color: #475569; border: none; border-radius: 4px; padding: 8px 14px; font-weight: 600; cursor: pointer; font-family: 'Montserrat', sans-serif; }
+        .btn-apply { background: var(--accent-green); color: #fff; border: none; border-radius: 6px; padding: 8px 14px; font-weight: 700; cursor: pointer; font-family: 'Montserrat', sans-serif; }
+        .btn-clear { background: #e2e8f0; color: #475569; border: none; border-radius: 6px; padding: 8px 14px; font-weight: 600; cursor: pointer; font-family: 'Montserrat', sans-serif; }
 
         .btn-google {
             background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1;
-            padding: 8px 14px; border-radius: 4px; font-weight: 700; cursor: pointer;
+            padding: 8px 14px; border-radius: 6px; font-weight: 700; cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px;
         }
 
@@ -1443,7 +1625,7 @@
             transform: translateX(-50%);
             width: 92%;
             max-width: 680px;
-            background-color: #0f172a;
+            background-color: var(--primary-dark);
             color: #f8fafc;
             padding: 14px 20px;
             border-radius: 12px;
@@ -1473,7 +1655,7 @@
         }
 
         .cookie-banner-text a {
-            color: #10b981;
+            color: var(--accent-green);
             text-decoration: underline;
             font-weight: 600;
         }
@@ -1485,7 +1667,7 @@
         }
 
         .cookie-btn-accept {
-            background-color: #10b981;
+            background-color: var(--accent-green);
             color: #ffffff;
             border: none;
             padding: 7px 14px;
@@ -1536,9 +1718,10 @@
         @media (max-width: 1024px) {
             .layout-grid { grid-template-columns: 160px minmax(0, 1fr) 160px; gap: 10px; }
             .sidebar-banner { max-width: 160px; }
-            .tech-table-header { font-size: 0.55rem; padding: 8px 10px; gap: 6px; }
-            .tech-row { padding: 10px 10px; gap: 6px; }
+            .tech-table-header { font-size: 0.6rem; padding: 8px 10px; gap: 8px; }
+            .tech-row { padding: 10px 10px; gap: 8px; }
         }
+
         @media (max-width: 860px) {
             .layout-grid { grid-template-columns: 1fr; }
             .sidebar-banner { display: none; } 
@@ -1553,19 +1736,37 @@
             .navbar-actions .nav-item { font-size: 0.7rem; gap: 2px; }
             .navbar-actions .nav-item span { display: inline-block !important; }
             .user-status-tag { display: none !important; }
-            .user-btn-active { padding: 2px 6px; }
+            .user-btn-active { padding: 3px 6px; }
             
-            .tech-controls-bar { flex-direction: column; gap: 12px; align-items: stretch; }
+            .tech-controls-bar { flex-direction: column; gap: 10px; align-items: stretch; }
             .tech-table-header { display: none; }
             
-            .tech-row { grid-template-columns: 1fr; grid-template-rows: auto; gap: 8px; padding: 12px; border-left-width: 4px; }
-            .col-time { justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 6px; }
+            .tech-row { 
+                grid-template-columns: 1fr; 
+                grid-template-rows: auto; 
+                gap: 8px; 
+                padding: 12px; 
+                border-left-width: 4px; 
+            }
+            .col-time { 
+                justify-content: space-between; 
+                border-bottom: 1px dashed var(--border-subtle); 
+                padding-bottom: 6px; 
+            }
+            .time-container {
+                flex-direction: row;
+                gap: 8px;
+                align-items: center;
+            }
+            .match-hour { font-size: 0.85rem; }
             .col-match { margin: 4px 0; }
-            .col-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: center; }
-            .prob-bar { margin-top: 4px; }
+            .col-match .team-home { text-align: left; }
+            .col-match .team-away { text-align: right; }
+            .col-metrics { display: flex; flex-direction: column; gap: 4px; }
+            .prob-bar { margin-top: 2px; }
             .col-odds { justify-content: space-between; }
             .col-preds { flex-direction: row; flex-wrap: wrap; margin-top: 4px; }
-            .mini-pred { flex: 1; min-width: 110px; padding: 4px; font-size: 0.75rem;}
+            .mini-pred { flex: 1; min-width: 110px; padding: 5px 8px; font-size: 0.75rem;}
         }
     </style>
 </head>
@@ -1644,7 +1845,7 @@
                     <span id="profitOUVal" class="roi-positive">+0.00u</span>
                 </div>
             </div>
-            <span id="monthlyProgressText" style="color: #10b981; font-weight: 800;">0%</span>
+            <span id="monthlyProgressText" style="color: var(--accent-green); font-weight: 800; font-family: var(--font-mono);">0%</span>
         </div>
         <div class="monthly-progress-track">
             <div id="monthlyProgressFill" class="monthly-progress-fill"></div>
@@ -1657,7 +1858,7 @@
     <div class="tech-controls-bar">
         <div class="controls-left">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            <span id="lblDiaSelecionadoText">Data Base:</span> <span id="txtDataFormatada" style="color: #0f172a; font-weight: 800;">--/--/--</span>
+            <span id="lblDiaSelecionadoText">Data Base:</span> <span id="txtDataFormatada" style="color: #0f172a; font-weight: 800; font-family: var(--font-mono);">--/--/--</span>
         </div>
         <div class="controls-right">
             <button id="btnFilter" class="btn-filter-icon" type="button" title="Filtros">
@@ -1695,7 +1896,7 @@
 
         <div id="authLoggedBox" style="display:none; text-align:center;">
             <p style="font-size:0.9rem; color:#475569;">Sessão iniciada como:</p>
-            <strong id="authLoggedEmail" style="font-size:1rem; color:#0f172a;">-</strong>
+            <strong id="authLoggedEmail" style="font-size:1rem; color:#0f172a; font-family: var(--font-mono);">-</strong>
             <p style="font-size:0.8rem; color:#10b981; font-weight:700; margin-top:10px;">✔ Acesso total a Sugestões e Fight Selected ativo!</p>
             <button type="button" id="btnLogout" class="btn-clear" style="width:100%; margin-top:15px; background:#ef4444; color:#fff;">Sair da Conta</button>
         </div>
@@ -1752,7 +1953,7 @@
     <div class="animated-popup-content">
         <button class="popup-close-btn" onclick="fecharBannerAnimado()">&times;</button>
         <a href="https://22bet4me.com?bf=9c0edc58d75d4_464354407" target="_blank" class="popup-banner-anchor" style="display:block; margin-top: 15px;">
-            <img src="imagens/banner_esquerdo_mobile.png" alt="" style="width: 100%; border-radius: 4px;">
+            <img src="imagens/banner_esquerdo_mobile.png" alt="" style="width: 100%; border-radius: 6px;">
         </a>
     </div>
 </div>
